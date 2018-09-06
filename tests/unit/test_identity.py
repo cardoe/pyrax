@@ -521,7 +521,7 @@ class IdentityTest(unittest.TestCase):
         key = "fake%api%key"
         ident.authenticate = Mock()
         with utils.SelfDeletingTempfile() as tmpname:
-            with open(tmpname, "w") as ff:
+            with open(tmpname, "wb") as ff:
                 ff.write("[rackspace_cloud]\n")
                 ff.write("username = %s\n" % user)
                 ff.write("api_key = %s\n" % key)
@@ -530,7 +530,7 @@ class IdentityTest(unittest.TestCase):
         self.assertEqual(ident.password, key)
         # Using 'password' instead of 'api_key'
         with utils.SelfDeletingTempfile() as tmpname:
-            with open(tmpname, "w") as ff:
+            with open(tmpname, "wb") as ff:
                 ff.write("[rackspace_cloud]\n")
                 ff.write("username = %s\n" % user)
                 ff.write("password = %s\n" % key)
@@ -542,19 +542,19 @@ class IdentityTest(unittest.TestCase):
                 "doesn't exist")
         # Missing section
         with utils.SelfDeletingTempfile() as tmpname:
-            with open(tmpname, "w") as ff:
+            with open(tmpname, "wb") as ff:
                 ff.write("user = x\n")
             self.assertRaises(exc.InvalidCredentialFile,
                     ident.set_credential_file, tmpname)
         # Incorrect section
         with utils.SelfDeletingTempfile() as tmpname:
-            with open(tmpname, "w") as ff:
+            with open(tmpname, "wb") as ff:
                 ff.write("[bad_section]\nusername = x\napi_key = y\n")
             self.assertRaises(exc.InvalidCredentialFile,
                     ident.set_credential_file, tmpname)
         # Incorrect option
         with utils.SelfDeletingTempfile() as tmpname:
-            with open(tmpname, "w") as ff:
+            with open(tmpname, "wb") as ff:
                 ff.write("[rackspace_cloud]\nuserbad = x\napi_key = y\n")
             self.assertRaises(exc.InvalidCredentialFile,
                     ident.set_credential_file, tmpname)
@@ -566,7 +566,7 @@ class IdentityTest(unittest.TestCase):
         password = "fakeapikey"
         tenant_id = "faketenantid"
         with utils.SelfDeletingTempfile() as tmpname:
-            with open(tmpname, "w") as ff:
+            with file(tmpname, "wb") as ff:
                 ff.write("[keystone]\n")
                 ff.write("username = %s\n" % user)
                 ff.write("password = %s\n" % password)

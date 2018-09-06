@@ -37,6 +37,9 @@ import pyrax.exceptions as exc
 
 
 def _safe_quote(val):
+    """
+    Unicode values will raise a KeyError, so catch those and encode in UTF-8.
+    """
     # urllib.parse.quote expects bytes
     SAFE_QUOTE_CHARS = b"/.?&=,"
     if isinstance(val, six.text_type):

@@ -85,6 +85,7 @@ setup(
     ],
     install_requires=[
         "python-novaclient==2.27.0",
+        "python-keystoneclient==3.13.0",
         "rackspace-novaclient",
         "keyring",
         "requests>=2.2.1,<3",
