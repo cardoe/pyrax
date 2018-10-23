@@ -27,25 +27,25 @@ from pyrax.manager import BaseManager
 from pyrax.resource import BaseResource
 import pyrax.utils as utils
 
+import six
 
 
 class ScalingGroup(BaseResource):
     def __init__(self, *args, **kwargs):
         super(ScalingGroup, self).__init__(*args, **kwargs)
         self._non_display = ["active", "launchConfiguration", "links",
-        "groupConfiguration", "policies", "scalingPolicies"]
+                             "groupConfiguration", "policies",
+                             "scalingPolicies"]
         self._repr_properties = ["name", "cooldown", "metadata",
-        "min_entities", "max_entities"]
+                                 "min_entities", "max_entities"]
         self._make_policies()
-
 
     def _make_policies(self):
         """
         Convert the 'scalingPolicies' dictionary into AutoScalePolicy objects.
         """
         self.policies = [AutoScalePolicy(self.manager, dct, self)
-                for dct in self.scalingPolicies]
-
+                         for dct in self.scalingPolicies]
 
     def get_state(self):
         """
@@ -53,13 +53,11 @@ class ScalingGroup(BaseResource):
         """
         return self.manager.get_state(self)
 
-
     def pause(self):
         """
         Pauses all execution of the policies for this scaling group.
         """
         return self.manager.pause(self)
-
 
     def resume(self):
         """
@@ -67,9 +65,8 @@ class ScalingGroup(BaseResource):
         """
         return self.manager.resume(self)
 
-
     def update(self, name=None, cooldown=None, min_entities=None,
-            max_entities=None, metadata=None):
+               max_entities=None, metadata=None):
         """
         Updates this ScalingGroup. One or more of the attributes can be
         specified.
@@ -78,10 +75,10 @@ class ScalingGroup(BaseResource):
         If you want to add to it, you either need to pass the complete dict of
         metadata, or call the update_metadata() method.
         """
-        return self.manager.update(self, name=name,
-                cooldown=cooldown, min_entities=min_entities,
-                max_entities=max_entities, metadata=metadata)
-
+        return self.manager.update(self, name=name, cooldown=cooldown,
+                                   min_entities=min_entities,
+                                   max_entities=max_entities,
+                                   metadata=metadata)
 
     def update_metadata(self, metadata):
         """
@@ -90,13 +87,11 @@ class ScalingGroup(BaseResource):
         """
         return self.manager.update_metadata(self, metadata=metadata)
 
-
     def get_configuration(self):
         """
         Returns the scaling group configuration in a dictionary.
         """
         return self.manager.get_configuration(self)
-
 
     def get_launch_config(self):
         """
@@ -104,10 +99,10 @@ class ScalingGroup(BaseResource):
         """
         return self.manager.get_launch_config(self)
 
-
     def update_launch_config(self, server_name=None, image=None, flavor=None,
-            disk_config=None, metadata=None, personality=None, networks=None,
-            load_balancers=None, key_name=None, config_drive=False, user_data=None):
+                             disk_config=None, metadata=None, personality=None,
+                             networks=None, load_balancers=None, key_name=None,
+                             config_drive=False, user_data=None):
         """
         Updates the server launch configuration for this scaling group.
         One or more of the available attributes can be specified.
@@ -116,12 +111,12 @@ class ScalingGroup(BaseResource):
         If you want to add to it, you either need to pass the complete dict of
         metadata, or call the update_launch_metadata() method.
         """
-        return self.manager.update_launch_config(self, server_name=server_name,
-                image=image, flavor=flavor, disk_config=disk_config,
-                metadata=metadata, personality=personality, networks=networks,
-                load_balancers=load_balancers, key_name=key_name,
-                config_drive=config_drive, user_data=user_data)
-
+        return self.manager.update_launch_config(
+            self, server_name=server_name, image=image, flavor=flavor,
+            disk_config=disk_config, metadata=metadata,
+            personality=personality, networks=networks,
+            load_balancers=load_balancers, key_name=key_name,
+            config_drive=config_drive, user_data=user_data)
 
     def update_launch_metadata(self, metadata):
         """
@@ -130,18 +125,17 @@ class ScalingGroup(BaseResource):
         """
         return self.manager.update_launch_metadata(self, metadata)
 
-
     def add_policy(self, name, policy_type, cooldown, change=None,
-            is_percent=False, desired_capacity=None, args=None):
+                   is_percent=False, desired_capacity=None, args=None):
         """
         Adds a policy with the given values to this scaling group. The
         'change' parameter is treated as an absolute amount, unless
         'is_percent' is True, in which case it is treated as a percentage.
         """
-        return self.manager.add_policy(self, name, policy_type, cooldown,
-                change=change, is_percent=is_percent,
-                desired_capacity=desired_capacity, args=args)
-
+        return self.manager.add_policy(
+            self, name, policy_type, cooldown, change=change,
+            is_percent=is_percent, desired_capacity=desired_capacity,
+            args=args)
 
     def list_policies(self):
         """
@@ -149,25 +143,24 @@ class ScalingGroup(BaseResource):
         """
         return self.manager.list_policies(self)
 
-
     def get_policy(self, policy):
         """
         Gets the detail for the specified policy.
         """
         return self.manager.get_policy(self, policy)
 
-
     def update_policy(self, policy, name=None, policy_type=None, cooldown=None,
-            change=None, is_percent=False, desired_capacity=None, args=None):
+                      change=None, is_percent=False, desired_capacity=None,
+                      args=None):
         """
         Updates the specified policy. One or more of the parameters may be
         specified.
         """
-        return self.manager.update_policy(scaling_group=self, policy=policy,
-                name=name, policy_type=policy_type, cooldown=cooldown,
-                change=change, is_percent=is_percent,
-                desired_capacity=desired_capacity, args=args)
-
+        return self.manager.update_policy(
+            scaling_group=self, policy=policy, name=name,
+            policy_type=policy_type, cooldown=cooldown, change=change,
+            is_percent=is_percent, desired_capacity=desired_capacity,
+            args=args)
 
     def execute_policy(self, policy):
         """
@@ -175,13 +168,11 @@ class ScalingGroup(BaseResource):
         """
         return self.manager.execute_policy(scaling_group=self, policy=policy)
 
-
     def delete_policy(self, policy):
         """
         Deletes the specified policy from this scaling group.
         """
         return self.manager.delete_policy(scaling_group=self, policy=policy)
-
 
     def add_webhook(self, policy, name, metadata=None):
         """
@@ -189,13 +180,11 @@ class ScalingGroup(BaseResource):
         """
         return self.manager.add_webhook(self, policy, name, metadata=metadata)
 
-
     def list_webhooks(self, policy):
         """
         Returns a list of all webhooks for the specified policy.
         """
         return self.manager.list_webhooks(self, policy)
-
 
     def update_webhook(self, policy, webhook, name=None, metadata=None):
         """
@@ -203,8 +192,8 @@ class ScalingGroup(BaseResource):
         specified.
         """
         return self.manager.update_webhook(scaling_group=self, policy=policy,
-                webhook=webhook, name=name, metadata=metadata)
-
+                                           webhook=webhook, name=name,
+                                           metadata=metadata)
 
     def update_webhook_metadata(self, policy, webhook, metadata):
         """
@@ -212,8 +201,7 @@ class ScalingGroup(BaseResource):
         webhook.
         """
         return self.manager.update_webhook_metadata(self, policy, webhook,
-                metadata)
-
+                                                    metadata)
 
     def delete_webhook(self, policy, webhook):
         """
@@ -221,11 +209,9 @@ class ScalingGroup(BaseResource):
         """
         return self.manager.delete_webhook(self, policy, webhook)
 
-
     @property
     def policy_count(self):
         return len(self.policies)
-
 
     ##################################################################
     # The following property declarations allow access to the base attributes
@@ -248,7 +234,6 @@ class ScalingGroup(BaseResource):
     def cooldown(self, val):
         self.groupConfiguration["cooldown"] = val
 
-
     @property
     def metadata(self):
         return self.groupConfiguration.get("metadata")
@@ -257,7 +242,6 @@ class ScalingGroup(BaseResource):
     def metadata(self, val):
         self.groupConfiguration["metadata"] = val
 
-
     @property
     def min_entities(self):
         return self.groupConfiguration.get("minEntities")
@@ -265,7 +249,6 @@ class ScalingGroup(BaseResource):
     @min_entities.setter
     def min_entities(self, val):
         self.groupConfiguration["minEntities"] = val
-
 
     @property
     def max_entities(self):
@@ -277,14 +260,13 @@ class ScalingGroup(BaseResource):
     ##################################################################
 
 
-
 class ScalingGroupManager(BaseManager):
     def __init__(self, api, resource_class=None, response_key=None,
-            plural_response_key=None, uri_base=None):
-        super(ScalingGroupManager, self).__init__(api,
-                resource_class=resource_class, response_key=response_key,
-                plural_response_key=plural_response_key, uri_base=uri_base)
-
+                 plural_response_key=None, uri_base=None):
+        super(ScalingGroupManager, self).__init__(api, resource_class,
+                                                  response_key,
+                                                  plural_response_key,
+                                                  uri_base)
 
     def get_state(self, scaling_group):
         """
@@ -302,7 +284,6 @@ class ScalingGroupManager(BaseManager):
         ret["paused"] = data["paused"]
         return ret
 
-
     def pause(self, scaling_group):
         """
         Pauses all execution of the policies for the specified scaling group.
@@ -310,7 +291,6 @@ class ScalingGroupManager(BaseManager):
         uri = "/%s/%s/pause" % (self.uri_base, utils.get_id(scaling_group))
         resp, resp_body = self.api.method_post(uri)
         return None
-
 
     def resume(self, scaling_group):
         """
@@ -320,7 +300,6 @@ class ScalingGroupManager(BaseManager):
         resp, resp_body = self.api.method_post(uri)
         return None
 
-
     def get_configuration(self, scaling_group):
         """
         Returns the scaling group's configuration in a dictionary.
@@ -329,23 +308,21 @@ class ScalingGroupManager(BaseManager):
         resp, resp_body = self.api.method_get(uri)
         return resp_body.get("groupConfiguration")
 
-
     def replace(self, scaling_group, name, cooldown, min_entities,
-            max_entities, metadata=None):
+                max_entities, metadata=None):
         """
         Replace an existing ScalingGroup configuration. All of the attributes
         must be specified If you wish to delete any of the optional attributes,
         pass them in as None.
         """
         body = self._create_group_config_body(name, cooldown, min_entities,
-                max_entities, metadata=metadata)
+                                              max_entities, metadata=metadata)
         group_id = utils.get_id(scaling_group)
         uri = "/%s/%s/config" % (self.uri_base, group_id)
         resp, resp_body = self.api.method_put(uri, body=body)
 
-
     def update(self, scaling_group, name=None, cooldown=None,
-            min_entities=None, max_entities=None, metadata=None):
+               min_entities=None, max_entities=None, metadata=None):
         """
         Updates an existing ScalingGroup. One or more of the attributes can
         be specified.
@@ -372,7 +349,6 @@ class ScalingGroupManager(BaseManager):
         resp, resp_body = self.api.method_put(uri, body=body)
         return None
 
-
     def update_metadata(self, scaling_group, metadata):
         """
         Adds the given metadata dict to the existing metadata for the scaling
@@ -383,7 +359,6 @@ class ScalingGroupManager(BaseManager):
         curr_meta = scaling_group.metadata
         curr_meta.update(metadata)
         return self.update(scaling_group, metadata=curr_meta)
-
 
     def get_launch_config(self, scaling_group):
         """
@@ -406,11 +381,11 @@ class ScalingGroupManager(BaseManager):
             ret[norm_key] = value
         return ret
 
-
     def replace_launch_config(self, scaling_group, launch_config_type,
-            server_name, image, flavor, disk_config=None, metadata=None,
-            personality=None, networks=None, load_balancers=None,
-            key_name=None, config_drive=False, user_data=None):
+                              server_name, image, flavor, disk_config=None,
+                              metadata=None, personality=None, networks=None,
+                              load_balancers=None, key_name=None,
+                              config_drive=False, user_data=None):
         """
         Replace an existing launch configuration. All of the attributes must be
         specified. If you wish to delete any of the optional attributes, pass
@@ -426,11 +401,11 @@ class ScalingGroupManager(BaseManager):
                 config_drive=config_drive, user_data=user_data)
         resp, resp_body = self.api.method_put(uri, body=body)
 
-
-    def update_launch_config(self, scaling_group, server_name=None, image=None,
+    def update_launch_config(
+            self, scaling_group, server_name=None, image=None,
             flavor=None, disk_config=None, metadata=None, personality=None,
-            networks=None, load_balancers=None, key_name=None, config_drive=False,
-            user_data=None):
+            networks=None, load_balancers=None, key_name=None,
+            config_drive=False, user_data=None):
         """
         Updates the server launch configuration for an existing scaling group.
         One or more of the available attributes can be specified.
@@ -465,7 +440,7 @@ class ScalingGroupManager(BaseManager):
                     },
                     "loadBalancers": load_balancers or lb_args,
                 },
-            }
+                }
         bas = body["args"]["server"]
         if cfg_drv:
             bas["config_drive"] = cfg_drv
@@ -481,7 +456,6 @@ class ScalingGroupManager(BaseManager):
         resp, resp_body = self.api.method_put(uri, body=body)
         return None
 
-
     def update_launch_metadata(self, scaling_group, metadata):
         """
         Adds the given metadata dict to the existing metadata for the scaling
@@ -494,9 +468,9 @@ class ScalingGroupManager(BaseManager):
         curr_meta.update(metadata)
         return self.update_launch_config(scaling_group, metadata=curr_meta)
 
-
     def add_policy(self, scaling_group, name, policy_type, cooldown,
-            change=None, is_percent=False, desired_capacity=None, args=None):
+                   change=None, is_percent=False, desired_capacity=None,
+                   args=None):
         """
         Adds a policy with the given values to the specified scaling group. The
         'change' parameter is treated as an absolute amount, unless
@@ -504,17 +478,17 @@ class ScalingGroupManager(BaseManager):
         """
         uri = "/%s/%s/policies" % (self.uri_base, utils.get_id(scaling_group))
         body = self._create_policy_body(name, policy_type, cooldown,
-                change=change, is_percent=is_percent,
-                desired_capacity=desired_capacity, args=args)
+                                        change=change, is_percent=is_percent,
+                                        desired_capacity=desired_capacity,
+                                        args=args)
         # "body" needs to be a list
         body = [body]
         resp, resp_body = self.api.method_post(uri, body=body)
         pol_info = resp_body.get("policies")[0]
         return AutoScalePolicy(self, pol_info, scaling_group)
 
-
     def _create_policy_body(self, name, policy_type, cooldown, change=None,
-            is_percent=None, desired_capacity=None, args=None):
+                            is_percent=None, desired_capacity=None, args=None):
         body = {"name": name, "cooldown": cooldown, "type": policy_type}
         if change is not None:
             if is_percent:
@@ -527,7 +501,6 @@ class ScalingGroupManager(BaseManager):
             body["args"] = args
         return body
 
-
     def list_policies(self, scaling_group):
         """
         Returns a list of all policies defined for the specified scaling group.
@@ -537,21 +510,19 @@ class ScalingGroupManager(BaseManager):
         return [AutoScalePolicy(self, data, scaling_group)
                 for data in resp_body.get("policies", [])]
 
-
     def get_policy(self, scaling_group, policy):
         """
         Gets the detail for the specified policy.
         """
-        uri = "/%s/%s/policies/%s" % (self.uri_base,
-                utils.get_id(scaling_group), utils.get_id(policy))
+        uri = "/%s/%s/policies/%s" % (
+            self.uri_base, utils.get_id(scaling_group), utils.get_id(policy))
         resp, resp_body = self.api.method_get(uri)
         data = resp_body.get("policy")
         return AutoScalePolicy(self, data, scaling_group)
 
-
     def replace_policy(self, scaling_group, policy, name,
-            policy_type, cooldown, change=None, is_percent=False,
-            desired_capacity=None, args=None):
+                       policy_type, cooldown, change=None, is_percent=False,
+                       desired_capacity=None, args=None):
         """
         Replace an existing policy. All of the attributes must be specified. If
         you wish to delete any of the optional attributes, pass them in as
@@ -560,21 +531,21 @@ class ScalingGroupManager(BaseManager):
         policy_id = utils.get_id(policy)
         group_id = utils.get_id(scaling_group)
         uri = "/%s/%s/policies/%s" % (self.uri_base, group_id, policy_id)
-        body = self._create_policy_body(name=name, policy_type=policy_type,
+        body = self._create_policy_body(
+                name=name, policy_type=policy_type,
                 cooldown=cooldown, change=change, is_percent=is_percent,
                 desired_capacity=desired_capacity, args=args)
         resp, resp_body = self.api.method_put(uri, body=body)
 
-
     def update_policy(self, scaling_group, policy, name=None, policy_type=None,
-            cooldown=None, change=None, is_percent=False,
-            desired_capacity=None, args=None):
+                      cooldown=None, change=None, is_percent=False,
+                      desired_capacity=None, args=None):
         """
         Updates the specified policy. One or more of the parameters may be
         specified.
         """
-        uri = "/%s/%s/policies/%s" % (self.uri_base,
-                utils.get_id(scaling_group), utils.get_id(policy))
+        uri = "/%s/%s/policies/%s" % (
+            self.uri_base, utils.get_id(scaling_group), utils.get_id(policy))
         if not isinstance(policy, AutoScalePolicy):
             # Received an ID
             policy = self.get_policy(scaling_group, policy)
@@ -602,23 +573,21 @@ class ScalingGroupManager(BaseManager):
         resp, resp_body = self.api.method_put(uri, body=body)
         return None
 
-
     def execute_policy(self, scaling_group, policy):
         """
         Executes the specified policy for this scaling group.
         """
-        uri = "/%s/%s/policies/%s/execute" % (self.uri_base,
-                utils.get_id(scaling_group), utils.get_id(policy))
+        uri = "/%s/%s/policies/%s/execute" % (
+            self.uri_base, utils.get_id(scaling_group), utils.get_id(policy))
         resp, resp_body = self.api.method_post(uri)
         return None
-
 
     def delete_policy(self, scaling_group, policy):
         """
         Deletes the specified policy from the scaling group.
         """
-        uri = "/%s/%s/policies/%s" % (self.uri_base,
-                utils.get_id(scaling_group), utils.get_id(policy))
+        uri = "/%s/%s/policies/%s" % (
+            self.uri_base, utils.get_id(scaling_group), utils.get_id(policy))
         resp, resp_body = self.api.method_delete(uri)
 
     def _create_webhook_body(self, name, metadata=None):
@@ -633,8 +602,8 @@ class ScalingGroupManager(BaseManager):
         """
         Adds a webhook to the specified policy.
         """
-        uri = "/%s/%s/policies/%s/webhooks" % (self.uri_base,
-                utils.get_id(scaling_group), utils.get_id(policy))
+        uri = "/%s/%s/policies/%s/webhooks" % (
+            self.uri_base, utils.get_id(scaling_group), utils.get_id(policy))
         body = self._create_webhook_body(name, metadata=metadata)
         # "body" needs to be a list
         body = [body]
@@ -642,56 +611,49 @@ class ScalingGroupManager(BaseManager):
         data = resp_body.get("webhooks")[0]
         return AutoScaleWebhook(self, data, policy, scaling_group)
 
-
     def list_webhooks(self, scaling_group, policy):
         """
         Returns a list of all webhooks for the specified policy.
         """
-        uri = "/%s/%s/policies/%s/webhooks" % (self.uri_base,
-                utils.get_id(scaling_group), utils.get_id(policy))
+        uri = "/%s/%s/policies/%s/webhooks" % (
+            self.uri_base, utils.get_id(scaling_group), utils.get_id(policy))
         resp, resp_body = self.api.method_get(uri)
         return [AutoScaleWebhook(self, data, policy, scaling_group)
                 for data in resp_body.get("webhooks", [])]
-
 
     def get_webhook(self, scaling_group, policy, webhook):
         """
         Gets the detail for the specified webhook.
         """
-        uri = "/%s/%s/policies/%s/webhooks/%s" % (self.uri_base,
-                utils.get_id(scaling_group), utils.get_id(policy),
-                utils.get_id(webhook))
+        uri = "/%s/%s/policies/%s/webhooks/%s" % (
+            self.uri_base, utils.get_id(scaling_group), utils.get_id(policy),
+            utils.get_id(webhook))
         resp, resp_body = self.api.method_get(uri)
         data = resp_body.get("webhook")
         return AutoScaleWebhook(self, data, policy, scaling_group)
 
-
     def replace_webhook(self, scaling_group, policy, webhook, name,
-            metadata=None):
+                        metadata=None):
         """
         Replace an existing webhook. All of the attributes must be specified.
         If you wish to delete any of the optional attributes, pass them in as
         None.
         """
-        uri = "/%s/%s/policies/%s/webhooks/%s" % (self.uri_base,
-                utils.get_id(scaling_group), utils.get_id(policy),
-                utils.get_id(webhook))
-        group_id = utils.get_id(scaling_group)
-        policy_id = utils.get_id(policy)
-        webhook_id = utils.get_id(webhook)
+        uri = "/%s/%s/policies/%s/webhooks/%s" % (
+            self.uri_base, utils.get_id(scaling_group), utils.get_id(policy),
+            utils.get_id(webhook))
         body = self._create_webhook_body(name, metadata=metadata)
         resp, resp_body = self.api.method_put(uri, body=body)
 
-
     def update_webhook(self, scaling_group, policy, webhook, name=None,
-            metadata=None):
+                       metadata=None):
         """
         Updates the specified webhook. One or more of the parameters may be
         specified.
         """
-        uri = "/%s/%s/policies/%s/webhooks/%s" % (self.uri_base,
-                utils.get_id(scaling_group), utils.get_id(policy),
-                utils.get_id(webhook))
+        uri = "/%s/%s/policies/%s/webhooks/%s" % (
+            self.uri_base, utils.get_id(scaling_group), utils.get_id(policy),
+            utils.get_id(webhook))
         if not isinstance(webhook, AutoScaleWebhook):
             # Received an ID
             webhook = self.get_webhook(scaling_group, policy, webhook)
@@ -702,8 +664,8 @@ class ScalingGroupManager(BaseManager):
         webhook.reload()
         return webhook
 
-
-    def update_webhook_metadata(self, scaling_group, policy, webhook, metadata):
+    def update_webhook_metadata(self, scaling_group, policy, webhook,
+                                metadata):
         """
         Adds the given metadata dict to the existing metadata for the specified
         webhook.
@@ -713,19 +675,17 @@ class ScalingGroupManager(BaseManager):
         curr_meta = webhook.metadata or {}
         curr_meta.update(metadata)
         return self.update_webhook(scaling_group, policy, webhook,
-                metadata=curr_meta)
-
+                                   metadata=curr_meta)
 
     def delete_webhook(self, scaling_group, policy, webhook):
         """
         Deletes the specified webhook from the specified policy.
         """
-        uri = "/%s/%s/policies/%s/webhooks/%s" % (self.uri_base,
-                utils.get_id(scaling_group), utils.get_id(policy),
-                utils.get_id(webhook))
+        uri = "/%s/%s/policies/%s/webhooks/%s" % (
+            self.uri_base, utils.get_id(scaling_group), utils.get_id(policy),
+            utils.get_id(webhook))
         resp, resp_body = self.api.method_delete(uri)
         return None
-
 
     @staticmethod
     def _resolve_lbs(load_balancers):
@@ -751,25 +711,25 @@ class ScalingGroupManager(BaseManager):
                         "port": lb.port,
                         })
             elif isinstance(lb, tuple):
-                lb_args.append({"loadBalancerId": lb[0],
-                        "port": lb[1]})
+                lb_args.append({"loadBalancerId": lb[0], "port": lb[1]})
             else:
                 # See if it's an ID for a Load Balancer
                 try:
                     instance = pyrax.cloud_loadbalancers.get(lb)
                 except Exception:
-                    raise exc.InvalidLoadBalancer("Received an invalid "
-                            "specification for a Load Balancer: '%s'" % lb)
+                    raise exc.InvalidLoadBalancer(
+                        "Received an invalid specification for a Load "
+                        "Balancer: '%s'" % lb)
                 lb_args.append({
                         "loadBalancerId": instance.id,
                         "port": instance.port,
                         })
         return lb_args
 
-
-    def _encode_personality(self, personality):
+    def _encode_personality(self, personality, encoding="utf-8"):
         """
         Personality files must be base64-encoded before transmitting.
+
         """
         if personality is None:
             personality = []
@@ -777,11 +737,18 @@ class ScalingGroupManager(BaseManager):
             personality = utils.coerce_to_list(personality)
             for pfile in personality:
                 if "contents" in pfile:
-                    pfile["contents"] = base64.b64encode(pfile["contents"])
+                    # For python3 compatibility, "contents" must be passed in
+                    # as bytes since b64encode no longer accepts str as an
+                    # argument.
+                    pfile_contents = pfile["contents"]
+                    if isinstance(pfile_contents, six.text_type):
+                        pfile_contents = bytes(pfile_contents, encoding)
+                    pfile["contents"] = base64.b64encode(pfile_contents)
+                    pfile["contents"] = pfile["contents"].decode('ascii')
         return personality
 
-
-    def _create_body(self, name, cooldown, min_entities, max_entities,
+    def _create_body(
+            self, name, cooldown, min_entities, max_entities,
             launch_config_type, server_name, image, flavor, disk_config=None,
             metadata=None, personality=None, networks=None,
             load_balancers=None, scaling_policies=None, group_metadata=None,
@@ -794,13 +761,15 @@ class ScalingGroupManager(BaseManager):
             metadata = {}
         if scaling_policies is None:
             scaling_policies = []
-        group_config = self._create_group_config_body(name, cooldown,
-                min_entities, max_entities, metadata=group_metadata)
-        launch_config = self._create_launch_config_body(launch_config_type,
-                server_name, image, flavor, disk_config=disk_config,
-                metadata=metadata, personality=personality, networks=networks,
-                load_balancers=load_balancers, key_name=key_name,
-                config_drive=config_drive, user_data=user_data)
+        group_config = self._create_group_config_body(
+            name, cooldown, min_entities, max_entities,
+            metadata=group_metadata)
+        launch_config = self._create_launch_config_body(
+            launch_config_type, server_name, image, flavor,
+            disk_config=disk_config, metadata=metadata,
+            personality=personality, networks=networks,
+            load_balancers=load_balancers, key_name=key_name,
+            config_drive=config_drive, user_data=user_data)
         body = {
                 "groupConfiguration": group_config,
                 "launchConfiguration": launch_config,
@@ -808,9 +777,8 @@ class ScalingGroupManager(BaseManager):
                 }
         return body
 
-
     def _create_group_config_body(self, name, cooldown, min_entities,
-            max_entities, metadata=None):
+                                  max_entities, metadata=None):
         if metadata is None:
             # If updating a group with existing metadata, metadata MUST be
             # passed. Leaving it out causes Otter to return 400.
@@ -824,8 +792,8 @@ class ScalingGroupManager(BaseManager):
                 }
         return body
 
-
-    def _create_launch_config_body(self, launch_config_type,
+    def _create_launch_config_body(
+            self, launch_config_type,
             server_name, image, flavor, disk_config=None, metadata=None,
             personality=None, networks=None, load_balancers=None,
             key_name=None, config_drive=False, user_data=None):
@@ -868,7 +836,6 @@ class AutoScalePolicy(BaseResource):
         self.scaling_group = scaling_group
         self._non_display = ["links", "scaling_group"]
 
-
     def get(self):
         """
         Gets the details for this policy.
@@ -876,25 +843,23 @@ class AutoScalePolicy(BaseResource):
         return self.manager.get_policy(self.scaling_group, self)
     reload = get
 
-
     def delete(self):
         """
         Deletes this policy.
         """
         return self.manager.delete_policy(self.scaling_group, self)
 
-
     def update(self, name=None, policy_type=None, cooldown=None, change=None,
-            is_percent=False, desired_capacity=None, args=None):
+               is_percent=False, desired_capacity=None, args=None):
         """
         Updates this policy. One or more of the parameters may be
         specified.
         """
-        return self.manager.update_policy(scaling_group=self.scaling_group,
+        return self.manager.update_policy(
+                scaling_group=self.scaling_group,
                 policy=self, name=name, policy_type=policy_type,
                 cooldown=cooldown, change=change, is_percent=is_percent,
                 desired_capacity=desired_capacity, args=args)
-
 
     def execute(self):
         """
@@ -902,14 +867,12 @@ class AutoScalePolicy(BaseResource):
         """
         return self.manager.execute_policy(self.scaling_group, self)
 
-
     def add_webhook(self, name, metadata=None):
         """
         Adds a webhook to this policy.
         """
         return self.manager.add_webhook(self.scaling_group, self, name,
-                metadata=metadata)
-
+                                        metadata=metadata)
 
     def list_webhooks(self):
         """
@@ -917,13 +880,11 @@ class AutoScalePolicy(BaseResource):
         """
         return self.manager.list_webhooks(self.scaling_group, self)
 
-
     def get_webhook(self, webhook):
         """
         Gets the detail for the specified webhook.
         """
         return self.manager.get_webhook(self.scaling_group, self, webhook)
-
 
     def update_webhook(self, webhook, name=None, metadata=None):
         """
@@ -931,8 +892,8 @@ class AutoScalePolicy(BaseResource):
         specified.
         """
         return self.manager.update_webhook(self.scaling_group, policy=self,
-                webhook=webhook, name=name, metadata=metadata)
-
+                                           webhook=webhook, name=name,
+                                           metadata=metadata)
 
     def update_webhook_metadata(self, webhook, metadata):
         """
@@ -940,15 +901,13 @@ class AutoScalePolicy(BaseResource):
         webhook.
         """
         return self.manager.update_webhook_metadata(self.scaling_group, self,
-                webhook, metadata)
-
+                                                    webhook, metadata)
 
     def delete_webhook(self, webhook):
         """
         Deletes the specified webhook from this policy.
         """
         return self.manager.delete_webhook(self.scaling_group, self, webhook)
-
 
 
 class AutoScaleWebhook(BaseResource):
@@ -959,11 +918,9 @@ class AutoScaleWebhook(BaseResource):
         self.policy = policy
         self._non_display = ["links", "policy"]
 
-
     def get(self):
         return self.policy.get_webhook(self)
     reload = get
-
 
     def update(self, name=None, metadata=None):
         """
@@ -971,20 +928,17 @@ class AutoScaleWebhook(BaseResource):
         """
         return self.policy.update_webhook(self, name=name, metadata=metadata)
 
-
     def update_metadata(self, metadata):
         """
         Adds the given metadata dict to the existing metadata for this webhook.
         """
         return self.policy.update_webhook_metadata(self, metadata)
 
-
     def delete(self):
         """
         Deletes this webhook.
         """
         return self.policy.delete_webhook(self)
-
 
 
 class AutoScaleClient(BaseClient):
@@ -997,17 +951,15 @@ class AutoScaleClient(BaseClient):
         """
         Creates a manager to handle autoscale operations.
         """
-        self._manager = ScalingGroupManager(self,
-                resource_class=ScalingGroup, response_key="group",
-                uri_base="groups")
-
+        self._manager = ScalingGroupManager(self, resource_class=ScalingGroup,
+                                            response_key="group",
+                                            uri_base="groups")
 
     def get_state(self, scaling_group):
         """
         Returns the current state of the specified scaling group.
         """
         return self._manager.get_state(scaling_group)
-
 
     def pause(self, scaling_group):
         """
@@ -1017,7 +969,6 @@ class AutoScaleClient(BaseClient):
         # so it should either work or be pretty close.
         return self._manager.pause(scaling_group)
 
-
     def resume(self, scaling_group):
         """
         Resumes execution of the policies for the specified scaling group.
@@ -1026,20 +977,19 @@ class AutoScaleClient(BaseClient):
         # so it should either work or be pretty close.
         return self._manager.resume(scaling_group)
 
-
     def replace(self, scaling_group, name, cooldown, min_entities,
-            max_entities, metadata=None):
+                max_entities, metadata=None):
         """
         Replace an existing ScalingGroup configuration. All of the attributes
         must be specified. If you wish to delete any of the optional
         attributes, pass them in as None.
         """
         return self._manager.replace(scaling_group, name, cooldown,
-                min_entities, max_entities, metadata=metadata)
+                                     min_entities, max_entities,
+                                     metadata=metadata)
 
-
-    def update(self, scaling_group, name=None, cooldown=None, min_entities=None,
-            max_entities=None, metadata=None):
+    def update(self, scaling_group, name=None, cooldown=None,
+               min_entities=None, max_entities=None, metadata=None):
         """
         Updates an existing ScalingGroup. One or more of the attributes can be
         specified.
@@ -1048,10 +998,10 @@ class AutoScaleClient(BaseClient):
         If you want to add to it, you either need to pass the complete dict of
         metadata, or call the update_metadata() method.
         """
-        return self._manager.update(scaling_group, name=name, cooldown=cooldown,
-                min_entities=min_entities, max_entities=max_entities,
-                metadata=metadata)
-
+        return self._manager.update(
+            scaling_group, name=name, cooldown=cooldown,
+            min_entities=min_entities, max_entities=max_entities,
+            metadata=metadata)
 
     def update_metadata(self, scaling_group, metadata):
         """
@@ -1060,13 +1010,11 @@ class AutoScaleClient(BaseClient):
         """
         return self._manager.update_metadata(scaling_group, metadata)
 
-
     def get_configuration(self, scaling_group):
         """
         Returns the scaling group's configuration in a dictionary.
         """
         return self._manager.get_configuration(scaling_group)
-
 
     def get_launch_config(self, scaling_group):
         """
@@ -1074,8 +1022,8 @@ class AutoScaleClient(BaseClient):
         """
         return self._manager.get_launch_config(scaling_group)
 
-
-    def replace_launch_config(self, scaling_group, launch_config_type,
+    def replace_launch_config(
+            self, scaling_group, launch_config_type,
             server_name, image, flavor, disk_config=None, metadata=None,
             personality=None, networks=None, load_balancers=None,
             key_name=None):
@@ -1084,17 +1032,17 @@ class AutoScaleClient(BaseClient):
         specified. If you wish to delete any of the optional attributes, pass
         them in as None.
         """
-        return self._manager.replace_launch_config(scaling_group,
-                launch_config_type, server_name, image, flavor,
-                disk_config=disk_config, metadata=metadata,
-                personality=personality, networks=networks,
-                load_balancers=load_balancers, key_name=key_name)
+        return self._manager.replace_launch_config(
+            scaling_group, launch_config_type, server_name, image, flavor,
+            disk_config=disk_config, metadata=metadata,
+            personality=personality, networks=networks,
+            load_balancers=load_balancers, key_name=key_name)
 
-
-    def update_launch_config(self, scaling_group, server_name=None, image=None,
+    def update_launch_config(
+            self, scaling_group, server_name=None, image=None,
             flavor=None, disk_config=None, metadata=None, personality=None,
-            networks=None, load_balancers=None, key_name=None, config_drive=False,
-            user_data=None):
+            networks=None, load_balancers=None, key_name=None,
+            config_drive=False, user_data=None):
         """
         Updates the server launch configuration for an existing scaling group.
         One or more of the available attributes can be specified.
@@ -1103,13 +1051,12 @@ class AutoScaleClient(BaseClient):
         If you want to add to it, you either need to pass the complete dict of
         metadata, or call the update_launch_metadata() method.
         """
-        return self._manager.update_launch_config(scaling_group,
-                server_name=server_name, image=image, flavor=flavor,
-                disk_config=disk_config, metadata=metadata,
-                personality=personality, networks=networks,
-                load_balancers=load_balancers, key_name=key_name,
-                config_drive=config_drive, user_data=user_data)
-
+        return self._manager.update_launch_config(
+            scaling_group, server_name=server_name, image=image, flavor=flavor,
+            disk_config=disk_config, metadata=metadata,
+            personality=personality, networks=networks,
+            load_balancers=load_balancers, key_name=key_name,
+            config_drive=config_drive, user_data=user_data)
 
     def update_launch_metadata(self, scaling_group, metadata):
         """
@@ -1118,18 +1065,18 @@ class AutoScaleClient(BaseClient):
         """
         return self._manager.update_launch_metadata(scaling_group, metadata)
 
-
     def add_policy(self, scaling_group, name, policy_type, cooldown,
-            change=None, is_percent=False, desired_capacity=None, args=None):
+                   change=None, is_percent=False, desired_capacity=None,
+                   args=None):
         """
         Adds a policy with the given values to the specified scaling group. The
         'change' parameter is treated as an absolute amount, unless
         'is_percent' is True, in which case it is treated as a percentage.
         """
-        return self._manager.add_policy(scaling_group, name, policy_type,
+        return self._manager.add_policy(
+                scaling_group, name, policy_type,
                 cooldown, change=change, is_percent=is_percent,
                 desired_capacity=desired_capacity, args=args)
-
 
     def list_policies(self, scaling_group):
         """
@@ -1137,15 +1084,14 @@ class AutoScaleClient(BaseClient):
         """
         return self._manager.list_policies(scaling_group)
 
-
     def get_policy(self, scaling_group, policy):
         """
         Gets the detail for the specified policy.
         """
         return self._manager.get_policy(scaling_group, policy)
 
-
-    def replace_policy(self, scaling_group, policy, name,
+    def replace_policy(
+            self, scaling_group, policy, name,
             policy_type, cooldown, change=None, is_percent=False,
             desired_capacity=None, args=None):
         """
@@ -1153,47 +1099,44 @@ class AutoScaleClient(BaseClient):
         you wish to delete any of the optional attributes, pass them in as
         None.
         """
-        return self._manager.replace_policy(scaling_group, policy, name,
+        return self._manager.replace_policy(
+                scaling_group, policy, name,
                 policy_type, cooldown, change=change, is_percent=is_percent,
                 desired_capacity=desired_capacity, args=args)
 
-
     def update_policy(self, scaling_group, policy, name=None, policy_type=None,
-            cooldown=None, change=None, is_percent=False,
-            desired_capacity=None, args=None):
+                      cooldown=None, change=None, is_percent=False,
+                      desired_capacity=None, args=None):
         """
         Updates the specified policy. One or more of the parameters may be
         specified.
         """
-        return self._manager.update_policy(scaling_group, policy, name=name,
-                policy_type=policy_type, cooldown=cooldown, change=change,
-                is_percent=is_percent, desired_capacity=desired_capacity,
-                args=args)
-
+        return self._manager.update_policy(
+            scaling_group, policy, name=name,
+            policy_type=policy_type, cooldown=cooldown, change=change,
+            is_percent=is_percent, desired_capacity=desired_capacity,
+            args=args)
 
     def execute_policy(self, scaling_group, policy):
         """
         Executes the specified policy for the scaling group.
         """
         return self._manager.execute_policy(scaling_group=scaling_group,
-                policy=policy)
-
+                                            policy=policy)
 
     def delete_policy(self, scaling_group, policy):
         """
         Deletes the specified policy from the scaling group.
         """
         return self._manager.delete_policy(scaling_group=scaling_group,
-                policy=policy)
-
+                                           policy=policy)
 
     def add_webhook(self, scaling_group, policy, name, metadata=None):
         """
         Adds a webhook to the specified policy.
         """
         return self._manager.add_webhook(scaling_group, policy, name,
-                metadata=metadata)
-
+                                         metadata=metadata)
 
     def list_webhooks(self, scaling_group, policy):
         """
@@ -1201,43 +1144,40 @@ class AutoScaleClient(BaseClient):
         """
         return self._manager.list_webhooks(scaling_group, policy)
 
-
     def get_webhook(self, scaling_group, policy, webhook):
         """
         Gets the detail for the specified webhook.
         """
         return self._manager.get_webhook(scaling_group, policy, webhook)
 
-
     def replace_webhook(self, scaling_group, policy, webhook, name,
-            metadata=None):
+                        metadata=None):
         """
         Replace an existing webhook. All of the attributes must be specified.
         If you wish to delete any of the optional attributes, pass them in as
         None.
         """
         return self._manager.replace_webhook(scaling_group, policy, webhook,
-                name, metadata=metadata)
-
+                                             name, metadata=metadata)
 
     def update_webhook(self, scaling_group, policy, webhook, name=None,
-            metadata=None):
+                       metadata=None):
         """
         Updates the specified webhook. One or more of the parameters may be
         specified.
         """
-        return self._manager.update_webhook(scaling_group=scaling_group,
-                policy=policy, webhook=webhook, name=name, metadata=metadata)
+        return self._manager.update_webhook(
+                scaling_group=scaling_group, policy=policy, webhook=webhook,
+                name=name, metadata=metadata)
 
-
-    def update_webhook_metadata(self, scaling_group, policy, webhook, metadata):
+    def update_webhook_metadata(
+            self, scaling_group, policy, webhook, metadata):
         """
         Adds the given metadata dict to the existing metadata for the specified
         webhook.
         """
         return self._manager.update_webhook_metadata(scaling_group, policy,
-                webhook, metadata)
-
+                                                     webhook, metadata)
 
     def delete_webhook(self, scaling_group, policy, webhook):
         """

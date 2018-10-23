@@ -15,7 +15,7 @@ class BaseTest(unittest.TestCase):
         super(BaseTest, self).__init__(*args, **kwargs)
         self.timing = False
         # Create the output file if it doesn't exist
-        with open(TIMING_FILE, "a") as jj:
+        with open(TIMING_FILE, "a"):
             pass
 
     def setUp(self):

@@ -5,21 +5,16 @@ from __future__ import absolute_import, unicode_literals
 import random
 import unittest
 
-from mock import patch
 from mock import MagicMock as Mock
 
 import pyrax
 import pyrax.autoscale
-from pyrax.autoscale import AutoScaleClient
 from pyrax.autoscale import AutoScalePolicy
 from pyrax.autoscale import AutoScaleWebhook
-from pyrax.autoscale import ScalingGroup
-from pyrax.autoscale import ScalingGroupManager
 import pyrax.exceptions as exc
 import pyrax.utils as utils
 
 from pyrax import fakes
-
 
 
 class AutoscaleTest(unittest.TestCase):
@@ -75,10 +70,10 @@ class AutoscaleTest(unittest.TestCase):
         max_entities = utils.random_unicode()
         metadata = utils.random_unicode()
         sg.update(name=name, cooldown=cooldown, min_entities=min_entities,
+                  max_entities=max_entities, metadata=metadata)
+        mgr.update.assert_called_once_with(
+                sg, name=name, cooldown=cooldown, min_entities=min_entities,
                 max_entities=max_entities, metadata=metadata)
-        mgr.update.assert_called_once_with(sg, name=name, cooldown=cooldown,
-                min_entities=min_entities, max_entities=max_entities,
-                metadata=metadata)
 
     def test_update_metadata(self):
         sg = self.scaling_group
@@ -117,17 +112,18 @@ class AutoscaleTest(unittest.TestCase):
         key_name = utils.random_unicode()
         config_drive = utils.random_unicode()
         user_data = utils.random_unicode()
-        sg.update_launch_config(server_name=server_name, flavor=flavor,
-                image=image, disk_config=disk_config, metadata=metadata,
-                personality=personality, networks=networks,
-                load_balancers=load_balancers, key_name=key_name,
-                config_drive=config_drive, user_data=user_data)
-        mgr.update_launch_config.assert_called_once_with(sg,
-                server_name=server_name, flavor=flavor, image=image,
-                disk_config=disk_config, metadata=metadata,
-                personality=personality, networks=networks,
-                load_balancers=load_balancers, key_name=key_name,
-                config_drive=config_drive, user_data=user_data)
+        sg.update_launch_config(
+           server_name=server_name, flavor=flavor,
+           image=image, disk_config=disk_config, metadata=metadata,
+           personality=personality, networks=networks,
+           load_balancers=load_balancers, key_name=key_name,
+           config_drive=config_drive, user_data=user_data)
+        mgr.update_launch_config.assert_called_once_with(
+           sg, server_name=server_name, flavor=flavor, image=image,
+           disk_config=disk_config, metadata=metadata,
+           personality=personality, networks=networks,
+           load_balancers=load_balancers, key_name=key_name,
+           config_drive=config_drive, user_data=user_data)
 
     def test_update_launch_metadata(self):
         sg = self.scaling_group
@@ -148,12 +144,13 @@ class AutoscaleTest(unittest.TestCase):
         desired_capacity = utils.random_unicode()
         args = utils.random_unicode()
         mgr.add_policy = Mock()
-        sg.add_policy(name, policy_type, cooldown, change,
-                is_percent=is_percent, desired_capacity=desired_capacity,
-                args=args)
-        mgr.add_policy.assert_called_once_with(sg, name, policy_type, cooldown,
-                change=change, is_percent=is_percent,
-                desired_capacity=desired_capacity, args=args)
+        sg.add_policy(
+            name, policy_type, cooldown, change, is_percent=is_percent,
+            desired_capacity=desired_capacity, args=args)
+        mgr.add_policy.assert_called_once_with(
+            sg, name, policy_type, cooldown, change=change,
+            is_percent=is_percent, desired_capacity=desired_capacity,
+            args=args)
 
     def test_list_policies(self):
         sg = self.scaling_group
@@ -182,13 +179,15 @@ class AutoscaleTest(unittest.TestCase):
         is_percent = utils.random_unicode()
         args = utils.random_unicode()
         mgr.update_policy = Mock()
-        sg.update_policy(policy, name=name, policy_type=policy_type,
-                cooldown=cooldown, change=change, is_percent=is_percent,
-                desired_capacity=desired_capacity, args=args)
-        mgr.update_policy.assert_called_once_with(scaling_group=sg,
-                policy=policy, name=name, policy_type=policy_type,
-                cooldown=cooldown, change=change, is_percent=is_percent,
-                desired_capacity=desired_capacity, args=args)
+        sg.update_policy(
+            policy, name=name, policy_type=policy_type,
+            cooldown=cooldown, change=change, is_percent=is_percent,
+            desired_capacity=desired_capacity, args=args)
+        mgr.update_policy.assert_called_once_with(
+            scaling_group=sg, policy=policy, name=name,
+            policy_type=policy_type, cooldown=cooldown, change=change,
+            is_percent=is_percent, desired_capacity=desired_capacity,
+            args=args)
 
     def test_execute_policy(self):
         sg = self.scaling_group
@@ -197,7 +196,7 @@ class AutoscaleTest(unittest.TestCase):
         mgr.execute_policy = Mock()
         sg.execute_policy(pol)
         mgr.execute_policy.assert_called_once_with(scaling_group=sg,
-                policy=pol)
+                                                   policy=pol)
 
     def test_delete_policy(self):
         sg = self.scaling_group
@@ -206,7 +205,7 @@ class AutoscaleTest(unittest.TestCase):
         mgr.delete_policy = Mock()
         sg.delete_policy(pol)
         mgr.delete_policy.assert_called_once_with(scaling_group=sg,
-                policy=pol)
+                                                  policy=pol)
 
     def test_add_webhook(self):
         sg = self.scaling_group
@@ -217,7 +216,7 @@ class AutoscaleTest(unittest.TestCase):
         mgr.add_webhook = Mock()
         sg.add_webhook(pol, name, metadata=metadata)
         mgr.add_webhook.assert_called_once_with(sg, pol, name,
-                metadata=metadata)
+                                                metadata=metadata)
 
     def test_list_webhooks(self):
         sg = self.scaling_group
@@ -236,8 +235,9 @@ class AutoscaleTest(unittest.TestCase):
         metadata = utils.random_unicode()
         mgr.update_webhook = Mock()
         sg.update_webhook(pol, hook, name=name, metadata=metadata)
-        mgr.update_webhook.assert_called_once_with(scaling_group=sg, policy=pol,
-                webhook=hook, name=name, metadata=metadata)
+        mgr.update_webhook.assert_called_once_with(
+            scaling_group=sg, policy=pol, webhook=hook, name=name,
+            metadata=metadata)
 
     def test_update_webhook_metadata(self):
         sg = self.scaling_group
@@ -248,7 +248,7 @@ class AutoscaleTest(unittest.TestCase):
         mgr.update_webhook_metadata = Mock()
         sg.update_webhook_metadata(pol, hook, metadata=metadata)
         mgr.update_webhook_metadata.assert_called_once_with(sg, pol, hook,
-                metadata)
+                                                            metadata)
 
     def test_delete_webhook(self):
         sg = self.scaling_group
@@ -258,7 +258,6 @@ class AutoscaleTest(unittest.TestCase):
         mgr.delete_webhook = Mock()
         sg.delete_webhook(pol, hook)
         mgr.delete_webhook.assert_called_once_with(sg, pol, hook)
-
 
     def test_policy_count(self):
         sg = self.scaling_group
@@ -376,11 +375,12 @@ class AutoscaleTest(unittest.TestCase):
         sg.max_entities = utils.random_unicode()
         metadata = utils.random_unicode()
         mgr.api.method_put = Mock(return_value=(None, None))
-        expected_body = {"name": sg.name,
-                "cooldown": sg.cooldown,
-                "minEntities": sg.min_entities,
-                "maxEntities": sg.max_entities,
-                "metadata": metadata,
+        expected_body = {
+            "name": sg.name,
+            "cooldown": sg.cooldown,
+            "minEntities": sg.min_entities,
+            "maxEntities": sg.max_entities,
+            "metadata": metadata,
                 }
         mgr.update(sg.id, metadata=metadata)
         mgr.api.method_put.assert_called_once_with(uri, body=expected_body)
@@ -394,7 +394,6 @@ class AutoscaleTest(unittest.TestCase):
         sg.cooldown = utils.random_unicode()
         sg.min_entities = utils.random_unicode()
         sg.max_entities = utils.random_unicode()
-        metadata = utils.random_unicode()
 
         new_name = utils.random_unicode()
         new_cooldown = utils.random_unicode()
@@ -436,22 +435,23 @@ class AutoscaleTest(unittest.TestCase):
         personality = utils.random_unicode()
         networks = utils.random_unicode()
         key_name = utils.random_unicode()
-        launchdict = {"launchConfiguration":
+        launchdict = {
+            "launchConfiguration":
                 {"type": typ,
-                "args": {
-                    "loadBalancers": lbs,
-                    "server": {
-                        "name": name,
-                        "flavorRef": flv,
-                        "imageRef": img,
-                        "OS-DCF:diskConfig": dconfig,
-                        "metadata": metadata,
-                        "personality": personality,
-                        "networks": networks,
-                        "key_name": key_name,
+                    "args": {
+                        "loadBalancers": lbs,
+                        "server": {
+                            "name": name,
+                            "flavorRef": flv,
+                            "imageRef": img,
+                            "OS-DCF:diskConfig": dconfig,
+                            "metadata": metadata,
+                            "personality": personality,
+                            "networks": networks,
+                            "key_name": key_name,
+                            },
                         },
-                    },
-                },
+                 },
             }
         expected = {
                 "type": typ,
@@ -475,7 +475,6 @@ class AutoscaleTest(unittest.TestCase):
         sg = self.scaling_group
         mgr = sg.manager
         mgr.get = Mock(return_value=sg)
-        typ = utils.random_unicode()
         lbs = utils.random_unicode()
         name = utils.random_unicode()
         flv = utils.random_unicode()
@@ -485,32 +484,33 @@ class AutoscaleTest(unittest.TestCase):
         personality = utils.random_unicode()
         networks = utils.random_unicode()
         sg.launchConfiguration = {}
-        body = {"type": "launch_server",
-                "args": {
-                    "server": {
-                        "name": name,
-                        "imageRef": img,
-                        "flavorRef": flv,
-                        "OS-DCF:diskConfig": dconfig,
-                        "personality": mgr._encode_personality(personality),
-                        "networks": networks,
-                        "metadata": metadata,
-                    },
-                    "loadBalancers": lbs,
+        body = {
+            "type": "launch_server",
+            "args": {
+                "server": {
+                    "name": name,
+                    "imageRef": img,
+                    "flavorRef": flv,
+                    "OS-DCF:diskConfig": dconfig,
+                    "personality": mgr._encode_personality(personality),
+                    "networks": networks,
+                    "metadata": metadata,
                 },
+                "loadBalancers": lbs,
+            },
             }
         mgr.api.method_put = Mock(return_value=(None, None))
         uri = "/%s/%s/launch" % (mgr.uri_base, sg.id)
-        mgr.update_launch_config(sg.id, server_name=name, flavor=flv, image=img,
-                disk_config=dconfig, metadata=metadata,
-                personality=personality, networks=networks, load_balancers=lbs)
+        mgr.update_launch_config(
+            sg.id, server_name=name, flavor=flv, image=img,
+            disk_config=dconfig, metadata=metadata,
+            personality=personality, networks=networks, load_balancers=lbs)
         mgr.api.method_put.assert_called_once_with(uri, body=body)
 
     def test_mgr_update_launch_config_unset_personality(self):
         sg = self.scaling_group
         mgr = sg.manager
         mgr.get = Mock(return_value=sg)
-        typ = utils.random_unicode()
         lbs = utils.random_unicode()
         name = utils.random_unicode()
         flv = utils.random_unicode()
@@ -553,16 +553,16 @@ class AutoscaleTest(unittest.TestCase):
         }
         mgr.api.method_put = Mock(return_value=(None, None))
         uri = "/%s/%s/launch" % (mgr.uri_base, sg.id)
-        mgr.update_launch_config(sg.id, server_name=name, flavor=flv, image=img,
-                disk_config=dconfig, metadata=metadata,
-                personality=[], networks=networks, load_balancers=lbs)
+        mgr.update_launch_config(
+            sg.id, server_name=name, flavor=flv, image=img,
+            disk_config=dconfig, metadata=metadata,
+            personality=[], networks=networks, load_balancers=lbs)
         mgr.api.method_put.assert_called_once_with(uri, body=body)
 
     def test_mgr_update_launch_config_no_personality(self):
         sg = self.scaling_group
         mgr = sg.manager
         mgr.get = Mock(return_value=sg)
-        typ = utils.random_unicode()
         lbs = utils.random_unicode()
         name = utils.random_unicode()
         flv = utils.random_unicode()
@@ -571,31 +571,32 @@ class AutoscaleTest(unittest.TestCase):
         metadata = utils.random_unicode()
         networks = utils.random_unicode()
         sg.launchConfiguration = {}
-        body = {"type": "launch_server",
-                "args": {
-                    "server": {
-                        "name": name,
-                        "imageRef": img,
-                        "flavorRef": flv,
-                        "OS-DCF:diskConfig": dconfig,
-                        "networks": networks,
-                        "metadata": metadata,
-                    },
-                    "loadBalancers": lbs,
+        body = {
+            "type": "launch_server",
+            "args": {
+                "server": {
+                    "name": name,
+                    "imageRef": img,
+                    "flavorRef": flv,
+                    "OS-DCF:diskConfig": dconfig,
+                    "networks": networks,
+                    "metadata": metadata,
                 },
+                "loadBalancers": lbs,
+            },
             }
         mgr.api.method_put = Mock(return_value=(None, None))
         uri = "/%s/%s/launch" % (mgr.uri_base, sg.id)
-        mgr.update_launch_config(sg.id, server_name=name, flavor=flv, image=img,
-                disk_config=dconfig, metadata=metadata,
-                networks=networks, load_balancers=lbs)
+        mgr.update_launch_config(
+            sg.id, server_name=name, flavor=flv, image=img,
+            disk_config=dconfig, metadata=metadata,
+            networks=networks, load_balancers=lbs)
         mgr.api.method_put.assert_called_once_with(uri, body=body)
 
     def test_mgr_update_launch_config_no_metadata(self):
         sg = self.scaling_group
         mgr = sg.manager
         mgr.get = Mock(return_value=sg)
-        typ = utils.random_unicode()
         lbs = utils.random_unicode()
         name = utils.random_unicode()
         flv = utils.random_unicode()
@@ -603,29 +604,30 @@ class AutoscaleTest(unittest.TestCase):
         dconfig = utils.random_unicode()
         networks = utils.random_unicode()
         sg.launchConfiguration = {}
-        body = {"type": "launch_server",
-                "args": {
-                    "server": {
-                        "name": name,
-                        "imageRef": img,
-                        "flavorRef": flv,
-                        "OS-DCF:diskConfig": dconfig,
-                        "networks": networks,
-                    },
-                    "loadBalancers": lbs,
+        body = {
+            "type": "launch_server",
+            "args": {
+                "server": {
+                    "name": name,
+                    "imageRef": img,
+                    "flavorRef": flv,
+                    "OS-DCF:diskConfig": dconfig,
+                    "networks": networks,
                 },
+                "loadBalancers": lbs,
+            },
             }
         mgr.api.method_put = Mock(return_value=(None, None))
         uri = "/%s/%s/launch" % (mgr.uri_base, sg.id)
-        mgr.update_launch_config(sg.id, server_name=name, flavor=flv, image=img,
-                disk_config=dconfig, networks=networks, load_balancers=lbs)
+        mgr.update_launch_config(
+            sg.id, server_name=name, flavor=flv, image=img,
+            disk_config=dconfig, networks=networks, load_balancers=lbs)
         mgr.api.method_put.assert_called_once_with(uri, body=body)
 
     def test_mgr_update_launch_config_key_name(self):
         sg = self.scaling_group
         mgr = sg.manager
         mgr.get = Mock(return_value=sg)
-        typ = utils.random_unicode()
         lbs = utils.random_unicode()
         name = utils.random_unicode()
         flv = utils.random_unicode()
@@ -636,27 +638,29 @@ class AutoscaleTest(unittest.TestCase):
         networks = utils.random_unicode()
         key_name = utils.random_unicode()
         sg.launchConfiguration = {}
-        body = {"type": "launch_server",
-                "args": {
-                    "server": {
-                        "name": name,
-                        "imageRef": img,
-                        "flavorRef": flv,
-                        "OS-DCF:diskConfig": dconfig,
-                        "networks": networks,
-                        "metadata": metadata,
-                        "key_name": key_name,
-                        "personality": mgr._encode_personality(personality),
-                    },
-                    "loadBalancers": lbs,
+        body = {
+            "type": "launch_server",
+            "args": {
+                "server": {
+                    "name": name,
+                    "imageRef": img,
+                    "flavorRef": flv,
+                    "OS-DCF:diskConfig": dconfig,
+                    "networks": networks,
+                    "metadata": metadata,
+                    "key_name": key_name,
+                    "personality": mgr._encode_personality(personality),
                 },
+                "loadBalancers": lbs,
+            },
             }
         mgr.api.method_put = Mock(return_value=(None, None))
         uri = "/%s/%s/launch" % (mgr.uri_base, sg.id)
-        mgr.update_launch_config(sg.id, server_name=name, flavor=flv, image=img,
-                disk_config=dconfig, metadata=metadata,
-                personality=personality, networks=networks, load_balancers=lbs,
-                key_name=key_name)
+        mgr.update_launch_config(
+            sg.id, server_name=name, flavor=flv, image=img,
+            disk_config=dconfig, metadata=metadata,
+            personality=personality, networks=networks, load_balancers=lbs,
+            key_name=key_name)
         mgr.api.method_put.assert_called_once_with(uri, body=body)
 
     def test_mgr_replace_launch_config(self):
@@ -708,8 +712,9 @@ class AutoscaleTest(unittest.TestCase):
         mgr.api.method_put = Mock(return_value=(None, None))
         uri = "/%s/%s/launch" % (mgr.uri_base, sg.id)
 
-        mgr.replace_launch_config(sg.id, launch_config_type=new_typ,
-                server_name=new_name, flavor=new_flv, image=new_img)
+        mgr.replace_launch_config(
+            sg.id, launch_config_type=new_typ, server_name=new_name,
+            flavor=new_flv, image=new_img)
         mgr.api.method_put.assert_called_once_with(uri, body=expected)
 
     def test_mgr_update_launch_metadata(self):
@@ -742,7 +747,7 @@ class AutoscaleTest(unittest.TestCase):
             else:
                 post_body["change"] = change
             ret = mgr.add_policy(sg, name, ptype, cooldown, change,
-                    is_percent=is_percent)
+                                 is_percent=is_percent)
             mgr.api.method_post.assert_called_with(uri, body=[post_body])
             self.assert_(isinstance(ret, AutoScalePolicy))
 
@@ -755,7 +760,8 @@ class AutoscaleTest(unittest.TestCase):
         desired_capacity = utils.random_unicode()
         args = utils.random_unicode()
         change = utils.random_unicode()
-        expected_pct = {"name": name,
+        expected_pct = {
+                "name": name,
                 "cooldown": cooldown,
                 "type": ptype,
                 "desiredCapacity": desired_capacity,
@@ -764,11 +770,12 @@ class AutoscaleTest(unittest.TestCase):
         expected_nopct = expected_pct.copy()
         expected_pct["changePercent"] = change
         expected_nopct["change"] = change
-        ret_pct = mgr._create_policy_body(name, ptype, cooldown, change=change,
-                is_percent=True, desired_capacity=desired_capacity, args=args)
-        ret_nopct = mgr._create_policy_body(name, ptype, cooldown,
-                change=change, is_percent=False,
-                desired_capacity=desired_capacity, args=args)
+        ret_pct = mgr._create_policy_body(
+            name, ptype, cooldown, change=change, is_percent=True,
+            desired_capacity=desired_capacity, args=args)
+        ret_nopct = mgr._create_policy_body(
+            name, ptype, cooldown, change=change, is_percent=False,
+            desired_capacity=desired_capacity, args=args)
         self.assertEqual(ret_nopct, expected_nopct)
         self.assertEqual(ret_pct, expected_pct)
 
@@ -789,7 +796,7 @@ class AutoscaleTest(unittest.TestCase):
                 "desiredCapacity": desired_capacity,
                 }
         ret = mgr.add_policy(sg, name, ptype, cooldown,
-                desired_capacity=desired_capacity)
+                             desired_capacity=desired_capacity)
         mgr.api.method_post.assert_called_with(uri, body=[post_body])
         self.assert_(isinstance(ret, AutoScalePolicy))
 
@@ -799,7 +806,7 @@ class AutoscaleTest(unittest.TestCase):
         ret_body = {"policies": [{}]}
         mgr.api.method_get = Mock(return_value=(None, ret_body))
         uri = "/%s/%s/policies" % (mgr.uri_base, sg.id)
-        ret = mgr.list_policies(sg)
+        mgr.list_policies(sg)
         mgr.api.method_get.assert_called_once_with(uri)
 
     def test_mgr_get_policy(self):
@@ -840,9 +847,9 @@ class AutoscaleTest(unittest.TestCase):
                 "cooldown": new_cooldown,
                 "changePercent": new_change_percent,
                 }
-        ret = mgr.replace_policy(sg, pol_id, name=new_name,
-                policy_type=new_type, cooldown=new_cooldown,
-                change=new_change_percent, is_percent=True)
+        mgr.replace_policy(
+            sg, pol_id, name=new_name, policy_type=new_type,
+            cooldown=new_cooldown, change=new_change_percent, is_percent=True)
         mgr.api.method_put.assert_called_with(uri, body=expected)
 
     def test_mgr_update_policy(self):
@@ -854,20 +861,21 @@ class AutoscaleTest(unittest.TestCase):
         cooldown = utils.random_unicode()
         change = utils.random_unicode()
         args = utils.random_unicode()
-        mgr.get_policy = Mock(return_value=fakes.FakeAutoScalePolicy(mgr, {},
-                sg))
+        mgr.get_policy = Mock(
+            return_value=fakes.FakeAutoScalePolicy(mgr, {}, sg))
         mgr.api.method_put = Mock(return_value=(None, None))
         uri = "/%s/%s/policies/%s" % (mgr.uri_base, sg.id, pol)
         for is_percent in (True, False):
-            put_body = {"name": name, "cooldown": cooldown, "type": ptype,
-                    "args": args}
+            put_body = {
+                "name": name, "cooldown": cooldown, "type": ptype,
+                "args": args}
             if is_percent:
                 put_body["changePercent"] = change
             else:
                 put_body["change"] = change
-            ret = mgr.update_policy(sg, pol, name=name, policy_type=ptype,
-                    cooldown=cooldown, change=change, is_percent=is_percent,
-                    args=args)
+            mgr.update_policy(
+                sg, pol, name=name, policy_type=ptype, cooldown=cooldown,
+                change=change, is_percent=is_percent, args=args)
             mgr.api.method_put.assert_called_with(uri, body=put_body)
 
     def test_mgr_update_policy_desired_to_desired(self):
@@ -877,18 +885,18 @@ class AutoscaleTest(unittest.TestCase):
         name = utils.random_unicode()
         ptype = utils.random_unicode()
         cooldown = utils.random_unicode()
-        change = utils.random_unicode()
-        args = utils.random_unicode()
         new_desired_capacity = 10
         old_info = {"desiredCapacity": 0}
         mgr.get_policy = Mock(
                 return_value=fakes.FakeAutoScalePolicy(mgr, old_info, sg))
         mgr.api.method_put = Mock(return_value=(None, None))
         uri = "/%s/%s/policies/%s" % (mgr.uri_base, sg.id, pol)
-        put_body = {"name": name, "cooldown": cooldown, "type": ptype,
+        put_body = {
+                "name": name, "cooldown": cooldown, "type": ptype,
                 "desiredCapacity": new_desired_capacity}
-        ret = mgr.update_policy(sg, pol, name=name, policy_type=ptype,
-                cooldown=cooldown, desired_capacity=new_desired_capacity)
+        mgr.update_policy(
+            sg, pol, name=name, policy_type=ptype, cooldown=cooldown,
+            desired_capacity=new_desired_capacity)
         mgr.api.method_put.assert_called_with(uri, body=put_body)
 
     def test_mgr_update_policy_change_to_desired(self):
@@ -898,18 +906,18 @@ class AutoscaleTest(unittest.TestCase):
         name = utils.random_unicode()
         ptype = utils.random_unicode()
         cooldown = utils.random_unicode()
-        change = utils.random_unicode()
-        args = utils.random_unicode()
         new_desired_capacity = 10
         old_info = {"change": -1}
         mgr.get_policy = Mock(
                 return_value=fakes.FakeAutoScalePolicy(mgr, old_info, sg))
         mgr.api.method_put = Mock(return_value=(None, None))
         uri = "/%s/%s/policies/%s" % (mgr.uri_base, sg.id, pol)
-        put_body = {"name": name, "cooldown": cooldown, "type": ptype,
+        put_body = {
+                "name": name, "cooldown": cooldown, "type": ptype,
                 "desiredCapacity": new_desired_capacity}
-        ret = mgr.update_policy(sg, pol, name=name, policy_type=ptype,
-                cooldown=cooldown, desired_capacity=new_desired_capacity)
+        mgr.update_policy(
+            sg, pol, name=name, policy_type=ptype, cooldown=cooldown,
+            desired_capacity=new_desired_capacity)
         mgr.api.method_put.assert_called_with(uri, body=put_body)
 
     def test_mgr_update_policy_desired_to_change(self):
@@ -919,29 +927,26 @@ class AutoscaleTest(unittest.TestCase):
         name = utils.random_unicode()
         ptype = utils.random_unicode()
         cooldown = utils.random_unicode()
-        change = utils.random_unicode()
-        args = utils.random_unicode()
         new_change = 1
         old_info = {"desiredCapacity": 0}
         mgr.get_policy = Mock(
                 return_value=fakes.FakeAutoScalePolicy(mgr, old_info, sg))
         mgr.api.method_put = Mock(return_value=(None, None))
         uri = "/%s/%s/policies/%s" % (mgr.uri_base, sg.id, pol)
-        put_body = {"name": name, "cooldown": cooldown, "type": ptype,
+        put_body = {
+                "name": name, "cooldown": cooldown, "type": ptype,
                 "change": new_change}
-        ret = mgr.update_policy(sg, pol, name=name, policy_type=ptype,
-                cooldown=cooldown, change=new_change)
+        mgr.update_policy(
+            sg, pol, name=name, policy_type=ptype,
+            cooldown=cooldown, change=new_change)
         mgr.api.method_put.assert_called_with(uri, body=put_body)
 
     def test_mgr_update_policy_maintain_desired_capacity(self):
         sg = self.scaling_group
         mgr = sg.manager
         pol = utils.random_unicode()
-        name = utils.random_unicode()
         ptype = utils.random_unicode()
         cooldown = utils.random_unicode()
-        change = utils.random_unicode()
-        args = utils.random_unicode()
         new_name = utils.random_unicode()
         old_capacity = 0
         old_info = {
@@ -953,16 +958,16 @@ class AutoscaleTest(unittest.TestCase):
                 return_value=fakes.FakeAutoScalePolicy(mgr, old_info, sg))
         mgr.api.method_put = Mock(return_value=(None, None))
         uri = "/%s/%s/policies/%s" % (mgr.uri_base, sg.id, pol)
-        put_body = {"name": new_name, "cooldown": cooldown, "type": ptype,
+        put_body = {
+                "name": new_name, "cooldown": cooldown, "type": ptype,
                 "desiredCapacity": old_capacity}
-        ret = mgr.update_policy(sg, pol, name=new_name)
+        mgr.update_policy(sg, pol, name=new_name)
         mgr.api.method_put.assert_called_with(uri, body=put_body)
 
     def test_mgr_update_policy_maintain_is_percent(self):
         sg = self.scaling_group
         mgr = sg.manager
         pol = utils.random_unicode()
-        name = utils.random_unicode()
         ptype = utils.random_unicode()
         cooldown = utils.random_unicode()
         new_name = utils.random_unicode()
@@ -976,19 +981,18 @@ class AutoscaleTest(unittest.TestCase):
                 return_value=fakes.FakeAutoScalePolicy(mgr, old_info, sg))
         mgr.api.method_put = Mock(return_value=(None, None))
         uri = "/%s/%s/policies/%s" % (mgr.uri_base, sg.id, pol)
-        put_body = {"name": new_name, "cooldown": cooldown, "type": ptype,
-                "changePercent": old_percent}
-        ret = mgr.update_policy(sg, pol, name=new_name)
+        put_body = {
+            "name": new_name, "cooldown": cooldown, "type": ptype,
+            "changePercent": old_percent}
+        mgr.update_policy(sg, pol, name=new_name)
         mgr.api.method_put.assert_called_with(uri, body=put_body)
 
     def test_mgr_update_policy_maintain_is_absolute(self):
         sg = self.scaling_group
         mgr = sg.manager
         pol = utils.random_unicode()
-        name = utils.random_unicode()
         ptype = utils.random_unicode()
         cooldown = utils.random_unicode()
-        change = utils.random_unicode()
         new_name = utils.random_unicode()
         old_change = 10
         old_info = {
@@ -1000,9 +1004,10 @@ class AutoscaleTest(unittest.TestCase):
                 return_value=fakes.FakeAutoScalePolicy(mgr, old_info, sg))
         mgr.api.method_put = Mock(return_value=(None, None))
         uri = "/%s/%s/policies/%s" % (mgr.uri_base, sg.id, pol)
-        put_body = {"name": new_name, "cooldown": cooldown, "type": ptype,
+        put_body = {
+                "name": new_name, "cooldown": cooldown, "type": ptype,
                 "change": old_change}
-        ret = mgr.update_policy(sg, pol, name=new_name)
+        mgr.update_policy(sg, pol, name=new_name)
         mgr.api.method_put.assert_called_with(uri, body=put_body)
 
     def test_mgr_execute_policy(self):
@@ -1030,8 +1035,8 @@ class AutoscaleTest(unittest.TestCase):
         ret_body = {"webhooks": [{}]}
         mgr.api.method_post = Mock(return_value=(None, ret_body))
         uri = "/%s/%s/policies/%s/webhooks" % (mgr.uri_base, sg.id, pol)
-        mgr.get_policy = Mock(return_value=fakes.FakeAutoScalePolicy(mgr, {},
-                sg))
+        mgr.get_policy = Mock(
+            return_value=fakes.FakeAutoScalePolicy(mgr, {}, sg))
         name = utils.random_unicode()
         metadata = utils.random_unicode()
         post_body = {"name": name, "metadata": metadata}
@@ -1045,10 +1050,10 @@ class AutoscaleTest(unittest.TestCase):
         pol = fakes.FakeAutoScalePolicy(mgr, {}, sg)
         ret_body = {"webhooks": [{}]}
         mgr.api.method_get = Mock(return_value=(None, ret_body))
-        mgr.get_policy = Mock(return_value=fakes.FakeAutoScalePolicy(mgr, {},
-                sg))
+        mgr.get_policy = Mock(
+            return_value=fakes.FakeAutoScalePolicy(mgr, {}, sg))
         uri = "/%s/%s/policies/%s/webhooks" % (mgr.uri_base, sg.id, pol.id)
-        ret = mgr.list_webhooks(sg, pol)
+        mgr.list_webhooks(sg, pol)
         mgr.api.method_get.assert_called_once_with(uri)
 
     def test_mgr_get_webhook(self):
@@ -1058,7 +1063,7 @@ class AutoscaleTest(unittest.TestCase):
         hook = utils.random_unicode()
         ret_body = {"webhook": {}}
         uri = "/%s/%s/policies/%s/webhooks/%s" % (mgr.uri_base, sg.id, pol.id,
-                hook)
+                                                  hook)
         mgr.api.method_get = Mock(return_value=(None, ret_body))
         ret = mgr.get_webhook(sg, pol, hook)
         self.assert_(isinstance(ret, AutoScaleWebhook))
@@ -1073,13 +1078,12 @@ class AutoscaleTest(unittest.TestCase):
                 "metadata": utils.random_unicode()}
         hook_obj = fakes.FakeAutoScaleWebhook(mgr, info, pol, sg)
         new_name = utils.random_unicode()
-        new_metadata = utils.random_unicode()
         mgr.get_webhook = Mock(return_value=hook_obj)
         mgr.api.method_put = Mock(return_value=(None, None))
         uri = "/%s/%s/policies/%s/webhooks/%s" % (mgr.uri_base, sg.id, pol.id,
-                hook)
+                                                  hook)
         expected = {"name": new_name, "metadata": {}}
-        ret = mgr.replace_webhook(sg, pol, hook, name=new_name)
+        mgr.replace_webhook(sg, pol, hook, name=new_name)
         mgr.api.method_put.assert_called_with(uri, body=expected)
 
     def test_mgr_update_webhook(self):
@@ -1093,9 +1097,9 @@ class AutoscaleTest(unittest.TestCase):
         mgr.get_webhook = Mock(return_value=hook_obj)
         mgr.api.method_put = Mock(return_value=(None, None))
         uri = "/%s/%s/policies/%s/webhooks/%s" % (mgr.uri_base, sg.id, pol.id,
-                hook)
+                                                  hook)
         put_body = {"name": name, "metadata": metadata}
-        ret = mgr.update_webhook(sg, pol, hook, name=name, metadata=metadata)
+        mgr.update_webhook(sg, pol, hook, name=name, metadata=metadata)
         mgr.api.method_put.assert_called_with(uri, body=put_body)
 
     def test_mgr_update_webhook_metadata(self):
@@ -1108,13 +1112,11 @@ class AutoscaleTest(unittest.TestCase):
         metadata = {"new": "new"}
         expected = hook_obj.metadata.copy()
         expected.update(metadata)
-        uri = "/%s/%s/policies/%s/webhooks/%s" % (mgr.uri_base, sg.id, pol.id,
-                hook)
         mgr.update_webhook = Mock()
         mgr.get_webhook = Mock(return_value=hook_obj)
         mgr.update_webhook_metadata(sg, pol, hook, metadata)
         mgr.update_webhook.assert_called_once_with(sg, pol, hook_obj,
-                metadata=expected)
+                                                   metadata=expected)
 
     def test_mgr_delete_webhook(self):
         sg = self.scaling_group
@@ -1123,7 +1125,7 @@ class AutoscaleTest(unittest.TestCase):
         hook = utils.random_unicode()
         hook_obj = fakes.FakeAutoScaleWebhook(mgr, {}, pol, sg)
         uri = "/%s/%s/policies/%s/webhooks/%s" % (mgr.uri_base, sg.id, pol.id,
-                hook)
+                                                  hook)
         mgr.api.method_delete = Mock(return_value=(None, None))
         mgr.get_webhook = Mock(return_value=hook_obj)
         mgr.delete_webhook(sg, pol, hook)
@@ -1177,7 +1179,8 @@ class AutoscaleTest(unittest.TestCase):
         mgr = sg.manager
         pyclb = pyrax.cloudloadbalancers
         pyclb.get = Mock(side_effect=Exception())
-        self.assertRaises(exc.InvalidLoadBalancer, mgr._resolve_lbs, "bogus")
+        with self.assertRaises(exc.InvalidLoadBalancer):
+            mgr._resolve_lbs("bogus")
 
     def test_mgr_create_body(self):
         sg = self.scaling_group
@@ -1208,8 +1211,9 @@ class AutoscaleTest(unittest.TestCase):
                     "metadata": group_metadata},
                 "launchConfiguration": {
                     "args": {
-                        "loadBalancers": [{"loadBalancerId": lb.id,
-                            "port": lb.port}],
+                        "loadBalancers": [{
+                                            "loadBalancerId": lb.id,
+                                            "port": lb.port}],
                         "server": {
                             "flavorRef": flavor,
                             "imageRef": image,
@@ -1224,13 +1228,14 @@ class AutoscaleTest(unittest.TestCase):
                 "scalingPolicies": []}
 
         self.maxDiff = 1000000
-        ret = mgr._create_body(name, cooldown, min_entities, max_entities,
-                launch_config_type, server_name, image, flavor,
-                disk_config=disk_config, metadata=metadata,
-                personality=personality, networks=networks,
-                load_balancers=load_balancers,
-                scaling_policies=scaling_policies,
-                group_metadata=group_metadata, key_name=key_name)
+        ret = mgr._create_body(
+            name, cooldown, min_entities, max_entities,
+            launch_config_type, server_name, image, flavor,
+            disk_config=disk_config, metadata=metadata,
+            personality=personality, networks=networks,
+            load_balancers=load_balancers,
+            scaling_policies=scaling_policies,
+            group_metadata=group_metadata, key_name=key_name)
         self.assertEqual(ret, expected)
 
     def test_mgr_create_body_disk_config(self):
@@ -1262,8 +1267,9 @@ class AutoscaleTest(unittest.TestCase):
                     "metadata": group_metadata},
                 "launchConfiguration": {
                     "args": {
-                        "loadBalancers": [{"loadBalancerId": lb.id,
-                            "port": lb.port}],
+                        "loadBalancers": [{
+                                            "loadBalancerId": lb.id,
+                                            "port": lb.port}],
                         "server": {
                             "OS-DCF:diskConfig": disk_config,
                             "flavorRef": flavor,
@@ -1277,13 +1283,14 @@ class AutoscaleTest(unittest.TestCase):
                 "scalingPolicies": []}
 
         self.maxDiff = 1000000
-        ret = mgr._create_body(name, cooldown, min_entities, max_entities,
-                launch_config_type, server_name, image, flavor,
-                disk_config=disk_config, metadata=metadata,
-                personality=personality, networks=networks,
-                load_balancers=load_balancers,
-                scaling_policies=scaling_policies,
-                group_metadata=group_metadata, key_name=key_name)
+        ret = mgr._create_body(
+            name, cooldown, min_entities, max_entities,
+            launch_config_type, server_name, image, flavor,
+            disk_config=disk_config, metadata=metadata,
+            personality=personality, networks=networks,
+            load_balancers=load_balancers,
+            scaling_policies=scaling_policies,
+            group_metadata=group_metadata, key_name=key_name)
         self.assertEqual(ret, expected)
 
     def test_policy_init(self):
@@ -1322,12 +1329,12 @@ class AutoscaleTest(unittest.TestCase):
         args = utils.random_unicode()
         mgr.update_policy = Mock()
         pol.update(name=name, policy_type=policy_type, cooldown=cooldown,
-                change=change, is_percent=is_percent,
-                desired_capacity=desired_capacity, args=args)
-        mgr.update_policy.assert_called_once_with(scaling_group=sg,
-                policy=pol, name=name, policy_type=policy_type,
-                cooldown=cooldown, change=change, is_percent=is_percent,
-                desired_capacity=desired_capacity, args=args)
+                   change=change, is_percent=is_percent,
+                   desired_capacity=desired_capacity, args=args)
+        mgr.update_policy.assert_called_once_with(
+            scaling_group=sg, policy=pol, name=name, policy_type=policy_type,
+            cooldown=cooldown, change=change, is_percent=is_percent,
+            desired_capacity=desired_capacity, args=args)
 
     def test_policy_execute(self):
         sg = self.scaling_group
@@ -1346,7 +1353,7 @@ class AutoscaleTest(unittest.TestCase):
         metadata = utils.random_unicode()
         pol.add_webhook(name, metadata=metadata)
         mgr.add_webhook.assert_called_once_with(sg, pol, name,
-                metadata=metadata)
+                                                metadata=metadata)
 
     def test_policy_list_webhooks(self):
         sg = self.scaling_group
@@ -1374,8 +1381,8 @@ class AutoscaleTest(unittest.TestCase):
         metadata = utils.random_unicode()
         mgr.update_webhook = Mock()
         pol.update_webhook(hook, name=name, metadata=metadata)
-        mgr.update_webhook.assert_called_once_with(sg, policy=pol, webhook=hook,
-                name=name, metadata=metadata)
+        mgr.update_webhook.assert_called_once_with(
+            sg, policy=pol, webhook=hook, name=name, metadata=metadata)
 
     def test_policy_update_webhook_metadata(self):
         sg = self.scaling_group
@@ -1385,8 +1392,8 @@ class AutoscaleTest(unittest.TestCase):
         metadata = utils.random_unicode()
         mgr.update_webhook_metadata = Mock()
         pol.update_webhook_metadata(hook, metadata=metadata)
-        mgr.update_webhook_metadata.assert_called_once_with(sg, pol, hook,
-                metadata)
+        mgr.update_webhook_metadata.assert_called_once_with(
+            sg, pol, hook, metadata)
 
     def test_policy_delete_webhook(self):
         sg = self.scaling_group
@@ -1415,8 +1422,8 @@ class AutoscaleTest(unittest.TestCase):
         metadata = utils.random_unicode()
         pol.update_webhook = Mock()
         hook.update(name=name, metadata=metadata)
-        pol.update_webhook.assert_called_once_with(hook, name=name,
-                metadata=metadata)
+        pol.update_webhook.assert_called_once_with(
+            hook, name=name, metadata=metadata)
 
     def test_webhook_update_metadata(self):
         sg = self.scaling_group
@@ -1426,8 +1433,7 @@ class AutoscaleTest(unittest.TestCase):
         metadata = utils.random_unicode()
         pol.update_webhook_metadata = Mock()
         hook.update_metadata(metadata=metadata)
-        pol.update_webhook_metadata.assert_called_once_with(hook,
-                metadata)
+        pol.update_webhook_metadata.assert_called_once_with(hook, metadata)
 
     def test_webhook_delete(self):
         sg = self.scaling_group
@@ -1472,10 +1478,10 @@ class AutoscaleTest(unittest.TestCase):
         max_entities = utils.random_unicode()
         metadata = utils.random_unicode()
         mgr.replace = Mock()
-        clt.replace(sg, name, cooldown, min_entities, max_entities,
-                metadata=metadata)
-        mgr.replace.assert_called_once_with(sg, name, cooldown, min_entities,
-                max_entities, metadata=metadata)
+        clt.replace(
+            sg, name, cooldown, min_entities, max_entities, metadata=metadata)
+        mgr.replace.assert_called_once_with(
+            sg, name, cooldown, min_entities, max_entities, metadata=metadata)
 
     def test_clt_update(self):
         clt = fakes.FakeAutoScaleClient()
@@ -1488,10 +1494,10 @@ class AutoscaleTest(unittest.TestCase):
         metadata = utils.random_unicode()
         mgr.update = Mock()
         clt.update(sg, name=name, cooldown=cooldown, min_entities=min_entities,
-                max_entities=max_entities, metadata=metadata)
-        mgr.update.assert_called_once_with(sg, name=name, cooldown=cooldown,
-                min_entities=min_entities, max_entities=max_entities,
-                metadata=metadata)
+                   max_entities=max_entities, metadata=metadata)
+        mgr.update.assert_called_once_with(
+            sg, name=name, cooldown=cooldown, min_entities=min_entities,
+            max_entities=max_entities, metadata=metadata)
 
     def test_clt_update_metadata(self):
         clt = fakes.FakeAutoScaleClient()
@@ -1533,15 +1539,16 @@ class AutoscaleTest(unittest.TestCase):
         networks = utils.random_unicode()
         load_balancers = utils.random_unicode()
         key_name = utils.random_unicode()
-        clt.replace_launch_config(sg, launch_config_type, server_name, image,
-                flavor, disk_config=disk_config, metadata=metadata,
-                personality=personality, networks=networks,
-                load_balancers=load_balancers, key_name=key_name)
-        mgr.replace_launch_config.assert_called_once_with(sg,
-                launch_config_type, server_name, image, flavor,
-                disk_config=disk_config, metadata=metadata,
-                personality=personality, networks=networks,
-                load_balancers=load_balancers, key_name=key_name)
+        clt.replace_launch_config(
+            sg, launch_config_type, server_name, image, flavor,
+            disk_config=disk_config, metadata=metadata,
+            personality=personality, networks=networks,
+            load_balancers=load_balancers, key_name=key_name)
+        mgr.replace_launch_config.assert_called_once_with(
+            sg, launch_config_type, server_name, image, flavor,
+            disk_config=disk_config, metadata=metadata,
+            personality=personality, networks=networks,
+            load_balancers=load_balancers, key_name=key_name)
 
     def test_clt_update_launch_config(self):
         clt = fakes.FakeAutoScaleClient()
@@ -1559,17 +1566,18 @@ class AutoscaleTest(unittest.TestCase):
         key_name = utils.random_unicode()
         user_data = utils.random_unicode()
         config_drive = utils.random_unicode()
-        clt.update_launch_config(sg, server_name=server_name, flavor=flavor,
-                image=image, disk_config=disk_config, metadata=metadata,
-                personality=personality, networks=networks,
-                load_balancers=load_balancers, key_name=key_name,
-                config_drive=config_drive, user_data=user_data)
-        mgr.update_launch_config.assert_called_once_with(sg,
-                server_name=server_name, flavor=flavor, image=image,
-                disk_config=disk_config, metadata=metadata,
-                personality=personality, networks=networks,
-                load_balancers=load_balancers, key_name=key_name,
-                config_drive=config_drive, user_data=user_data)
+        clt.update_launch_config(
+            sg, server_name=server_name, flavor=flavor,
+            image=image, disk_config=disk_config, metadata=metadata,
+            personality=personality, networks=networks,
+            load_balancers=load_balancers, key_name=key_name,
+            config_drive=config_drive, user_data=user_data)
+        mgr.update_launch_config.assert_called_once_with(
+            sg, server_name=server_name, flavor=flavor, image=image,
+            disk_config=disk_config, metadata=metadata,
+            personality=personality, networks=networks,
+            load_balancers=load_balancers, key_name=key_name,
+            config_drive=config_drive, user_data=user_data)
 
     def test_clt_update_launch_metadata(self):
         clt = fakes.FakeAutoScaleClient()
@@ -1592,12 +1600,14 @@ class AutoscaleTest(unittest.TestCase):
         desired_capacity = utils.random_unicode()
         args = utils.random_unicode()
         mgr.add_policy = Mock()
-        clt.add_policy(sg, name, policy_type, cooldown, change,
-                is_percent=is_percent, desired_capacity=desired_capacity,
-                args=args)
-        mgr.add_policy.assert_called_once_with(sg, name, policy_type, cooldown,
-                change=change, is_percent=is_percent,
-                desired_capacity=desired_capacity, args=args)
+        clt.add_policy(
+            sg, name, policy_type, cooldown, change,
+            is_percent=is_percent, desired_capacity=desired_capacity,
+            args=args)
+        mgr.add_policy.assert_called_once_with(
+            sg, name, policy_type, cooldown, change=change,
+            is_percent=is_percent,
+            desired_capacity=desired_capacity, args=args)
 
     def test_clt_list_policies(self):
         clt = fakes.FakeAutoScaleClient()
@@ -1629,12 +1639,14 @@ class AutoscaleTest(unittest.TestCase):
         desired_capacity = utils.random_unicode()
         args = utils.random_unicode()
         mgr.replace_policy = Mock()
-        clt.replace_policy(sg, pol, name, policy_type, cooldown, change=change,
-                is_percent=is_percent, desired_capacity=desired_capacity,
-                args=args)
-        mgr.replace_policy.assert_called_once_with(sg, pol, name, policy_type,
-                cooldown, change=change, is_percent=is_percent,
-                desired_capacity=desired_capacity, args=args)
+        clt.replace_policy(
+            sg, pol, name, policy_type, cooldown, change=change,
+            is_percent=is_percent, desired_capacity=desired_capacity,
+            args=args)
+        mgr.replace_policy.assert_called_once_with(
+            sg, pol, name, policy_type,
+            cooldown, change=change, is_percent=is_percent,
+            desired_capacity=desired_capacity, args=args)
 
     def test_clt_update_policy(self):
         clt = fakes.FakeAutoScaleClient()
@@ -1649,13 +1661,14 @@ class AutoscaleTest(unittest.TestCase):
         desired_capacity = utils.random_unicode()
         args = utils.random_unicode()
         mgr.update_policy = Mock()
-        clt.update_policy(sg, pol, name=name, policy_type=policy_type,
-                cooldown=cooldown, change=change, is_percent=is_percent,
-                desired_capacity=desired_capacity, args=args)
-        mgr.update_policy.assert_called_once_with(sg, pol, name=name,
-                policy_type=policy_type, cooldown=cooldown, change=change,
-                is_percent=is_percent, desired_capacity=desired_capacity,
-                args=args)
+        clt.update_policy(
+            sg, pol, name=name, policy_type=policy_type,
+            cooldown=cooldown, change=change, is_percent=is_percent,
+            desired_capacity=desired_capacity, args=args)
+        mgr.update_policy.assert_called_once_with(
+            sg, pol, name=name, policy_type=policy_type, cooldown=cooldown,
+            change=change, is_percent=is_percent,
+            desired_capacity=desired_capacity, args=args)
 
     def test_clt_execute_policy(self):
         clt = fakes.FakeAutoScaleClient()
@@ -1664,7 +1677,8 @@ class AutoscaleTest(unittest.TestCase):
         pol = utils.random_unicode()
         mgr.execute_policy = Mock()
         clt.execute_policy(sg, pol)
-        mgr.execute_policy.assert_called_once_with(scaling_group=sg, policy=pol)
+        mgr.execute_policy.assert_called_once_with(
+            scaling_group=sg, policy=pol)
 
     def test_clt_delete_policy(self):
         clt = fakes.FakeAutoScaleClient()
@@ -1685,7 +1699,7 @@ class AutoscaleTest(unittest.TestCase):
         mgr.add_webhook = Mock()
         clt.add_webhook(sg, pol, name, metadata=metadata)
         mgr.add_webhook.assert_called_once_with(sg, pol, name,
-                metadata=metadata)
+                                                metadata=metadata)
 
     def test_clt_list_webhooks(self):
         clt = fakes.FakeAutoScaleClient()
@@ -1717,7 +1731,7 @@ class AutoscaleTest(unittest.TestCase):
         mgr.replace_webhook = Mock()
         clt.replace_webhook(sg, pol, hook, name, metadata=metadata)
         mgr.replace_webhook.assert_called_once_with(sg, pol, hook, name,
-                metadata=metadata)
+                                                    metadata=metadata)
 
     def test_clt_update_webhook(self):
         clt = fakes.FakeAutoScaleClient()
@@ -1729,8 +1743,9 @@ class AutoscaleTest(unittest.TestCase):
         metadata = utils.random_unicode()
         mgr.update_webhook = Mock()
         clt.update_webhook(sg, pol, hook, name=name, metadata=metadata)
-        mgr.update_webhook.assert_called_once_with(scaling_group=sg, policy=pol,
-                webhook=hook, name=name, metadata=metadata)
+        mgr.update_webhook.assert_called_once_with(
+            scaling_group=sg, policy=pol, webhook=hook, name=name,
+            metadata=metadata)
 
     def test_clt_update_webhook_metadata(self):
         clt = fakes.FakeAutoScaleClient()
@@ -1742,7 +1757,7 @@ class AutoscaleTest(unittest.TestCase):
         mgr.update_webhook_metadata = Mock()
         clt.update_webhook_metadata(sg, pol, hook, metadata)
         mgr.update_webhook_metadata.assert_called_once_with(sg, pol, hook,
-                metadata)
+                                                            metadata)
 
     def test_clt_delete_webhook(self):
         clt = fakes.FakeAutoScaleClient()
@@ -1753,8 +1768,6 @@ class AutoscaleTest(unittest.TestCase):
         mgr.delete_webhook = Mock()
         clt.delete_webhook(sg, pol, hook)
         mgr.delete_webhook.assert_called_once_with(sg, pol, hook)
-
-
 
 
 if __name__ == "__main__":
