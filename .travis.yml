@@ -4,6 +4,8 @@ cache:
 
 python:
  - 2.7
+ - 3.4
+ - 3.5
  - pypy
 
 install:
@@ -11,6 +13,8 @@ install:
 
 script:
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then tox -e pep8,py27; fi
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]]; then tox -e pep8,py34; fi
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "3.5" ]]; then tox -e pep8,py35; fi
   - if [[ "$TRAVIS_PYTHON_VERSION" == "pypy" ]]; then tox -e pep8,pypy; fi
 
 after_success:

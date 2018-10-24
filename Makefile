@@ -25,6 +25,7 @@ reinstall: uninstall install
 uninstall: clean
 	rm -f /usr/bin/${PACKAGE}
 	rm -rf /usr/lib/python2.*/site-packages/${PACKAGE}
+	rm -rf /usr/lib/python3.*/site-packages/${PACKAGE}
 
 uninstall_rpms: clean
 	rpm -e ${PACKAGE}
