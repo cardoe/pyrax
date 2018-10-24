@@ -24,8 +24,6 @@ OpenStack Client interface. Handles the REST calls and responses.
 
 from __future__ import absolute_import, unicode_literals
 
-import json
-import logging
 import time
 
 import requests
@@ -56,7 +54,8 @@ class BaseClient(object):
     # Each client subclass should set their own name.
     name = "base"
 
-    def __init__(self, identity, region_name=None, endpoint_type=None,
+    def __init__(
+            self, identity, region_name=None, endpoint_type=None,
             management_url=None, service_name=None, timings=False,
             verify_ssl=True, http_log_debug=False, timeout=None):
         self.version = "v1.1"
@@ -76,14 +75,12 @@ class BaseClient(object):
         # without having to override __init__().
         self._configure_manager()
 
-
     def _configure_manager(self):
         """
         This must be overridden in base classes to create
         the required manager class and configure it as needed.
         """
         raise NotImplementedError
-
 
     # The next 6 methods are simple pass-through to the manager.
     def list(self, limit=None, marker=None):
@@ -93,21 +90,17 @@ class BaseClient(object):
         """
         return self._manager.list(limit=limit, marker=marker)
 
-
     def get(self, item):
         """Gets a specific resource."""
         return self._manager.get(item)
-
 
     def create(self, *args, **kwargs):
         """Creates a new resource."""
         return self._manager.create(*args, **kwargs)
 
-
     def delete(self, item):
         """Deletes a specific resource."""
         return self._manager.delete(item)
-
 
     def find(self, **kwargs):
         """
@@ -118,7 +111,6 @@ class BaseClient(object):
         """
         return self._manager.find(**kwargs)
 
-
     def findall(self, **kwargs):
         """
         Finds all items with attributes matching ``**kwargs``.
@@ -128,21 +120,17 @@ class BaseClient(object):
         """
         return self._manager.findall(**kwargs)
 
-
     def unauthenticate(self):
         """Clears all of our authentication information."""
         self.identity.unauthenticate()
-
 
     def get_timings(self):
         """Returns a list of all execution timings."""
         return self.times
 
-
     def reset_timings(self):
         """Clears the timing history."""
         self.times = []
-
 
     def get_limits(self):
         """
@@ -150,7 +138,6 @@ class BaseClient(object):
         """
         resp, resp_body = self.method_get("/limits")
         return resp_body
-
 
     def _add_custom_headers(self, dct):
         """
@@ -162,7 +149,6 @@ class BaseClient(object):
         pairs to the 'dct'.
         """
         pass
-
 
     def request(self, uri, method, *args, **kwargs):
         """
@@ -187,15 +173,12 @@ class BaseClient(object):
             raise exc.from_response(resp, body)
         return resp, body
 
-
     def _time_request(self, uri, method, **kwargs):
         """Wraps the request call and records the elapsed time."""
         start_time = time.time()
         resp, body = self.request(uri, method, **kwargs)
-        self.times.append(("%s %s" % (method, uri),
-                start_time, time.time()))
+        self.times.append(("%s %s" % (method, uri), start_time, time.time()))
         return resp, body
-
 
     def _api_request(self, uri, method, **kwargs):
         """
@@ -210,8 +193,8 @@ class BaseClient(object):
         if not self.management_url:
             # We've authenticated but no management_url has been set. This
             # indicates that the service is not available.
-            raise exc.ServiceNotAvailable("The '%s' service is not available."
-                    % self)
+            raise exc.ServiceNotAvailable(
+                "The '%s' service is not available." % self)
         if uri.startswith("http"):
             parsed = list(urllib.parse.urlparse(uri))
             for pos, item in enumerate(parsed):
@@ -240,36 +223,29 @@ class BaseClient(object):
             except exc.Unauthorized:
                 raise ex
 
-
     def method_head(self, uri, **kwargs):
         """Method used to make HEAD requests."""
         return self._api_request(uri, "HEAD", **kwargs)
-
 
     def method_get(self, uri, **kwargs):
         """Method used to make GET requests."""
         return self._api_request(uri, "GET", **kwargs)
 
-
     def method_post(self, uri, **kwargs):
         """Method used to make POST requests."""
         return self._api_request(uri, "POST", **kwargs)
-
 
     def method_put(self, uri, **kwargs):
         """Method used to make PUT requests."""
         return self._api_request(uri, "PUT", **kwargs)
 
-
     def method_delete(self, uri, **kwargs):
         """Method used to make DELETE requests."""
         return self._api_request(uri, "DELETE", **kwargs)
 
-
     def method_patch(self, uri, **kwargs):
         """Method used to make PATCH requests."""
         return self._api_request(uri, "PATCH", **kwargs)
-
 
     def authenticate(self):
         """
@@ -280,7 +256,6 @@ class BaseClient(object):
         others can benefit.
         """
         return self.identity.authenticate()
-
 
     @property
     def projectid(self):

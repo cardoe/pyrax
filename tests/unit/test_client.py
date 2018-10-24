@@ -3,11 +3,7 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import datetime
 import json
-import os
-import pkg_resources
-import requests
 import unittest
 
 import six
@@ -23,6 +19,7 @@ from pyrax import client
 from pyrax.client import _safe_quote
 
 from pyrax import fakes
+import six
 
 DUMMY_URL = "http://example.com"
 ID_CLS = pyrax.settings.get("identity_class") or pyrax.rax_identity.RaxIdentity
@@ -54,25 +51,21 @@ class ClientTest(unittest.TestCase):
         self.assertEqual(ret, expected)
 
     def test_base_client(self):
-        tenant_id = "faketenantid"
-        auth_url = "fakeauthurl"
         region_name = "fakeregion"
         endpoint_type = "fakeenpointtype"
         management_url = "fakemanagementurl"
-        auth_token = "fakeauthtoken"
         service_name = "fakeservicename"
         timings = "faketimings"
-        no_cache = "fakenocache"
         http_log_debug = "fakehttplogdebug"
         timeout = "faketimeout"
-        auth_system = "fakeauthsystem"
 
         save_conf = client.BaseClient._configure_manager
         client.BaseClient._configure_manager = Mock()
-        bc = client.BaseClient(identity=self.identity, region_name=region_name,
-                endpoint_type=endpoint_type, management_url=management_url,
-                service_name=service_name, timings=timings,
-                http_log_debug=http_log_debug, timeout=timeout,)
+        bc = client.BaseClient(
+            identity=self.identity, region_name=region_name,
+            endpoint_type=endpoint_type, management_url=management_url,
+            service_name=service_name, timings=timings,
+            http_log_debug=http_log_debug, timeout=timeout,)
 
         self.assertEqual(bc.region_name, region_name)
         self.assertEqual(bc.endpoint_type, endpoint_type)
@@ -84,7 +77,8 @@ class ClientTest(unittest.TestCase):
         client.BaseClient._configure_manager = save_conf
 
     def test_configure_manager(self):
-        self.assertRaises(NotImplementedError, client.BaseClient, self.identity)
+        with self.assertRaises(NotImplementedError):
+            client.BaseClient(self.identity)
 
     def test_list(self):
         mgr = self.client._manager
@@ -129,7 +123,6 @@ class ClientTest(unittest.TestCase):
     def test_find(self):
         mgr = self.client._manager
         mgr.find = Mock()
-        prop = utils.random_unicode()
         val = utils.random_unicode()
         self.client.find(prop=val)
         mgr.find.assert_called_once_with(prop=val)
@@ -137,7 +130,6 @@ class ClientTest(unittest.TestCase):
     def test_findall(self):
         mgr = self.client._manager
         mgr.findall = Mock()
-        prop = utils.random_unicode()
         val = utils.random_unicode()
         self.client.findall(prop=val)
         mgr.findall.assert_called_once_with(prop=val)
@@ -196,7 +188,7 @@ class ClientTest(unittest.TestCase):
         fake_method = utils.random_unicode()
         mock_req.return_value = (fakeresp, body_content)
         resp, body = clt.request(fake_uri, fake_method, body=body,
-                headers=headers)
+                                 headers=headers)
         self.assertTrue(isinstance(resp, fakes.FakeResponse))
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(body, body_content)
@@ -214,8 +206,8 @@ class ClientTest(unittest.TestCase):
         fake_method = utils.random_unicode()
         mock_req.return_value = (fakeresp, fakebody)
         mock_from.side_effect = fakes.FakeException
-        self.assertRaises(fakes.FakeException, clt.request, fake_uri,
-                fake_method)
+        with self.assertRaises(fakes.FakeException):
+            clt.request(fake_uri, fake_method)
 
     @patch("pyrax.exceptions.from_response")
     @patch("pyrax.http.request")
@@ -232,8 +224,8 @@ class ClientTest(unittest.TestCase):
         fake_method = utils.random_unicode()
         mock_req.return_value = (fakeresp, fakebody)
         mock_from.side_effect = fakes.FakeException
-        self.assertRaises(fakes.FakeException, clt.request, fake_uri,
-                fake_method)
+        with self.assertRaises(fakes.FakeException):
+            clt.request(fake_uri, fake_method)
 
     @patch("pyrax.exceptions.from_response")
     @patch("pyrax.http.request")
@@ -249,8 +241,8 @@ class ClientTest(unittest.TestCase):
         fake_method = utils.random_unicode()
         mock_req.return_value = (fakeresp, fakebody)
         mock_from.side_effect = fakes.FakeException
-        self.assertRaises(fakes.FakeException, clt.request, fake_uri,
-                fake_method)
+        with self.assertRaises(fakes.FakeException):
+            clt.request(fake_uri, fake_method)
         mock_from.assert_called_once_with(fakeresp, "")
 
     def test_time_request(self):
@@ -268,7 +260,7 @@ class ClientTest(unittest.TestCase):
         id_svc = clt.identity
         sav_auth = id_svc.authenticate
         returns = [exc.Unauthorized(""), (fakes.FakeIdentityResponse(),
-                fakes.fake_identity_response)]
+                   fakes.fake_identity_response)]
 
         def auth_resp(*args, **kwargs):
             result = returns.pop(0)
@@ -319,7 +311,8 @@ class ClientTest(unittest.TestCase):
         method = "PUT"
         clt.request = Mock(side_effect=exc.Unauthorized(""))
         clt.management_url = clt.auth_token = "test"
-        self.assertRaises(exc.Unauthorized, clt._api_request, url, method)
+        with self.assertRaises(exc.Unauthorized):
+            clt._api_request(url, method)
         clt.request = sav_req
         clt.authenticate = sav_auth
 
@@ -334,8 +327,8 @@ class ClientTest(unittest.TestCase):
         method = "GET"
         clt.request = Mock(side_effect=exc.Unauthorized(""))
         clt.management_url = ""
-        self.assertRaises(exc.ServiceNotAvailable, clt._api_request, url,
-                method)
+        with self.assertRaises(exc.ServiceNotAvailable):
+            clt._api_request(url, method)
         clt.request = sav_req
         id_svc.authenticate = sav_auth
 
@@ -350,10 +343,10 @@ class ClientTest(unittest.TestCase):
         clt._time_request = Mock(return_value=((None, None)))
         uri = "/abc/def?fake@fake.com"
         expected = "%s%s" % (clt.management_url, urllib.parse.quote(uri,
-                safe="/.?="))
+                             safe="/.?="))
         clt._api_request(uri, "GET")
-        clt._time_request.assert_called_once_with(expected, 'GET',
-                headers={'X-Auth-Token': None})
+        clt._time_request.assert_called_once_with(
+            expected, 'GET', headers={'X-Auth-Token': None})
         id_svc.authenticate = sav_auth
         clt._time_request = sav_req
         clt.management_url = sav_mgt
@@ -369,10 +362,10 @@ class ClientTest(unittest.TestCase):
         clt._time_request = Mock(return_value=((None, None)))
         uri = "/abc/def"
         expected = "%s%s" % (clt.management_url, urllib.parse.quote(uri,
-                safe="/.?="))
+                             safe="/.?="))
         clt._api_request(uri, "GET")
-        clt._time_request.assert_called_once_with(expected, 'GET',
-                headers={'X-Auth-Token': None})
+        clt._time_request.assert_called_once_with(
+            expected, 'GET', headers={'X-Auth-Token': None})
         id_svc.authenticate = sav_auth
         clt._time_request = sav_req
         clt.management_url = sav_mgt
@@ -435,7 +428,7 @@ class ClientTest(unittest.TestCase):
         clt = self.client
         sav_auth = clt.identity.authenticate
         clt.identity.authenticate = Mock()
-        ret = clt.authenticate()
+        clt.authenticate()
         clt.identity.authenticate.assert_called_once_with()
         clt.identity.authenticate = sav_auth
 
