@@ -3,7 +3,6 @@
 from __future__ import absolute_import, unicode_literals
 
 import random
-import time
 import unittest
 
 from mock import call
@@ -13,9 +12,7 @@ from mock import MagicMock as Mock
 import pyrax
 from pyrax.manager import BaseManager
 from pyrax.clouddns import assure_domain
-from pyrax.clouddns import CloudDNSClient
 from pyrax.clouddns import CloudDNSDomain
-from pyrax.clouddns import CloudDNSManager
 from pyrax.clouddns import CloudDNSRecord
 from pyrax.clouddns import ResultsIterator
 from pyrax.clouddns import DomainResultsIterator
@@ -115,15 +112,15 @@ class CloudDNSTest(unittest.TestCase):
         body = {"totalEntries": exp_entries,
                 "links": [
                     {"href": next_uri,
-                    "rel": "next"},
+                     "rel": "next"},
                     {"href": prev_uri,
-                    "rel": "previous"}]}
+                     "rel": "previous"}]}
         mgr._reset_paging("domain", body=body)
         self.assertEqual(mgr._paging["domain"]["total_entries"], exp_entries)
         self.assertEqual(mgr._paging["domain"]["next_uri"], "/domains/%s" %
-                uri_string_next)
+                         uri_string_next)
         self.assertEqual(mgr._paging["domain"]["prev_uri"], "/domains/%s" %
-                uri_string_prev)
+                         uri_string_prev)
 
     def test_get_pagination_qs(self):
         clt = self.client
@@ -135,7 +132,7 @@ class CloudDNSTest(unittest.TestCase):
 
     def test_manager_list(self):
         clt = self.client
-        mgr = clt._manager
+        clt._manager
         fake_name = utils.random_unicode()
         ret_body = {"domains": [{"name": fake_name}]}
         clt.method_get = Mock(return_value=({}, ret_body))
@@ -156,9 +153,9 @@ class CloudDNSTest(unittest.TestCase):
                 return ({}, ret_body)
             mgr.count += 1
             ret = {"totalEntries": 2,
-                    "links": [
-                        {"href": next_uri,
-                         "rel": "next"}]}
+                   "links": [
+                       {"href": next_uri,
+                        "rel": "next"}]}
             ret.update(ret_body)
             return ({}, ret)
 
@@ -176,8 +173,9 @@ class CloudDNSTest(unittest.TestCase):
 
     def test_list_previous_page_fail(self):
         clt = self.client
-        mgr = clt._manager
-        self.assertRaises(exc.NoMoreResults, clt.list_previous_page)
+        clt._manager
+        with self.assertRaises(exc.NoMoreResults):
+            clt.list_previous_page()
 
     def test_list_next_page(self):
         clt = self.client
@@ -189,8 +187,9 @@ class CloudDNSTest(unittest.TestCase):
 
     def test_list_next_page_fail(self):
         clt = self.client
-        mgr = clt._manager
-        self.assertRaises(exc.NoMoreResults, clt.list_next_page)
+        clt._manager
+        with self.assertRaises(exc.NoMoreResults):
+            clt.list_next_page()
 
     def test_list_subdomains_previous_page(self):
         clt = self.client
@@ -202,8 +201,9 @@ class CloudDNSTest(unittest.TestCase):
 
     def test_list_subdomains_previous_page_fail(self):
         clt = self.client
-        mgr = clt._manager
-        self.assertRaises(exc.NoMoreResults, clt.list_subdomains_previous_page)
+        clt._manager
+        with self.assertRaises(exc.NoMoreResults):
+            clt.list_subdomains_previous_page()
 
     def test_list_subdomains_next_page(self):
         clt = self.client
@@ -215,8 +215,9 @@ class CloudDNSTest(unittest.TestCase):
 
     def test_list_subdomains_next_page_fail(self):
         clt = self.client
-        mgr = clt._manager
-        self.assertRaises(exc.NoMoreResults, clt.list_subdomains_next_page)
+        clt._manager
+        with self.assertRaises(exc.NoMoreResults):
+            clt.list_subdomains_next_page()
 
     def test_list_records_previous_page(self):
         clt = self.client
@@ -228,8 +229,9 @@ class CloudDNSTest(unittest.TestCase):
 
     def test_list_records_previous_page_fail(self):
         clt = self.client
-        mgr = clt._manager
-        self.assertRaises(exc.NoMoreResults, clt.list_records_previous_page)
+        clt._manager
+        with self.assertRaises(exc.NoMoreResults):
+            clt.list_records_previous_page()
 
     def test_list_records_next_page(self):
         clt = self.client
@@ -241,8 +243,9 @@ class CloudDNSTest(unittest.TestCase):
 
     def test_list_records_next_page_fail(self):
         clt = self.client
-        mgr = clt._manager
-        self.assertRaises(exc.NoMoreResults, clt.list_records_next_page)
+        clt._manager
+        with self.assertRaises(exc.NoMoreResults):
+            clt.list_records_next_page()
 
     def test_manager_get(self):
         ret_body = {"recordsList": {
@@ -263,17 +266,17 @@ class CloudDNSTest(unittest.TestCase):
         clt = self.client
         mgr = clt._manager
         ret_body = {"callbackUrl": example_uri,
-                "status": "RUNNING"}
+                    "status": "RUNNING"}
         mgr.api.method_post = Mock(return_value=(None, ret_body))
         stat_body = {"status": "complete",
-                "response": {mgr.response_key: [{
-                    "accountId": "728829",
-                    "created": "2012-09-21T21:32:27.000+0000",
-                    "emailAddress": "me@example.com",
-                    "id": "3448214",
-                    "name": "example.com",
-                    "updated": "2012-09-21T21:35:45.000+0000"
-                }]}}
+                     "response": {mgr.response_key: [{
+                         "accountId": "728829",
+                         "created": "2012-09-21T21:32:27.000+0000",
+                         "emailAddress": "me@example.com",
+                         "id": "3448214",
+                         "name": "example.com",
+                         "updated": "2012-09-21T21:35:45.000+0000"
+                     }]}}
         mgr.api.method_get = Mock(return_value=(None, stat_body))
         dom = mgr._create("fake", {})
         self.assertTrue(isinstance(dom, CloudDNSDomain))
@@ -282,14 +285,15 @@ class CloudDNSTest(unittest.TestCase):
         clt = self.client
         mgr = clt._manager
         ret_body = {"callbackUrl": example_uri,
-                "status": "RUNNING"}
+                    "status": "RUNNING"}
         mgr.api.method_post = Mock(return_value=(None, ret_body))
         stat_body = {"status": "ERROR",
-                "error": {
-                    "details": "fail",
-                    "code": 666}}
+                     "error": {
+                         "details": "fail",
+                         "code": 666}}
         mgr.api.method_get = Mock(return_value=(None, stat_body))
-        self.assertRaises(exc.DomainCreationFailed, mgr._create, "fake", {})
+        with self.assertRaises(exc.DomainCreationFailed):
+            mgr._create("fake", {})
 
     def test_manager_findall(self):
         clt = self.client
@@ -311,7 +315,8 @@ class CloudDNSTest(unittest.TestCase):
         clt = self.client
         mgr = clt._manager
         mgr.api.method_get = Mock(return_value=(None, None))
-        self.assertRaises(exc.ServiceResponseFailure, mgr.list)
+        with self.assertRaises(exc.ServiceResponseFailure):
+            mgr.list()
 
     def test_create_body(self):
         mgr = self.client._manager
@@ -327,9 +332,9 @@ class CloudDNSTest(unittest.TestCase):
         callback_uri = "https://fake.example.com/status/fake"
         massaged_uri = "/status/fake?showDetails=true"
         put_resp = {"callbackUrl": callback_uri,
-                "status": "RUNNING"}
+                    "status": "RUNNING"}
         get_resp = {"response": {"result": "fake"},
-                "status": "COMPLETE"}
+                    "status": "COMPLETE"}
         method = "PUT"
         clt.method_put = Mock(return_value=({}, put_resp))
         clt.method_get = Mock(return_value=({}, get_resp))
@@ -345,9 +350,9 @@ class CloudDNSTest(unittest.TestCase):
         callback_uri = "https://fake.example.com/status/fake"
         massaged_uri = "/status/fake?showDetails=true"
         put_resp = {"callbackUrl": callback_uri,
-                "status": "RUNNING"}
+                    "status": "RUNNING"}
         get_resp = {"response": {"result": "fake"},
-                "status": "COMPLETE"}
+                    "status": "COMPLETE"}
         method = "DELETE"
         clt.method_delete = Mock(return_value=({}, put_resp))
         clt.method_get = Mock(return_value=({}, get_resp))
@@ -363,7 +368,7 @@ class CloudDNSTest(unittest.TestCase):
         callback_uri = "https://fake.example.com/status/fake"
         massaged_uri = "/status/fake?showDetails=true"
         put_resp = {"callbackUrl": callback_uri,
-                "status": "RUNNING"}
+                    "status": "RUNNING"}
         get_resp = {"status": "COMPLETE"}
         method = "DELETE"
         clt.method_delete = Mock(return_value=({}, put_resp))
@@ -380,9 +385,9 @@ class CloudDNSTest(unittest.TestCase):
         callback_uri = "https://fake.example.com/status/fake"
         clt.set_timeout(0.000001)
         clt.method_get = Mock(return_value=({}, {"callbackUrl": callback_uri,
-                "status": "RUNNING"}))
-        self.assertRaises(exc.DNSCallTimedOut, mgr._async_call, uri,
-                method="GET")
+                                                 "status": "RUNNING"}))
+        with self.assertRaises(exc.DNSCallTimedOut):
+            mgr._async_call(uri, method="GET")
 
     def test_async_call_error(self):
         clt = self.client
@@ -391,17 +396,17 @@ class CloudDNSTest(unittest.TestCase):
         callback_uri = "https://fake.example.com/status/fake"
         massaged_uri = "/status/fake?showDetails=true"
         put_resp = {"callbackUrl": callback_uri,
-                "status": "RUNNING"}
+                    "status": "RUNNING"}
         get_resp = {"response": {"result": "fake"},
-                "status": "ERROR"}
+                    "status": "ERROR"}
         method = "DELETE"
         clt.method_delete = Mock(return_value=({}, put_resp))
         clt.method_get = Mock(return_value=({}, get_resp))
         err_class = exc.DomainRecordDeletionFailed
         err = err_class("oops")
         mgr._process_async_error = Mock(side_effect=err)
-        self.assertRaises(err_class,
-                mgr._async_call, uri, method=method, error_class=err_class)
+        with self.assertRaises(err_class):
+            mgr._async_call(uri, method=method, error_class=err_class)
         clt.method_delete.assert_called_once_with(uri)
         clt.method_get.assert_called_once_with(massaged_uri)
         mgr._process_async_error.assert_called_once_with(get_resp, err_class)
@@ -411,7 +416,8 @@ class CloudDNSTest(unittest.TestCase):
         mgr = clt._manager
         err = {"error": {"message": "fake", "details": "", "code": 400}}
         err_class = exc.DomainRecordDeletionFailed
-        self.assertRaises(err_class, mgr._process_async_error, err, err_class)
+        with self.assertRaises(err_class):
+            mgr._process_async_error(err, err_class)
 
     def test_process_async_error_nested(self):
         clt = self.client
@@ -421,8 +427,8 @@ class CloudDNSTest(unittest.TestCase):
                     {"message": "fake1", "details": "", "code": 400},
                     {"message": "fake2", "details": "", "code": 400},
                     ]}}}
-        err_class = exc.DomainRecordDeletionFailed
-        self.assertRaises(err_class, mgr._process_async_error, err, err_class)
+        with self.assertRaises(exc.DomainRecordDeletionFailed):
+            mgr._process_async_error(err, exc.DomainRecordDeletionFailed)
 
     def test_changes_since(self):
         clt = self.client
@@ -438,11 +444,12 @@ class CloudDNSTest(unittest.TestCase):
         clt = self.client
         dom = self.domain
         export = utils.random_unicode()
-        clt._manager._async_call = Mock(return_value=({}, {"contents": export}))
+        clt._manager._async_call = Mock(
+            return_value=({}, {"contents": export}))
         ret = clt.export_domain(dom)
         uri = "/domains/%s/export" % dom.id
-        clt._manager._async_call.assert_called_once_with(uri,
-                error_class=exc.NotFound, method="GET")
+        clt._manager._async_call.assert_called_once_with(
+            uri, error_class=exc.NotFound, method="GET")
         self.assertEqual(ret, export)
 
     def test_import_domain(self):
@@ -454,14 +461,14 @@ class CloudDNSTest(unittest.TestCase):
                 "contentType": "BIND_9",
                 "contents": data,
                 }]}
-        ret = clt.import_domain(data)
-        mgr._async_call.assert_called_once_with("/domains/import",
-                method="POST", body=req_body,
-                error_class=exc.DomainCreationFailed)
+        clt.import_domain(data)
+        mgr._async_call.assert_called_once_with(
+            "/domains/import", method="POST", body=req_body,
+            error_class=exc.DomainCreationFailed)
 
     def test_update_domain_empty(self):
-        self.assertRaises(exc.MissingDNSSettings, self.client.update_domain,
-                self.domain)
+        with self.assertRaises(exc.MissingDNSSettings):
+            self.client.update_domain(self.domain)
 
     def test_update_domain(self):
         clt = self.client
@@ -473,12 +480,12 @@ class CloudDNSTest(unittest.TestCase):
         mgr._async_call = Mock(return_value=({}, "fake"))
         uri = "/domains/%s" % utils.get_id(dom)
         req_body = {"comment": comment,
-                "ttl": ttl,
-                }
-        ret = clt.update_domain(dom, emailAddress, ttl, comment)
-        mgr._async_call.assert_called_once_with(uri, method="PUT",
-                body=req_body, error_class=exc.DomainUpdateFailed,
-                has_response=False)
+                    "ttl": ttl,
+                    }
+        clt.update_domain(dom, emailAddress, ttl, comment)
+        mgr._async_call.assert_called_once_with(
+            uri, method="PUT", body=req_body,
+            error_class=exc.DomainUpdateFailed, has_response=False)
 
     def test_delete(self):
         clt = self.client
@@ -487,8 +494,9 @@ class CloudDNSTest(unittest.TestCase):
         mgr._async_call = Mock(return_value=({}, {}))
         uri = "/domains/%s" % utils.get_id(dom)
         clt.delete(dom)
-        mgr._async_call.assert_called_once_with(uri, method="DELETE",
-                error_class=exc.DomainDeletionFailed, has_response=False)
+        mgr._async_call.assert_called_once_with(
+            uri, method="DELETE", error_class=exc.DomainDeletionFailed,
+            has_response=False)
 
     def test_delete_subdomains(self):
         clt = self.client
@@ -497,12 +505,13 @@ class CloudDNSTest(unittest.TestCase):
         mgr._async_call = Mock(return_value=({}, {}))
         uri = "/domains/%s?deleteSubdomains=true" % utils.get_id(dom)
         clt.delete(dom, delete_subdomains=True)
-        mgr._async_call.assert_called_once_with(uri, method="DELETE",
-                error_class=exc.DomainDeletionFailed, has_response=False)
+        mgr._async_call.assert_called_once_with(
+            uri, method="DELETE", error_class=exc.DomainDeletionFailed,
+            has_response=False)
 
     def test_list_subdomains(self):
         clt = self.client
-        mgr = clt._manager
+        clt._manager
         dom = self.domain
         resp_body = {'Something': 'here'}
         clt.method_get = Mock(return_value=({}, resp_body))
@@ -512,7 +521,7 @@ class CloudDNSTest(unittest.TestCase):
 
     def test_list_records(self):
         clt = self.client
-        mgr = clt._manager
+        clt._manager
         dom = self.domain
         resp_body = {'Something': 'here'}
         clt.method_get = Mock(return_value=({}, resp_body))
@@ -534,9 +543,9 @@ class CloudDNSTest(unittest.TestCase):
                 return ({}, ret_body)
             mgr.count += 1
             ret = {"totalEntries": 2,
-                    "links": [
-                        {"href": uri,
-                         "rel": "next"}]}
+                   "links": [
+                       {"href": uri,
+                        "rel": "next"}]}
             ret.update(ret_body)
             return ({}, ret)
 
@@ -547,7 +556,7 @@ class CloudDNSTest(unittest.TestCase):
 
     def test_search_records_params(self):
         clt = self.client
-        mgr = clt._manager
+        clt._manager
         dom = self.domain
         typ = "A"
         nm = utils.random_unicode()
@@ -561,7 +570,7 @@ class CloudDNSTest(unittest.TestCase):
 
     def test_find_record(self):
         clt = self.client
-        mgr = clt._manager
+        clt._manager
         dom = self.domain
         typ = "A"
         nm = utils.random_unicode()
@@ -582,21 +591,19 @@ class CloudDNSTest(unittest.TestCase):
 
     def test_find_record_not_found(self):
         clt = self.client
-        mgr = clt._manager
+        clt._manager
         dom = self.domain
         typ = "A"
         nm = utils.random_unicode()
         data = "0.0.0.0"
         ret_body = {"records": []}
         clt.method_get = Mock(return_value=({}, ret_body))
-        uri = "/domains/%s/records?type=%s&name=%s&data=%s" % (
-                utils.get_id(dom), typ, nm, data)
-        self.assertRaises(exc.DomainRecordNotFound, clt.find_record, dom, typ,
-                name=nm, data=data)
+        with self.assertRaises(exc.DomainRecordNotFound):
+            clt.find_record(dom, typ, name=nm, data=data)
 
     def test_find_record_not_unique(self):
         clt = self.client
-        mgr = clt._manager
+        clt._manager
         dom = self.domain
         typ = "A"
         nm = utils.random_unicode()
@@ -609,17 +616,15 @@ class CloudDNSTest(unittest.TestCase):
                 "name": "example.com",
                 "updated": "2012-09-21T21:35:45.000+0000"
                 }, {"accountId": "728829",
-                "created": "2012-09-21T21:32:27.000+0000",
-                "emailAddress": "me@example.com",
-                "id": "3448214",
-                "name": "example.com",
-                "updated": "2012-09-21T21:35:45.000+0000"
-                }]}
+                    "created": "2012-09-21T21:32:27.000+0000",
+                    "emailAddress": "me@example.com",
+                    "id": "3448214",
+                    "name": "example.com",
+                    "updated": "2012-09-21T21:35:45.000+0000"
+                    }]}
         clt.method_get = Mock(return_value=({}, ret_body))
-        uri = "/domains/%s/records?type=%s&name=%s&data=%s" % (
-                utils.get_id(dom), typ, nm, data)
-        self.assertRaises(exc.DomainRecordNotUnique, clt.find_record, dom, typ,
-                name=nm, data=data)
+        with self.assertRaises(exc.DomainRecordNotUnique):
+            clt.find_record(dom, typ, name=nm, data=data)
 
     def test_add_records(self):
         clt = self.client
@@ -629,10 +634,9 @@ class CloudDNSTest(unittest.TestCase):
         mgr._async_call = Mock(return_value=({}, {}))
         uri = "/domains/%s/records" % utils.get_id(dom)
         clt.add_records(dom, rec)
-        mgr._async_call.assert_called_once_with(uri, method="POST",
-                body={"records": [rec]},
-                error_class=exc.DomainRecordAdditionFailed,
-                has_response=False)
+        mgr._async_call.assert_called_once_with(
+            uri, method="POST", body={"records": [rec]},
+            error_class=exc.DomainRecordAdditionFailed, has_response=False)
 
     def test_get_record(self):
         clt = self.client
@@ -642,9 +646,9 @@ class CloudDNSTest(unittest.TestCase):
         rec_id = utils.random_unicode()
         rec_dict = {"id": rec_id, "name": nm}
         mgr.api.method_get = Mock(return_value=(None, rec_dict))
-        ret = clt.get_record(dom, rec_id)
-        mgr.api.method_get.assert_called_once_with("/%s/%s/records/%s" %
-                (mgr.uri_base, dom.id, rec_id))
+        clt.get_record(dom, rec_id)
+        mgr.api.method_get.assert_called_once_with(
+            "/%s/%s/records/%s" % (mgr.uri_base, dom.id, rec_id))
 
     def test_update_record(self):
         clt = self.client
@@ -659,10 +663,9 @@ class CloudDNSTest(unittest.TestCase):
         uri = "/domains/%s/records" % utils.get_id(dom)
         req_body = {"id": rec_id, "name": nm, "data": data, "ttl": ttl}
         clt.update_record(dom, rec, data=data, ttl=ttl)
-        mgr._async_call.assert_called_once_with(uri, method="PUT",
-                body={"records": [req_body]},
-                error_class=exc.DomainRecordUpdateFailed,
-                has_response=False)
+        mgr._async_call.assert_called_once_with(
+            uri, method="PUT", body={"records": [req_body]},
+            error_class=exc.DomainRecordUpdateFailed, has_response=False)
 
     def test_delete_record(self):
         clt = self.client
@@ -672,9 +675,9 @@ class CloudDNSTest(unittest.TestCase):
         mgr._async_call = Mock(return_value=({}, {}))
         uri = "/domains/%s/records/%s" % (utils.get_id(dom), utils.get_id(rec))
         clt.delete_record(dom, rec)
-        mgr._async_call.assert_called_once_with(uri, method="DELETE",
-                error_class=exc.DomainRecordDeletionFailed,
-                has_response=False)
+        mgr._async_call.assert_called_once_with(
+            uri, method="DELETE", error_class=exc.DomainRecordDeletionFailed,
+            has_response=False)
 
     def test_resolve_device_type(self):
         clt = self.client
@@ -690,8 +693,8 @@ class CloudDNSTest(unittest.TestCase):
         clt = self.client
         mgr = clt._manager
         device = object()
-        self.assertRaises(exc.InvalidDeviceType, mgr._resolve_device_type,
-                device)
+        with self.assertRaises(exc.InvalidDeviceType):
+            mgr._resolve_device_type(device)
 
     def test_get_ptr_details_lb(self):
         clt = self.client
@@ -745,8 +748,9 @@ class CloudDNSTest(unittest.TestCase):
         mgr._get_ptr_details = Mock(return_value=(href, svc_name))
         mgr._async_call = Mock(return_value=({}, {"records": []}))
         clt.add_ptr_records(dvc, rec)
-        mgr._async_call.assert_called_once_with(uri, body=body,
-                error_class=exc.PTRRecordCreationFailed, method="POST")
+        mgr._async_call.assert_called_once_with(
+            uri, body=body, error_class=exc.PTRRecordCreationFailed,
+            method="POST")
 
     def test_update_ptr_record(self):
         clt = self.client
@@ -761,17 +765,17 @@ class CloudDNSTest(unittest.TestCase):
         trim_comment = long_comment[:160]
         nm = "example.com"
         rec = {"name": nm, "id": ptr_record.id, "type": "PTR", "data": data,
-                "ttl": ttl, "comment": trim_comment}
+               "ttl": ttl, "comment": trim_comment}
         uri = "/rdns"
         body = {"recordsList": {"records": [rec]}, "link": {"content": "",
                 "href": href, "rel": svc_name}}
         mgr._get_ptr_details = Mock(return_value=(href, svc_name))
         mgr._async_call = Mock(return_value=({}, {"records": []}))
         clt.update_ptr_record(dvc, ptr_record, domain_name=nm, data=data,
-                ttl=ttl, comment=long_comment)
-        mgr._async_call.assert_called_once_with(uri, body=body,
-                error_class=exc.PTRRecordUpdateFailed, method="PUT",
-                has_response=False)
+                              ttl=ttl, comment=long_comment)
+        mgr._async_call.assert_called_once_with(
+            uri, body=body, error_class=exc.PTRRecordUpdateFailed,
+            method="PUT", has_response=False)
 
     def test_delete_ptr_records(self):
         clt = self.client
@@ -783,10 +787,10 @@ class CloudDNSTest(unittest.TestCase):
         uri = "/rdns/%s?href=%s&ip=%s" % (svc_name, href, ip_address)
         mgr._get_ptr_details = Mock(return_value=(href, svc_name))
         mgr._async_call = Mock(return_value=({}, {"records": []}))
-        ret = clt.delete_ptr_records(dvc, ip_address=ip_address)
-        mgr._async_call.assert_called_once_with(uri,
-                error_class=exc.PTRRecordDeletionFailed,
-                method="DELETE", has_response=False)
+        clt.delete_ptr_records(dvc, ip_address=ip_address)
+        mgr._async_call.assert_called_once_with(
+            uri, error_class=exc.PTRRecordDeletionFailed,
+            method="DELETE", has_response=False)
 
     def test_get_absolute_limits(self):
         clt = self.client
@@ -799,10 +803,10 @@ class CloudDNSTest(unittest.TestCase):
     def test_get_rate_limits(self):
         clt = self.client
         limits = [{"uri": "fake1", "limit": 1},
-                {"uri": "fake2", "limit": 2}]
+                  {"uri": "fake2", "limit": 2}]
         resp = {"limits": {"rate": limits}}
         resp_limits = [{"uri": "fake1", "limits": 1},
-                {"uri": "fake2", "limits": 2}]
+                       {"uri": "fake2", "limits": 2}]
         clt.method_get = Mock(return_value=({}, resp))
         ret = clt.get_rate_limits()
         self.assertEqual(ret, resp_limits)
@@ -810,7 +814,8 @@ class CloudDNSTest(unittest.TestCase):
     def test_results_iterator(self):
         clt = self.client
         mgr = clt._manager
-        self.assertRaises(NotImplementedError, ResultsIterator, mgr)
+        with self.assertRaises(NotImplementedError):
+            ResultsIterator(mgr)
 
     def test_iter(self):
         clt = self.client
@@ -824,7 +829,8 @@ class CloudDNSTest(unittest.TestCase):
         mgr = clt._manager
         res_iter = DomainResultsIterator(mgr)
         clt.method_get = Mock(return_value=({}, {"domains": []}))
-        self.assertRaises(StopIteration, res_iter.next)
+        with self.assertRaises(StopIteration):
+            next(res_iter)
 
     def test_iter_items_first_fetch(self):
         clt = self.client
@@ -833,7 +839,7 @@ class CloudDNSTest(unittest.TestCase):
         ret_body = {"domains": [{"name": fake_name}]}
         clt.method_get = Mock(return_value=({}, ret_body))
         res_iter = DomainResultsIterator(mgr)
-        ret = res_iter.next()
+        ret = next(res_iter)
         self.assertTrue(isinstance(ret, CloudDNSDomain))
         clt.method_get.assert_called_once_with("/domains")
 
@@ -845,7 +851,7 @@ class CloudDNSTest(unittest.TestCase):
         clt.method_get = Mock(return_value=({}, ret_body))
         res_iter = DomainResultsIterator(mgr)
         res_iter.next_uri = example_uri
-        ret = res_iter.next()
+        ret = next(res_iter)
         self.assertTrue(isinstance(ret, CloudDNSDomain))
 
     def test_iter_items_next_stop(self):
@@ -853,7 +859,8 @@ class CloudDNSTest(unittest.TestCase):
         mgr = clt._manager
         res_iter = DomainResultsIterator(mgr)
         res_iter.next_uri = None
-        self.assertRaises(StopIteration, res_iter.next)
+        with self.assertRaises(StopIteration):
+            next(res_iter)
 
     def test_subdomain_iter(self):
         clt = self.client
@@ -871,10 +878,11 @@ class CloudDNSTest(unittest.TestCase):
     # body. client method_get uses super to get at BaseClient's
     # method_get.
     @patch.object(pyrax.client.BaseClient, "method_get",
-            new=lambda x, y: (None, None))
+                  new=lambda x, y: (None, None))
     def test_client_empty_get_body_error(self):
         clt = self.client
-        self.assertRaises(exc.ServiceResponseFailure, clt.get_absolute_limits)
+        with self.assertRaises(exc.ServiceResponseFailure):
+            clt.get_absolute_limits()
 
 
 if __name__ == "__main__":
