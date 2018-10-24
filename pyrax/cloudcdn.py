@@ -16,11 +16,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from functools import wraps
-import re
-
 from pyrax.client import BaseClient
-import pyrax.exceptions as exc
 from pyrax.manager import BaseManager
 from pyrax.resource import BaseResource
 import pyrax.utils as utils
@@ -28,6 +24,7 @@ import pyrax.utils as utils
 
 class CloudCDNFlavor(BaseResource):
     pass
+
 
 class CloudCDNFlavorManager(BaseManager):
 
@@ -114,17 +111,16 @@ class CloudCDNClient(BaseClient):
         super(CloudCDNClient, self).__init__(*args, **kwargs)
         self.name = "Cloud CDN"
 
-
     def _configure_manager(self):
         """
         Creates the Manager instances to handle monitoring.
         """
-        self._flavor_manager = CloudCDNFlavorManager(self,
-                uri_base="flavors", resource_class=CloudCDNFlavor,
-                response_key=None, plural_response_key="flavors")
-        self._services_manager = CloudCDNServiceManager(self,
-                uri_base="services", resource_class=CloudCDNService,
-                response_key=None, plural_response_key="services")
+        self._flavor_manager = CloudCDNFlavorManager(
+            self, uri_base="flavors", resource_class=CloudCDNFlavor,
+            response_key=None, plural_response_key="flavors")
+        self._services_manager = CloudCDNServiceManager(
+            self, uri_base="services", resource_class=CloudCDNService,
+            response_key=None, plural_response_key="services")
 
     def ping(self):
         """Ping the server

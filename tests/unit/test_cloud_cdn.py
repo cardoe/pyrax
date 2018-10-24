@@ -3,10 +3,7 @@ import unittest
 import mock
 
 from pyrax.cloudcdn import CloudCDNClient
-from pyrax.cloudcdn import CloudCDNFlavor
-from pyrax.cloudcdn import CloudCDNFlavorManager
-from pyrax.cloudcdn import CloudCDNService
-from pyrax.cloudcdn import CloudCDNServiceManager
+
 
 class CloudCDNTest(unittest.TestCase):
 
