@@ -45,7 +45,7 @@ def _resolve_name(val):
 
 def assure_volume(fnc):
     """
-    Converts a volumeID passed as the volume to a CloudBlockStorageVolume object.
+    Converts a volumeID passed as volume to a CloudBlockStorageVolume object.
     """
     @wraps(fnc)
     def _wrapped(self, volume, *args, **kwargs):
@@ -58,8 +58,8 @@ def assure_volume(fnc):
 
 def assure_snapshot(fnc):
     """
-    Converts a snapshot ID passed as the snapshot to a CloudBlockStorageSnapshot
-    object.
+    Converts a snapshot ID passed as the snapshot to a
+    CloudBlockStorageSnapshot object.
     """
     @wraps(fnc)
     def _wrapped(self, snapshot, *args, **kwargs):
@@ -68,7 +68,6 @@ def assure_snapshot(fnc):
             snapshot = self._snapshot_manager.get(snapshot)
         return fnc(self, snapshot, *args, **kwargs)
     return _wrapped
-
 
 
 class CloudBlockStorageSnapshot(BaseResource):
@@ -80,11 +79,12 @@ class CloudBlockStorageSnapshot(BaseResource):
         Adds a check to make sure that the snapshot is able to be deleted.
         """
         if self.status not in ("available", "error"):
-            raise exc.SnapshotNotAvailable("Snapshot must be in 'available' "
-                    "or 'error' status before deleting. Current status: %s" %
-                    self.status)
-        # When there are more thann one snapshot for a given volume, attempting to
-        # delete them all will throw a 409 exception. This will help by retrying
+            raise exc.SnapshotNotAvailable(
+                "Snapshot must be in 'available' or 'error' status before "
+                "deleting. Current status: %s" % self.status)
+        # When there are more thann one snapshot for a given volume,
+        # attempting to delete them all will throw a 409 exception.
+        # This will help by retrying
         # such an error once after a RETRY_INTERVAL second delay.
         try:
             super(CloudBlockStorageSnapshot, self).delete()
@@ -94,7 +94,6 @@ class CloudBlockStorageSnapshot(BaseResource):
                 # Try again; if it fails, oh, well...
                 super(CloudBlockStorageSnapshot, self).delete()
 
-
     def update(self, display_name=None, display_description=None):
         """
         Update the specified values on this snapshot. You may specify one or
@@ -102,15 +101,13 @@ class CloudBlockStorageSnapshot(BaseResource):
         is a no-op; no exception will be raised.
         """
         return self.manager.update(self, display_name=display_name,
-                display_description=display_description)
-
+                                   display_description=display_description)
 
     def rename(self, name):
         """
         Allows for direct renaming of an existing snapshot.
         """
         return self.update(display_name=name)
-
 
     def _get_name(self):
         return self.display_name
@@ -119,7 +116,7 @@ class CloudBlockStorageSnapshot(BaseResource):
         self.display_name = val
 
     name = property(_get_name, _set_name, None,
-            "Convenience for referencing the display_name.")
+                    "Convenience for referencing the display_name.")
 
     def _get_description(self):
         return self.display_description
@@ -127,8 +124,9 @@ class CloudBlockStorageSnapshot(BaseResource):
     def _set_description(self, val):
         self.display_description = val
 
-    description = property(_get_description, _set_description, None,
-            "Convenience for referencing the display_description.")
+    description = property(
+        _get_description, _set_description, None,
+        "Convenience for referencing the display_description.")
 
 
 class CloudBlockStorageVolumeType(BaseResource):
@@ -149,7 +147,6 @@ class CloudBlockStorageVolume(BaseResource):
         cs = pyrax.connect_to_cloudservers(region=region, context=context)
         self._nova_volumes = cs.volumes
 
-
     def attach_to_instance(self, instance, mountpoint):
         """
         Attaches this volume to the cloud server instance at the
@@ -158,11 +155,10 @@ class CloudBlockStorageVolume(BaseResource):
         """
         instance_id = _resolve_id(instance)
         try:
-            resp = self._nova_volumes.create_server_volume(instance_id,
-                    self.id, mountpoint)
+            self._nova_volumes.create_server_volume(instance_id, self.id,
+                                                    mountpoint)
         except Exception as e:
             raise exc.VolumeAttachmentFailed("%s" % e)
-
 
     def detach(self):
         """
@@ -183,14 +179,13 @@ class CloudBlockStorageVolume(BaseResource):
         except Exception as e:
             raise exc.VolumeDetachmentFailed("%s" % e)
 
-
     def delete(self, force=False):
         """
-        Volumes cannot be deleted if either a) they are attached to a device, or
-        b) they have any snapshots. This method overrides the base delete()
-        method to both better handle these failures, and also to offer a 'force'
-        option. When 'force' is True, the volume is detached, and any dependent
-        snapshots are deleted before calling the volume's delete.
+        Volumes cannot be deleted if either a) they are attached to a device,
+        or b) they have any snapshots. This method overrides the base delete()
+        method to both better handle these failures, and also to offer a
+        'force' option. When 'force' is True, the volume is detached, and any
+        dependent snapshots are deleted before calling the volume's delete.
         """
         if force:
             self.detach()
@@ -202,7 +197,6 @@ class CloudBlockStorageVolume(BaseResource):
             # For now, just re-raise
             raise
 
-
     def update(self, display_name=None, display_description=None):
         """
         Update the specified values on this volume. You may specify one or more
@@ -210,15 +204,13 @@ class CloudBlockStorageVolume(BaseResource):
         no-op; no exception will be raised.
         """
         return self.manager.update(self, display_name=display_name,
-                display_description=display_description)
-
+                                   display_description=display_description)
 
     def rename(self, name):
         """
         Allows for direct renaming of an existing volume.
         """
         return self.update(display_name=name)
-
 
     def create_snapshot(self, name=None, description=None, force=False):
         """
@@ -233,9 +225,8 @@ class CloudBlockStorageVolume(BaseResource):
         # Note that passing in non-None values is required for the _create_body
         # method to distinguish between this and the request to create and
         # instance.
-        return self.manager.create_snapshot(volume=self, name=name,
-                    description=description, force=force)
-
+        return self.manager.create_snapshot(
+            volume=self, name=name, description=description, force=force)
 
     def list_snapshots(self):
         """
@@ -244,14 +235,12 @@ class CloudBlockStorageVolume(BaseResource):
         return [snap for snap in self.manager.list_snapshots()
                 if snap.volume_id == self.id]
 
-
     def delete_all_snapshots(self):
         """
         Locates all snapshots of this volume and deletes them.
         """
         for snap in self.list_snapshots():
             snap.delete()
-
 
     def _get_name(self):
         return self.display_name
@@ -260,7 +249,7 @@ class CloudBlockStorageVolume(BaseResource):
         self.display_name = val
 
     name = property(_get_name, _set_name, None,
-            "Convenience for referencing the display_name.")
+                    "Convenience for referencing the display_name.")
 
     def _get_description(self):
         return self.display_description
@@ -268,17 +257,19 @@ class CloudBlockStorageVolume(BaseResource):
     def _set_description(self, val):
         self.display_description = val
 
-    description = property(_get_description, _set_description, None,
-            "Convenience for referencing the display_description.")
+    description = property(
+        _get_description, _set_description, None,
+        "Convenience for referencing the display_description.")
 
 
 class CloudBlockStorageManager(BaseManager):
     """
     Manager class for Cloud Block Storage.
     """
-    def _create_body(self, name, size=None, volume_type=None, description=None,
-             metadata=None, snapshot_id=None, clone_id=None,
-             availability_zone=None, image=None):
+    def _create_body(
+            self, name, size=None, volume_type=None, description=None,
+            metadata=None, snapshot_id=None, clone_id=None,
+            availability_zone=None, image=None):
         """
         Used to create the dict required to create a new volume
         """
@@ -306,22 +297,20 @@ class CloudBlockStorageManager(BaseManager):
                 }}
         return body
 
-
     def create(self, *args, **kwargs):
         """
         Catches errors that may be returned, and raises more informational
         exceptions.
         """
         try:
-            return super(CloudBlockStorageManager, self).create(*args,
-                    **kwargs)
+            return super(CloudBlockStorageManager, self).create(
+                *args, **kwargs)
         except exc.BadRequest as e:
             msg = e.message
             if "Clones currently must be >= original volume size" in msg:
                 raise exc.VolumeCloneTooSmall(msg)
             else:
                 raise
-
 
     def update(self, volume, display_name=None, display_description=None):
         """
@@ -341,7 +330,6 @@ class CloudBlockStorageManager(BaseManager):
         body = {"volume": param_dict}
         resp, resp_body = self.api.method_put(uri, body=body)
 
-
     def list_snapshots(self):
         """
         Pass-through method to allow the list_snapshots() call to be made
@@ -349,15 +337,13 @@ class CloudBlockStorageManager(BaseManager):
         """
         return self.api.list_snapshots()
 
-
     def create_snapshot(self, volume, name, description=None, force=False):
         """
         Pass-through method to allow the create_snapshot() call to be made
         directly on a volume.
         """
-        return self.api.create_snapshot(volume, name, description=description,
-                force=force)
-
+        return self.api.create_snapshot(
+            volume, name, description=description, force=force)
 
 
 class CloudBlockStorageSnapshotManager(BaseManager):
@@ -376,7 +362,6 @@ class CloudBlockStorageSnapshotManager(BaseManager):
                 }}
         return body
 
-
     def create(self, name, volume, description=None, force=False):
         """
         Adds exception handling to the default create() call.
@@ -389,10 +374,10 @@ class CloudBlockStorageSnapshotManager(BaseManager):
             msg = str(e)
             if "Invalid volume: must be available" in msg:
                 # The volume for the snapshot was attached.
-                raise exc.VolumeNotAvailable("Cannot create a snapshot from an "
-                        "attached volume. Detach the volume before trying "
-                        "again, or pass 'force=True' to the create_snapshot() "
-                        "call.")
+                raise exc.VolumeNotAvailable(
+                    "Cannot create a snapshot from an attached volume. Detach "
+                    "the volume before trying again, or pass 'force=True' to "
+                    "the create_snapshot() call.")
             else:
                 # Some other error
                 raise
@@ -400,15 +385,14 @@ class CloudBlockStorageSnapshotManager(BaseManager):
             if e.code == 409:
                 if "Request conflicts with in-progress" in str(e):
                     txt = ("The volume is current creating a snapshot. You "
-                            "must wait until that completes before attempting "
-                            "to create an additional snapshot.")
+                           "must wait until that completes before attempting "
+                           "to create an additional snapshot.")
                     raise exc.VolumeNotAvailable(txt)
                 else:
                     raise
             else:
                 raise
         return snap
-
 
     def update(self, snapshot, display_name=None, display_description=None):
         """
@@ -440,44 +424,38 @@ class CloudBlockStorageClient(BaseClient):
         Create the manager to handle the instances, and also another
         to handle flavors.
         """
-        self._manager = CloudBlockStorageManager(self,
-                resource_class=CloudBlockStorageVolume, response_key="volume",
-                uri_base="volumes")
-        self._types_manager = BaseManager(self,
-                resource_class=CloudBlockStorageVolumeType,
-                response_key="volume_type", uri_base="types")
-        self._snapshot_manager = CloudBlockStorageSnapshotManager(self,
-                resource_class=CloudBlockStorageSnapshot,
-                response_key="snapshot", uri_base="snapshots")
-
+        self._manager = CloudBlockStorageManager(
+            self, resource_class=CloudBlockStorageVolume,
+            response_key="volume", uri_base="volumes")
+        self._types_manager = BaseManager(
+            self, resource_class=CloudBlockStorageVolumeType,
+            response_key="volume_type", uri_base="types")
+        self._snapshot_manager = CloudBlockStorageSnapshotManager(
+            self, resource_class=CloudBlockStorageSnapshot,
+            response_key="snapshot", uri_base="snapshots")
 
     def list_types(self):
         """Returns a list of all available volume types."""
         return self._types_manager.list()
 
-
     def list_snapshots(self):
         """Returns a list of all snapshots."""
         return self._snapshot_manager.list()
-
 
     @assure_volume
     def attach_to_instance(self, volume, instance, mountpoint):
         """Attaches the volume to the specified instance at the mountpoint."""
         return volume.attach_to_instance(instance, mountpoint)
 
-
     @assure_volume
     def detach(self, volume):
         """Detaches the volume from whatever device it is attached to."""
         return volume.detach()
 
-
     @assure_volume
     def delete_volume(self, volume, force=False):
         """Deletes the volume."""
         return volume.delete(force=force)
-
 
     @assure_volume
     def update(self, volume, display_name=None, display_description=None):
@@ -487,8 +465,7 @@ class CloudBlockStorageClient(BaseClient):
         the call is a no-op; no exception will be raised.
         """
         return volume.update(display_name=display_name,
-                display_description=display_description)
-
+                             display_description=display_description)
 
     def rename(self, volume, name):
         """
@@ -496,18 +473,18 @@ class CloudBlockStorageClient(BaseClient):
         """
         return self.update(volume, display_name=name)
 
-
     @assure_volume
-    def create_snapshot(self, volume, name=None, description=None, force=False):
+    def create_snapshot(self, volume, name=None, description=None,
+                        force=False):
         """
-        Creates a snapshot of the volume, with an optional name and description.
+        Creates a snapshot of the volume, with an optional name and description
 
         Normally snapshots will not happen if the volume is attached. To
         override this default behavior, pass force=True.
         """
         return self._snapshot_manager.create(volume=volume, name=name,
-                description=description, force=force)
-
+                                             description=description,
+                                             force=force)
 
     def get_snapshot(self, snapshot):
         """
@@ -515,23 +492,20 @@ class CloudBlockStorageClient(BaseClient):
         """
         return self._snapshot_manager.get(snapshot)
 
-
     @assure_snapshot
     def delete_snapshot(self, snapshot):
         """Deletes the snapshot."""
         return snapshot.delete()
 
-
     @assure_snapshot
     def update_snapshot(self, snapshot, display_name=None,
-            display_description=None):
+                        display_description=None):
         """
         Update the specified values on the specified snapshot. You may specify
         one or more values to update.
         """
         return snapshot.update(display_name=display_name,
-                display_description=display_description)
-
+                               display_description=display_description)
 
     def rename_snapshot(self, snapshot, name):
         """
