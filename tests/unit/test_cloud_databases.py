@@ -7,7 +7,6 @@ import unittest
 from mock import patch
 from mock import MagicMock as Mock
 
-from pyrax.clouddatabases import CloudDatabaseBackupManager
 from pyrax.clouddatabases import CloudDatabaseDatabase
 from pyrax.clouddatabases import CloudDatabaseFlavor
 from pyrax.clouddatabases import CloudDatabaseInstance
@@ -15,7 +14,6 @@ from pyrax.clouddatabases import CloudDatabaseUser
 from pyrax.clouddatabases import CloudDatabaseVolume
 from pyrax.clouddatabases import assure_instance
 import pyrax.exceptions as exc
-from pyrax.resource import BaseResource
 import pyrax.utils as utils
 
 from pyrax import fakes
@@ -53,8 +51,9 @@ class CloudDatabasesTest(unittest.TestCase):
 
     @patch("pyrax.manager.BaseManager", new=fakes.FakeManager)
     def test_instantiate_instance(self):
-        inst = CloudDatabaseInstance(fakes.FakeManager(), {"id": 42,
-                "volume": {"size": 1, "used": 0.2}})
+        inst = CloudDatabaseInstance(
+            fakes.FakeManager(), {"id": 42,
+                                  "volume": {"size": 1, "used": 0.2}})
         self.assertTrue(isinstance(inst, CloudDatabaseInstance))
         self.assertTrue(isinstance(inst.volume, CloudDatabaseVolume))
 
@@ -65,7 +64,7 @@ class CloudDatabasesTest(unittest.TestCase):
         marker = utils.random_unicode()
         inst.list_databases(limit=limit, marker=marker)
         inst._database_manager.list.assert_called_once_with(limit=limit,
-                marker=marker)
+                                                            marker=marker)
 
     def test_list_users(self):
         inst = self.instance
@@ -74,7 +73,7 @@ class CloudDatabasesTest(unittest.TestCase):
         marker = utils.random_unicode()
         inst.list_users(limit=limit, marker=marker)
         inst._user_manager.list.assert_called_once_with(limit=limit,
-                marker=marker)
+                                                        marker=marker)
 
     def test_get_database(self):
         inst = self.instance
@@ -93,7 +92,8 @@ class CloudDatabasesTest(unittest.TestCase):
         db2 = fakes.FakeEntity()
         db2.name = "b"
         inst.list_databases = Mock(return_value=[db1, db2])
-        self.assertRaises(exc.NoSuchDatabase, inst.get_database, "z")
+        with self.assertRaises(exc.NoSuchDatabase):
+            inst.get_database("2")
 
     def test_dbmgr_get(self):
         mgr = fakes.FakeDatabaseManager()
@@ -112,13 +112,13 @@ class CloudDatabasesTest(unittest.TestCase):
         mgr.api.method_post = Mock(return_value=(None, {"backup": {}}))
         expected_uri = "/backups"
         expected_body = {"backup": {"instance": inst.id, "name": name,
-                "description": description}}
+                                    "description": description}}
         mgr.create_backup(inst, name, description=description)
         mgr.api.method_post.assert_called_once_with(expected_uri,
-                body=expected_body)
+                                                    body=expected_body)
 
     @patch('pyrax.clouddatabases.CloudDatabaseInstance',
-            new=fakes.FakeDatabaseInstance)
+           new=fakes.FakeDatabaseInstance)
     def test_mgr_restore_backup(self):
         inst = self.instance
         mgr = inst.manager
@@ -131,25 +131,26 @@ class CloudDatabasesTest(unittest.TestCase):
         mgr.api._get_flavor_ref = Mock(return_value=fref)
         expected_uri = "/%s" % mgr.uri_base
         expected_body = {"instance": {"name": name, "flavorRef": fref,
-                "volume": {"size": volume}, "restorePoint":
-                {"backupRef": backup}}}
+                                      "volume": {"size": volume},
+                                      "restorePoint": {"backupRef": backup}}}
         mgr.restore_backup(backup, name, flavor, volume)
         mgr.api.method_post.assert_called_once_with(expected_uri,
-                body=expected_body)
+                                                    body=expected_body)
 
     def test_mgr_list_backups(self):
         inst = self.instance
         mgr = inst.manager
         mgr.api._backup_manager.list = Mock(return_value=(None, None))
         mgr.list_backups(inst)
-        mgr.api._backup_manager.list.assert_called_once_with(instance=inst,
-                limit=20, marker=0)
+        mgr.api._backup_manager.list.assert_called_once_with(
+            instance=inst, limit=20, marker=0)
 
     def test_mgr_list_backups_for_instance(self):
         inst = self.instance
         mgr = inst.manager
         mgr.api.method_get = Mock(return_value=(None, {"backups": []}))
-        expected_uri = "/%s/%s/backups?limit=20&marker=0" % (mgr.uri_base, inst.id)
+        expected_uri = ("/%s/%s/backups?limit=20&marker=0" %
+                        (mgr.uri_base, inst.id))
         mgr._list_backups_for_instance(inst)
         mgr.api.method_get.assert_called_once_with(expected_uri)
 
@@ -157,10 +158,10 @@ class CloudDatabasesTest(unittest.TestCase):
         inst = self.instance
         inst._database_manager.create = Mock()
         inst._database_manager.find = Mock()
-        db = inst.create_database(name="test")
-        inst._database_manager.create.assert_called_once_with(name="test",
-                character_set="utf8", collate="utf8_general_ci",
-                return_none=True)
+        inst.create_database(name="test")
+        inst._database_manager.create.assert_called_once_with(
+            name="test", character_set="utf8", collate="utf8_general_ci",
+            return_none=True)
 
     def test_create_user(self):
         inst = self.instance
@@ -171,10 +172,10 @@ class CloudDatabasesTest(unittest.TestCase):
         database_names = utils.random_unicode()
         host = utils.random_unicode()
         inst.create_user(name=name, password=password,
-                database_names=database_names, host=host)
-        inst._user_manager.create.assert_called_once_with(name=name,
-                password=password, database_names=[database_names], host=host,
-                return_none=True)
+                         database_names=database_names, host=host)
+        inst._user_manager.create.assert_called_once_with(
+            name=name, password=password, database_names=[database_names],
+            host=host, return_none=True)
 
     def test_delete_database(self):
         inst = self.instance
@@ -228,7 +229,7 @@ class CloudDatabasesTest(unittest.TestCase):
     def test_restart(self):
         inst = self.instance
         inst.manager.action = Mock()
-        ret = inst.restart()
+        inst.restart()
         inst.manager.action.assert_called_once_with(inst, "restart")
 
     def test_resize(self):
@@ -237,32 +238,32 @@ class CloudDatabasesTest(unittest.TestCase):
         inst.manager.api._get_flavor_ref = Mock(return_value=flavor_ref)
         fake_body = {"flavorRef": flavor_ref}
         inst.manager.action = Mock()
-        ret = inst.resize(42)
-        call_uri = "/instances/%s/action" % inst.id
+        inst.resize(42)
         inst.manager.action.assert_called_once_with(inst, "resize",
-                body=fake_body)
+                                                    body=fake_body)
 
     def test_resize_volume_too_small(self):
         inst = self.instance
         inst.volume.get = Mock(return_value=2)
-        self.assertRaises(exc.InvalidVolumeResize, inst.resize_volume, 1)
+        with self.assertRaises(exc.InvalidVolumeResize):
+            inst.resize_volume(1)
 
     def test_resize_volume(self):
         inst = self.instance
         fake_body = {"volume": {"size": 2}}
         inst.manager.action = Mock()
-        ret = inst.resize_volume(2)
+        inst.resize_volume(2)
         inst.manager.action.assert_called_once_with(inst, "resize",
-                body=fake_body)
+                                                    body=fake_body)
 
     def test_resize_volume_direct(self):
         inst = self.instance
         vol = inst.volume
         fake_body = {"volume": {"size": 2}}
         inst.manager.action = Mock()
-        ret = vol.resize(2)
+        vol.resize(2)
         inst.manager.action.assert_called_once_with(inst, "resize",
-                body=fake_body)
+                                                    body=fake_body)
 
     def test_volume_get(self):
         inst = self.instance
@@ -274,15 +275,16 @@ class CloudDatabasesTest(unittest.TestCase):
     def test_volume_get_fail(self):
         inst = self.instance
         vol = inst.volume
-        self.assertRaises(AttributeError, vol.get, "fake")
+        with self.assertRaises(AttributeError):
+            vol.get("fake")
 
     def test_inst_list_backups(self):
         inst = self.instance
         mgr = inst.manager
         mgr._list_backups_for_instance = Mock()
         inst.list_backups()
-        mgr._list_backups_for_instance.assert_called_once_with(inst, limit=20,
-                marker=0)
+        mgr._list_backups_for_instance.assert_called_once_with(
+            inst, limit=20, marker=0)
 
     def test_inst_create_backup(self):
         inst = self.instance
@@ -292,7 +294,7 @@ class CloudDatabasesTest(unittest.TestCase):
         mgr.create_backup = Mock()
         inst.create_backup(name, description=description)
         mgr.create_backup.assert_called_once_with(inst, name,
-                description=description)
+                                                  description=description)
 
     def test_get_flavor_property(self):
         inst = self.instance
@@ -332,8 +334,8 @@ class CloudDatabasesTest(unittest.TestCase):
         nm = utils.random_unicode()
         ret = clt.create_database(inst, nm)
         self.assertEqual(ret, ["db"])
-        inst.create_database.assert_called_once_with(nm,
-                character_set=None, collate=None)
+        inst.create_database.assert_called_once_with(
+            nm, character_set=None, collate=None)
 
     def test_clt_get_database(self):
         clt = self.client
@@ -370,9 +372,9 @@ class CloudDatabasesTest(unittest.TestCase):
         nm = utils.random_unicode()
         pw = utils.random_unicode()
         host = utils.random_unicode()
-        ret = clt.create_user(inst, nm, pw, ["db"], host=host)
-        inst.create_user.assert_called_once_with(name=nm, password=pw,
-                database_names=["db"], host=host)
+        clt.create_user(inst, nm, pw, ["db"], host=host)
+        inst.create_user.assert_called_once_with(
+            name=nm, password=pw, database_names=["db"], host=host)
 
     @patch("pyrax.manager.BaseManager", new=fakes.FakeManager)
     def test_delete_user_for_instance(self):
@@ -420,7 +422,8 @@ class CloudDatabasesTest(unittest.TestCase):
         inst = self.instance
         bad_name = utils.random_unicode()
         inst._user_manager.get = Mock(side_effect=exc.NotFound(""))
-        self.assertRaises(exc.NoSuchDatabaseUser, inst.get_user, bad_name)
+        with self.assertRaises(exc.NoSuchDatabaseUser):
+            inst.get_user(bad_name)
 
     def test_get_db_names(self):
         inst = self.instance
@@ -449,7 +452,8 @@ class CloudDatabasesTest(unittest.TestCase):
         dbname1 = utils.random_ascii()
         dbname2 = utils.random_ascii()
         inst.list_databases = Mock(return_value=((dbname1, dbname2)))
-        self.assertRaises(exc.NoSuchDatabase, mgr._get_db_names, "BAD")
+        with self.assertRaises(exc.NoSuchDatabase):
+            mgr._get_db_names("BAD")
 
     def test_change_user_password(self):
         inst = self.instance
@@ -458,7 +462,8 @@ class CloudDatabasesTest(unittest.TestCase):
         resp = fakes.FakeResponse()
         resp.status_code = 202
         inst._user_manager.api.method_put = Mock(return_value=(resp, {}))
-        fakeuser = fakes.FakeDatabaseUser(inst._user_manager, {"name": fakename})
+        fakeuser = fakes.FakeDatabaseUser(
+            inst._user_manager, {"name": fakename})
         inst._user_manager.get = Mock(return_value=fakeuser)
         inst.change_user_password(fakename, newpass)
         inst._user_manager.api.method_put.assert_called_once_with(
@@ -474,7 +479,7 @@ class CloudDatabasesTest(unittest.TestCase):
         mgr.update = Mock()
         inst.update_user(user, name=name, password=password, host=host)
         mgr.update.assert_called_once_with(user, name=name, password=password,
-                host=host)
+                                           host=host)
 
     def test_user_manager_update(self):
         inst = self.instance
@@ -487,25 +492,26 @@ class CloudDatabasesTest(unittest.TestCase):
         mgr.api.method_put = Mock(return_value=(None, None))
         expected_uri = "/%s/%s" % (mgr.uri_base, username)
         expected_body = {"user": {"name": name, "host": host,
-                "password": password}}
+                         "password": password}}
         mgr.update(user, name=name, host=host, password=password)
-        mgr.api.method_put.assert_called_once_with(expected_uri,
-                body=expected_body)
+        mgr.api.method_put.assert_called_once_with(
+            expected_uri, body=expected_body)
 
     def test_user_manager_update_missing(self):
         inst = self.instance
         mgr = inst._user_manager
         username = utils.random_unicode()
         user = fakes.FakeDatabaseUser(mgr, info={"name": username})
-        self.assertRaises(exc.MissingDBUserParameters, mgr.update, user)
+        with self.assertRaises(exc.MissingDBUserParameters):
+            mgr.update(user)
 
     def test_user_manager_update_unchanged(self):
         inst = self.instance
         mgr = inst._user_manager
         username = utils.random_unicode()
         user = fakes.FakeDatabaseUser(mgr, info={"name": username})
-        self.assertRaises(exc.DBUpdateUnchanged, mgr.update, user,
-                name=username)
+        with self.assertRaises(exc.DBUpdateUnchanged):
+            mgr.update(user, name=username)
 
     def test_list_user_access(self):
         inst = self.instance
@@ -523,7 +529,8 @@ class CloudDatabasesTest(unittest.TestCase):
         mgr.api.method_get = Mock(side_effect=exc.NotFound(""))
         username = utils.random_unicode()
         user = fakes.FakeDatabaseUser(mgr, info={"name": username})
-        self.assertRaises(exc.NoSuchDatabaseUser, mgr.list_user_access, user)
+        with self.assertRaises(exc.NoSuchDatabaseUser):
+            mgr.list_user_access(user)
 
     def test_grant_user_access(self):
         inst = self.instance
@@ -532,8 +539,8 @@ class CloudDatabasesTest(unittest.TestCase):
         inst._user_manager.api.method_put = Mock(return_value=(None, None))
         inst.grant_user_access(fakeuser, dbname1, strict=False)
         inst._user_manager.api.method_put.assert_called_once_with(
-                "/None/%s/databases" % fakeuser, body={"databases": [{"name":
-                dbname1}]})
+            "/None/%s/databases" % fakeuser, body={"databases": [{"name":
+                                                                  dbname1}]})
 
     def test_grant_user_access_not_found(self):
         inst = self.instance
@@ -543,8 +550,8 @@ class CloudDatabasesTest(unittest.TestCase):
         user = fakes.FakeDatabaseUser(mgr, info={"name": username})
         db_names = utils.random_unicode()
         mgr._get_db_names = Mock(return_value=[])
-        self.assertRaises(exc.NoSuchDatabaseUser, mgr.grant_user_access, user,
-                db_names)
+        with self.assertRaises(exc.NoSuchDatabaseUser):
+            mgr.grant_user_access(user, db_names)
 
     def test_revoke_user_access(self):
         inst = self.instance
@@ -562,7 +569,7 @@ class CloudDatabasesTest(unittest.TestCase):
         name = utils.random_unicode()
         description = utils.random_unicode()
         expected_body = {"backup": {"instance": inst.id, "name": name,
-                "description": description}}
+                         "description": description}}
         ret = bu_mgr._create_body(name, inst, description=description)
         self.assertEqual(ret, expected_body)
 
@@ -582,8 +589,8 @@ class CloudDatabasesTest(unittest.TestCase):
         db_mgr = mgr.api._manager
         db_mgr._list_backups_for_instance = Mock()
         bu_mgr.list(instance=inst)
-        db_mgr._list_backups_for_instance.assert_called_once_with(inst, limit=20,
-                marker=0)
+        db_mgr._list_backups_for_instance.assert_called_once_with(
+            inst, limit=20, marker=0)
 
     def test_clt_change_user_password(self):
         clt = self.client
@@ -613,7 +620,7 @@ class CloudDatabasesTest(unittest.TestCase):
         host = utils.random_unicode()
         clt.update_user(inst, user, name=name, password=password, host=host)
         inst.update_user.assert_called_once_with(user, name=name,
-                password=password, host=host)
+                                                 password=password, host=host)
 
     def test_user_update(self):
         inst = self.instance
@@ -625,7 +632,7 @@ class CloudDatabasesTest(unittest.TestCase):
         mgr.update = Mock()
         user.update(name=name, password=password, host=host)
         mgr.update.assert_called_once_with(user, name=name, password=password,
-                host=host)
+                                           host=host)
 
     def test_clt_list_user_access(self):
         clt = self.client
@@ -651,7 +658,7 @@ class CloudDatabasesTest(unittest.TestCase):
         db_names = utils.random_unicode()
         clt.grant_user_access(inst, user, db_names)
         inst.grant_user_access.assert_called_once_with(user, db_names,
-                strict=True)
+                                                       strict=True)
 
     def test_user_grant_user_access(self):
         inst = self.instance
@@ -662,7 +669,7 @@ class CloudDatabasesTest(unittest.TestCase):
         mgr.grant_user_access = Mock()
         user.grant_user_access(db_names, strict=strict)
         mgr.grant_user_access.assert_called_once_with(user, db_names,
-                strict=strict)
+                                                      strict=strict)
 
     def test_clt_revoke_user_access(self):
         clt = self.client
@@ -672,7 +679,7 @@ class CloudDatabasesTest(unittest.TestCase):
         db_names = utils.random_unicode()
         clt.revoke_user_access(inst, user, db_names)
         inst.revoke_user_access.assert_called_once_with(user, db_names,
-                strict=True)
+                                                        strict=True)
 
     def test_user_revoke_user_access(self):
         inst = self.instance
@@ -683,7 +690,7 @@ class CloudDatabasesTest(unittest.TestCase):
         mgr.revoke_user_access = Mock()
         user.revoke_user_access(db_names, strict=strict)
         mgr.revoke_user_access.assert_called_once_with(user, db_names,
-                strict=strict)
+                                                       strict=strict)
 
     def test_clt_restart(self):
         clt = self.client
@@ -701,7 +708,8 @@ class CloudDatabasesTest(unittest.TestCase):
         inst.resize.assert_called_once_with("flavor")
 
     def test_get_limits(self):
-        self.assertRaises(NotImplementedError, self.client.get_limits)
+        with self.assertRaises(NotImplementedError):
+            self.client.get_limits()
 
     @patch("pyrax.manager.BaseManager", new=fakes.FakeManager)
     def test_list_flavors(self):
@@ -711,7 +719,7 @@ class CloudDatabasesTest(unittest.TestCase):
         marker = utils.random_unicode()
         clt.list_flavors(limit=limit, marker=marker)
         clt._flavor_manager.list.assert_called_once_with(limit=limit,
-                marker=marker)
+                                                         marker=marker)
 
     @patch("pyrax.manager.BaseManager", new=fakes.FakeManager)
     def test_get_flavor(self):
@@ -789,7 +797,8 @@ class CloudDatabasesTest(unittest.TestCase):
         flavor_obj = CloudDatabaseFlavor(clt._manager, info)
         clt.get_flavor = Mock(side_effect=exc.NotFound(""))
         clt.list_flavors = Mock(return_value=[flavor_obj])
-        self.assertRaises(exc.FlavorNotFound, clt._get_flavor_ref, "nonsense")
+        with self.assertRaises(exc.FlavorNotFound):
+            clt._get_flavor_ref("nonsense")
 
     def test_clt_list_backups(self):
         clt = self.client
@@ -830,7 +839,7 @@ class CloudDatabasesTest(unittest.TestCase):
         inst.create_backup = Mock()
         clt.create_backup(inst, name, description=description)
         inst.create_backup.assert_called_once_with(name,
-                description=description)
+                                                   description=description)
 
     def test_clt_restore_backup(self):
         clt = self.client
@@ -841,7 +850,8 @@ class CloudDatabasesTest(unittest.TestCase):
         volume = utils.random_unicode()
         mgr.restore_backup = Mock()
         clt.restore_backup(backup, name, flavor, volume)
-        mgr.restore_backup.assert_called_once_with(backup, name, flavor, volume)
+        mgr.restore_backup.assert_called_once_with(
+            backup, name, flavor, volume)
 
     @patch("pyrax.manager.BaseManager", new=fakes.FakeManager)
     def test_create_body_db(self):
@@ -850,8 +860,8 @@ class CloudDatabasesTest(unittest.TestCase):
         ret = mgr._create_body(nm, character_set="CS", collate="CO")
         expected = {"databases": [
                 {"name": nm,
-                "character_set": "CS",
-                "collate": "CO"}]}
+                 "character_set": "CS",
+                 "collate": "CO"}]}
         self.assertEqual(ret, expected)
 
     @patch("pyrax.manager.BaseManager", new=fakes.FakeManager)
@@ -864,8 +874,8 @@ class CloudDatabasesTest(unittest.TestCase):
         ret = mgr._create_body(nm, password=pw, database_names=dbnames)
         expected = {"users": [
                 {"name": nm,
-                "password": pw,
-                "databases": [{"name": dbnames[0]}, {"name": dbnames[1]}]}]}
+                 "password": pw,
+                 "databases": [{"name": dbnames[0]}, {"name": dbnames[1]}]}]}
         self.assertEqual(ret, expected)
 
     @patch("pyrax.manager.BaseManager", new=fakes.FakeManager)
@@ -877,12 +887,12 @@ class CloudDatabasesTest(unittest.TestCase):
         pw = utils.random_unicode()
         dbnames = [utils.random_unicode(), utils.random_unicode()]
         ret = mgr._create_body(nm, host=host, password=pw,
-                database_names=dbnames)
+                               database_names=dbnames)
         expected = {"users": [
                 {"name": nm,
-                "password": pw,
-                "host": host,
-                "databases": [{"name": dbnames[0]}, {"name": dbnames[1]}]}]}
+                 "password": pw,
+                 "host": host,
+                 "databases": [{"name": dbnames[0]}, {"name": dbnames[1]}]}]}
         self.assertEqual(ret, expected)
 
     @patch("pyrax.manager.BaseManager", new=fakes.FakeManager)
@@ -904,8 +914,8 @@ class CloudDatabasesTest(unittest.TestCase):
         clt = self.client
         nm = utils.random_unicode()
         clt._get_flavor_ref = Mock(return_value=example_uri)
-        self.assertRaises(exc.MissingCloudDatabaseParameter,
-            clt._manager._create_body, nm, version="10")
+        with self.assertRaises(exc.MissingCloudDatabaseParameter):
+            clt._manager._create_body(nm, version="10")
 
     @patch("pyrax.manager.BaseManager", new=fakes.FakeManager)
     def test_create_body_datastore(self):
