@@ -65,26 +65,24 @@ def assure_entity(fnc):
     return _wrapped
 
 
-
 class CloudMonitorEntity(BaseResource):
     def __init__(self, *args, **kwargs):
         super(CloudMonitorEntity, self).__init__(*args, **kwargs)
-        self._check_manager = CloudMonitorCheckManager(self.manager.api,
-                uri_base="entities/%s/checks" % self.id,
-                resource_class=CloudMonitorCheck, response_key=None,
-                plural_response_key=None)
-        self._alarm_manager = CloudMonitorAlarmManager(self.manager,
-                self.manager.api, uri_base="entities/%s/alarms" % self.id,
-                resource_class=CloudMonitorAlarm, response_key=None,
-                plural_response_key=None)
-
+        self._check_manager = CloudMonitorCheckManager(
+            self.manager.api, uri_base="entities/%s/checks" % self.id,
+            resource_class=CloudMonitorCheck, response_key=None,
+            plural_response_key=None)
+        self._alarm_manager = CloudMonitorAlarmManager(
+            self.manager, self.manager.api,
+            uri_base="entities/%s/alarms" % self.id,
+            resource_class=CloudMonitorAlarm, response_key=None,
+            plural_response_key=None)
 
     def update(self, agent=None, metadata=None):
         """
         Only the agent_id and metadata are able to be updated via the API.
         """
         self.manager.update_entity(self, agent=agent, metadata=metadata)
-
 
     def get_check(self, check):
         """
@@ -93,7 +91,6 @@ class CloudMonitorEntity(BaseResource):
         chk = self._check_manager.get(check)
         chk.set_entity(self)
         return chk
-
 
     def list_checks(self, limit=None, marker=None, return_next=False):
         """
@@ -109,11 +106,10 @@ class CloudMonitorEntity(BaseResource):
         next item. If there is no next item, the second element will be None.
         """
         checks = self._check_manager.list(limit=limit, marker=marker,
-                return_next=return_next)
+                                          return_next=return_next)
         for check in checks:
             check.set_entity(self)
         return checks
-
 
     def find_all_checks(self, **kwargs):
         """
@@ -127,8 +123,8 @@ class CloudMonitorEntity(BaseResource):
             check.set_entity(self)
         return checks
 
-
-    def create_check(self, label=None, name=None, check_type=None,
+    def create_check(
+            self, label=None, name=None, check_type=None,
             disabled=False, metadata=None, details=None,
             monitoring_zones_poll=None, timeout=None, period=None,
             target_alias=None, target_hostname=None, target_receiver=None,
@@ -138,29 +134,27 @@ class CloudMonitorEntity(BaseResource):
         'details' parameter should be a dict with the keys as the option name,
         and the value as the desired setting.
         """
-        return self._check_manager.create_check(label=label, name=name,
-                check_type=check_type, disabled=disabled, metadata=metadata,
-                details=details, monitoring_zones_poll=monitoring_zones_poll,
-                timeout=timeout, period=period, target_alias=target_alias,
-                target_hostname=target_hostname,
-                target_receiver=target_receiver, test_only=test_only,
-                include_debug=include_debug)
+        return self._check_manager.create_check(
+            label=label, name=name, check_type=check_type, disabled=disabled,
+            metadata=metadata, details=details,
+            monitoring_zones_poll=monitoring_zones_poll, timeout=timeout,
+            period=period, target_alias=target_alias,
+            target_hostname=target_hostname, target_receiver=target_receiver,
+            test_only=test_only, include_debug=include_debug)
 
-
-    def update_check(self, check, label=None, name=None, disabled=None,
+    def update_check(
+            self, check, label=None, name=None, disabled=None,
             metadata=None, monitoring_zones_poll=None, timeout=None,
             period=None, target_alias=None, target_hostname=None,
             target_receiver=None):
         """
         Updates an existing check with any of the parameters.
         """
-        return self._check_manager.update(check, label=label, name=name,
-                disabled=disabled, metadata=metadata,
-                monitoring_zones_poll=monitoring_zones_poll, timeout=timeout,
-                period=period, target_alias=target_alias,
-                target_hostname=target_hostname,
-                target_receiver=target_receiver)
-
+        return self._check_manager.update(
+            check, label=label, name=name, disabled=disabled,
+            metadata=metadata, monitoring_zones_poll=monitoring_zones_poll,
+            timeout=timeout, period=period, target_alias=target_alias,
+            target_hostname=target_hostname, target_receiver=target_receiver)
 
     def delete_check(self, check):
         """
@@ -168,19 +162,17 @@ class CloudMonitorEntity(BaseResource):
         """
         return self._check_manager.delete(check)
 
-
     @assure_check
     def list_metrics(self, check, limit=None, marker=None, return_next=False):
         """
         Returns a list of all the metrics associated with the specified check.
         """
         return check.list_metrics(limit=limit, marker=marker,
-                return_next=return_next)
-
+                                  return_next=return_next)
 
     @assure_check
     def get_metric_data_points(self, check, metric, start, end, points=None,
-            resolution=None, stats=None):
+                               resolution=None, stats=None):
         """
         Returns the data points for a given metric for the given period. The
         'start' and 'end' times must be specified; they can be be either Python
@@ -207,36 +199,33 @@ class CloudMonitorEntity(BaseResource):
             max
         """
         return check.get_metric_data_points(metric, start, end, points=points,
-                resolution=resolution, stats=stats)
-
+                                            resolution=resolution, stats=stats)
 
     def create_alarm(self, check, notification_plan, criteria=None,
-            disabled=False, label=None, name=None, metadata=None):
+                     disabled=False, label=None, name=None, metadata=None):
         """
         Creates an alarm that binds the check on this entity with a
         notification plan.
         """
-        return self._alarm_manager.create(check, notification_plan,
-                criteria=criteria, disabled=disabled, label=label, name=name,
-                metadata=metadata)
-
+        return self._alarm_manager.create(
+            check, notification_plan, criteria=criteria, disabled=disabled,
+            label=label, name=name, metadata=metadata)
 
     def update_alarm(self, alarm, criteria=None, disabled=False,
-            label=None, name=None, metadata=None):
+                     label=None, name=None, metadata=None):
         """
         Updates an existing alarm on this entity.
         """
-        return self._alarm_manager.update(alarm, criteria=criteria,
-                disabled=disabled, label=label, name=name, metadata=metadata)
-
+        return self._alarm_manager.update(
+            alarm, criteria=criteria, disabled=disabled, label=label,
+            name=name, metadata=metadata)
 
     def list_alarms(self, limit=None, marker=None, return_next=False):
         """
         Returns a list of all the alarms created on this entity.
         """
         return self._alarm_manager.list(limit=limit, marker=marker,
-                return_next=return_next)
-
+                                        return_next=return_next)
 
     def get_alarm(self, alarm):
         """
@@ -246,18 +235,15 @@ class CloudMonitorEntity(BaseResource):
         """
         return self._alarm_manager.get(alarm)
 
-
     def delete_alarm(self, alarm):
         """
         Deletes the specified alarm.
         """
         return self._alarm_manager.delete(alarm)
 
-
     @property
     def name(self):
         return self.label
-
 
 
 class _PaginationManager(BaseManager):
@@ -273,13 +259,12 @@ class _PaginationManager(BaseManager):
         if return_next:
             kwargs["other_keys"] = "metadata"
         ret = super(_PaginationManager, self).list(limit=limit,
-                marker=marker, **kwargs)
+                                                   marker=marker, **kwargs)
         if return_next:
             ents, meta = ret
             return (ents, meta[0].get("next_marker"))
         else:
             return ret
-
 
 
 class CloudMonitorNotificationManager(_PaginationManager):
@@ -298,9 +283,8 @@ class CloudMonitorNotificationManager(_PaginationManager):
         resp, resp_body = self.api.method_post(uri, body=body)
         return self.get(resp.headers["x-object-id"])
 
-
     def test_notification(self, notification=None, notification_type=None,
-            details=None):
+                          details=None):
         """
         This allows you to test either an existing notification, or a potential
         notification before creating it. The actual notification comes from the
@@ -323,7 +307,6 @@ class CloudMonitorNotificationManager(_PaginationManager):
                     "details": details}
         resp, resp_body = self.api.method_post(uri, body=body)
 
-
     def update_notification(self, notification, details):
         """
         Updates the specified notification with the supplied details.
@@ -341,7 +324,6 @@ class CloudMonitorNotificationManager(_PaginationManager):
                 "details": details}
         resp, resp_body = self.api.method_put(uri, body=body)
 
-
     def list_types(self):
         """
         Returns a list of all available notification types.
@@ -350,7 +332,6 @@ class CloudMonitorNotificationManager(_PaginationManager):
         resp, resp_body = self.api.method_get(uri)
         return [CloudMonitorNotificationType(self, info)
                 for info in resp_body["values"]]
-
 
     def get_type(self, notification_type_id):
         """
@@ -361,13 +342,12 @@ class CloudMonitorNotificationManager(_PaginationManager):
         return CloudMonitorNotificationType(self, resp_body)
 
 
-
 class CloudMonitorNotificationPlanManager(_PaginationManager):
     """
     Handles all of the requests dealing with Notification Plans.
     """
     def create(self, label=None, name=None, critical_state=None, ok_state=None,
-            warning_state=None):
+               warning_state=None):
         """
         Creates a notification plan to be executed when a monitoring check
         triggers an alarm. You can optionally label (or name) the plan.
@@ -396,10 +376,9 @@ class CloudMonitorNotificationPlanManager(_PaginationManager):
         return self.get(resp.headers["x-object-id"])
 
 
-
 class CloudMonitorMetricsManager(_PaginationManager):
     def get_metric_data_points(self, metric, start, end, points=None,
-            resolution=None, stats=None):
+                               resolution=None, stats=None):
         """
         Returns the data points for a given metric for the given period. The
         'start' and 'end' times must be specified; they can be be either Python
@@ -426,16 +405,16 @@ class CloudMonitorMetricsManager(_PaginationManager):
             max
         """
         allowed_resolutions = ("FULL", "MIN5", "MIN20", "MIN60", "MIN240",
-                "MIN1440")
+                               "MIN1440")
         if not (points or resolution):
-            raise exc.MissingMonitoringCheckGranularity("You must specify "
-                    "either the 'points' or 'resolution' parameter when "
-                    "fetching metrics.")
+            raise exc.MissingMonitoringCheckGranularity(
+                "You must specify either the 'points' or 'resolution' "
+                "parameter when fetching metrics.")
         if resolution:
             if resolution.upper() not in allowed_resolutions:
-                raise exc.InvalidMonitoringMetricsResolution("The specified "
-                        "resolution '%s' is not valid. The valid values are: "
-                        "%s." % (resolution, str(allowed_resolutions)))
+                raise exc.InvalidMonitoringMetricsResolution(
+                    "The specified resolution '%s' is not valid. The valid "
+                    "values are: %s." % (resolution, str(allowed_resolutions)))
         start_tm = utils.to_timestamp(start)
         end_tm = utils.to_timestamp(end)
         # NOTE: For some odd reason, the timestamps required for this must be
@@ -462,15 +441,14 @@ class CloudMonitorMetricsManager(_PaginationManager):
         try:
             resp, resp_body = self.api.method_get(uri)
         except exc.BadRequest as e:
-            msg = e.message
+            msg = str(e)
             dtls = e.details
             if msg.startswith("Validation error"):
-                raise exc.InvalidMonitoringMetricsRequest("Your request was "
-                        "invalid: '%s'" % dtls)
+                raise exc.InvalidMonitoringMetricsRequest(
+                    "Your request was invalid: '%s'" % dtls)
             else:
                 raise
         return resp_body["values"]
-
 
 
 class CloudMonitorAlarmManager(_PaginationManager):
@@ -479,15 +457,16 @@ class CloudMonitorAlarmManager(_PaginationManager):
     """
 
     def __init__(self, entity_manager, api, resource_class=None,
-            response_key=None, plural_response_key=None, uri_base=None):
+                 response_key=None, plural_response_key=None, uri_base=None):
         # need the entity manager to materialize the CloudMonitorAlarm object
         self.entity_manager = entity_manager
-        _PaginationManager.__init__(self, api, resource_class=resource_class,
+        _PaginationManager.__init__(
+            self, api, resource_class=resource_class,
             response_key=response_key, plural_response_key=plural_response_key,
             uri_base=uri_base)
 
     def create(self, check, notification_plan, criteria=None,
-            disabled=False, label=None, name=None, metadata=None):
+               disabled=False, label=None, name=None, metadata=None):
         """
         Creates an alarm that binds the check on the given entity with a
         notification plan.
@@ -517,9 +496,8 @@ class CloudMonitorAlarmManager(_PaginationManager):
             alarm_id = resp.headers["x-object-id"]
             return self.get(alarm_id)
 
-
     def update(self, alarm, criteria=None, disabled=False, label=None,
-            name=None, metadata=None):
+               name=None, metadata=None):
         """
         Updates an existing alarm. See the comments on the 'create()' method
         regarding the criteria parameter.
@@ -538,12 +516,12 @@ class CloudMonitorAlarmManager(_PaginationManager):
         resp, resp_body = self.api.method_put(uri, body=body)
 
 
-
 class CloudMonitorCheckManager(_PaginationManager):
     """
     Handles all of the check-specific requests.
     """
-    def create_check(self, label=None, name=None, check_type=None,
+    def create_check(
+            self, label=None, name=None, check_type=None,
             details=None, disabled=False, metadata=None,
             monitoring_zones_poll=None, timeout=None, period=None,
             target_alias=None, target_hostname=None, target_receiver=None,
@@ -561,29 +539,31 @@ class CloudMonitorCheckManager(_PaginationManager):
             remote.http check and includes the response body."
         """
         if details is None:
-            raise exc.MissingMonitoringCheckDetails("The required 'details' "
-                    "parameter was not passed to the create_check() method.")
+            raise exc.MissingMonitoringCheckDetails(
+                "The required 'details' parameter was not passed to the "
+                "create_check() method.")
         ctype = utils.get_id(check_type)
         is_remote = ctype.startswith("remote")
         monitoring_zones_poll = utils.coerce_to_list(monitoring_zones_poll)
         monitoring_zones_poll = [utils.get_id(mzp)
-                for mzp in monitoring_zones_poll]
+                                 for mzp in monitoring_zones_poll]
         # only require monitoring_zones and targets for remote checks
         if is_remote:
             if not monitoring_zones_poll:
-                raise exc.MonitoringZonesPollMissing("You must specify the "
-                    "'monitoring_zones_poll' parameter for remote checks.")
+                raise exc.MonitoringZonesPollMissing(
+                    "You must specify the 'monitoring_zones_poll' parameter "
+                    "for remote checks.")
             if not (target_alias or target_hostname):
-                raise exc.MonitoringCheckTargetNotSpecified("You must "
-                    "specify either the 'target_alias' or 'target_hostname' "
-                    "when creating a remote check.")
+                raise exc.MonitoringCheckTargetNotSpecified(
+                    "You must specify either the 'target_alias' or "
+                    "'target_hostname' when creating a remote check.")
         body = {"label": label or name,
                 "details": details,
                 "disabled": disabled,
                 "type": utils.get_id(check_type),
                 }
         params = ("monitoring_zones_poll", "timeout", "period",
-                "target_alias", "target_hostname", "target_receiver")
+                  "target_alias", "target_hostname", "target_receiver")
         body = _params_to_dict(params, body, locals())
         if test_only:
             uri = "/%s/test-check" % self.uri_base
@@ -594,25 +574,27 @@ class CloudMonitorCheckManager(_PaginationManager):
         try:
             resp = self.api.method_post(uri, body=body)[0]
         except exc.BadRequest as e:
-            msg = e.message
+            msg = str(e)
             dtls = e.details
             match = _invalid_key_pat.match(msg)
             if match:
                 missing = match.groups()[0].replace("details.", "")
                 if missing in details:
-                    errmsg = "".join(["The value passed for '%s' in the ",
-                            "details parameter is not valid."]) % missing
+                    errmsg = "".join(
+                        ["The value passed for '%s' in the ",
+                         "details parameter is not valid."]) % missing
                 else:
-                    errmsg = "".join(["The required value for the '%s' ",
-                            "setting is missing from the 'details' ",
-                            "parameter."]) % missing
+                    errmsg = "".join(
+                        ["The required value for the '%s' ",
+                         "setting is missing from the 'details' ",
+                         "parameter."]) % missing
                     utils.update_exc(e, errmsg)
                 raise e
             else:
-                if msg == "Validation error":
+                if msg.strip() == "Validation error (HTTP 400)":
                     # Info is in the 'details'
-                    raise exc.InvalidMonitoringCheckDetails("Validation "
-                            "failed. Error: '%s'." % dtls)
+                    raise exc.InvalidMonitoringCheckDetails(
+                        "Validation failed. Error: '%s'." % dtls)
             # its something other than validation error; probably
             # limits exceeded, but raise it instead of failing silently
             raise e
@@ -622,40 +604,38 @@ class CloudMonitorCheckManager(_PaginationManager):
                 return self.get(check_id)
             # don't fail silently here either; raise an error
             # if we get an unexpected response code
-            raise exc.ClientException("Unknown response code creating check;"
-                " expected 201, got %s" % resp.status_code)
+            raise exc.ClientException(
+                "Unknown response code creating check; expected 201, got %s"
+                % resp.status_code)
 
-
-    def update(self, check, label=None, name=None, disabled=None,
+    def update(
+            self, check, label=None, name=None, disabled=None,
             metadata=None, monitoring_zones_poll=None, timeout=None,
             period=None, target_alias=None, target_hostname=None,
             target_receiver=None):
         if monitoring_zones_poll:
             monitoring_zones_poll = utils.coerce_to_list(monitoring_zones_poll)
             monitoring_zones_poll = [utils.get_id(mzp)
-                    for mzp in monitoring_zones_poll]
+                                     for mzp in monitoring_zones_poll]
         body = {}
-        local_dict = locals()
         label = label or name
         params = ("label", "disabled", "metadata", "monitoring_zones_poll",
-                "timeout", "period", "target_alias", "target_hostname",
-                "target_receiver")
+                  "timeout", "period", "target_alias", "target_hostname",
+                  "target_receiver")
         body = _params_to_dict(params, body, locals())
-        entity = check.entity
         uri = "/%s/%s" % (self.uri_base, utils.get_id(check))
         try:
             resp, resp_body = self.api.method_put(uri, body=body)
         except exc.BadRequest as e:
-            msg = e.message
+            msg = str(e)
             dtls = e.details
             if msg.startswith("Validation error"):
-                raise exc.InvalidMonitoringCheckUpdate("The update failed "
-                        "validation: %s: %s" % (msg, dtls))
+                raise exc.InvalidMonitoringCheckUpdate(
+                    "The update failed validation: %s: %s" % (msg, dtls))
             else:
                 # Some other issue.
                 raise
         return resp_body
-
 
     def find_all_checks(self, **kwargs):
         """
@@ -666,16 +646,15 @@ class CloudMonitorCheckManager(_PaginationManager):
         the Python side.
         """
         found = []
-        searches = kwargs.items()
+        searches = kwargs
         for obj in self.list():
             try:
                 if all(getattr(obj, attr) == value
-                        for (attr, value) in searches):
+                        for (attr, value) in searches.items()):
                     found.append(obj)
             except AttributeError:
                 continue
         return found
-
 
 
 class _EntityFilteringManger(BaseManager):
@@ -693,13 +672,12 @@ class _EntityFilteringManger(BaseManager):
         return resp_body
 
 
-
 class CloudMonitorEntityManager(_PaginationManager):
     """
     Handles all of the entity-specific requests.
     """
     def _create_body(self, name, label=None, agent=None, ip_addresses=None,
-            metadata=None):
+                     metadata=None):
         """
         Used to create the dict required to create various resources. Accepts
         either 'label' or 'name' as the keyword parameter for the label
@@ -715,7 +693,6 @@ class CloudMonitorEntityManager(_PaginationManager):
             if metadata:
                 body["metadata"] = metadata
         return body
-
 
     def update_entity(self, entity, agent=None, metadata=None):
         """
@@ -737,12 +714,13 @@ class CloudMonitorTokenManager(BaseManager):
     """
 
     def __init__(self, api):
-        super(CloudMonitorTokenManager, self).__init__(api,
-            resource_class=CloudMonitorAgentToken, uri_base="agent_tokens")
+        super(CloudMonitorTokenManager, self).__init__(
+            api, resource_class=CloudMonitorAgentToken,
+            uri_base="agent_tokens")
 
     def create(self, name):
-        resp = super(CloudMonitorTokenManager, self).create(name,
-            return_response=True)
+        resp = super(CloudMonitorTokenManager, self).create(
+            name, return_response=True)
         loc = resp.headers.get("location")
         if loc:
             return self.get(loc.rsplit("/")[-1])
@@ -763,10 +741,9 @@ class CloudMonitorCheck(BaseResource):
     Represents a check defined for an entity.
     """
     def __init__(self, manager, info, entity=None, key=None, loaded=False):
-        super(CloudMonitorCheck, self).__init__(manager, info, key=key,
-                loaded=loaded)
+        super(CloudMonitorCheck, self).__init__(
+            manager, info, key=key, loaded=loaded)
         self.set_entity(entity)
-
 
     def set_entity(self, entity):
         if entity is None:
@@ -775,16 +752,15 @@ class CloudMonitorCheck(BaseResource):
         if not isinstance(entity, CloudMonitorEntity):
             entity = self.manager.get(entity)
         self.entity = entity
-        self._metrics_manager = CloudMonitorMetricsManager(self.manager.api,
-                uri_base="entities/%s/checks/%s/metrics" % (self.entity.id,
-                self.id), resource_class=CloudMonitorMetric, response_key=None,
-                plural_response_key=None)
-
+        uri_base = "entities/%s/checks/%s/metrics" % (self.entity.id, self.id)
+        self._metrics_manager = CloudMonitorMetricsManager(
+            self.manager.api, uri_base=uri_base,
+            resource_class=CloudMonitorMetric, response_key=None,
+            plural_response_key=None)
 
     @property
     def name(self):
         return self.label
-
 
     def get(self):
         """Reloads the check with its current values."""
@@ -794,36 +770,33 @@ class CloudMonitorCheck(BaseResource):
 
     reload = get
 
-
-    def update(self, label=None, name=None, disabled=None, metadata=None,
+    def update(
+            self, label=None, name=None, disabled=None, metadata=None,
             monitoring_zones_poll=None, timeout=None, period=None,
             target_alias=None, target_hostname=None, target_receiver=None):
         """
         Updates an existing check with any of the parameters.
         """
-        self.manager.update(self, label=label, name=name,
-                disabled=disabled, metadata=metadata,
-                monitoring_zones_poll=monitoring_zones_poll, timeout=timeout,
-                period=period, target_alias=target_alias,
-                target_hostname=target_hostname,
-                target_receiver=target_receiver)
-
+        self.manager.update(
+            self, label=label, name=name, disabled=disabled, metadata=metadata,
+            monitoring_zones_poll=monitoring_zones_poll, timeout=timeout,
+            period=period, target_alias=target_alias,
+            target_hostname=target_hostname,
+            target_receiver=target_receiver)
 
     def delete(self):
         """Removes this check from its entity."""
         self.manager.delete(self)
-
 
     def list_metrics(self, limit=None, marker=None, return_next=False):
         """
         Returns a list of all the metrics associated with this check.
         """
         return self._metrics_manager.list(limit=limit, marker=marker,
-                return_next=return_next)
-
+                                          return_next=return_next)
 
     def get_metric_data_points(self, metric, start, end, points=None,
-            resolution=None, stats=None):
+                               resolution=None, stats=None):
         """
         Returns the data points for a given metric for the given period. The
         'start' and 'end' times must be specified; they can be be either Python
@@ -849,19 +822,18 @@ class CloudMonitorCheck(BaseResource):
             min
             max
         """
-        return self._metrics_manager.get_metric_data_points(metric, start, end,
-                points=points, resolution=resolution, stats=stats)
-
+        return self._metrics_manager.get_metric_data_points(
+            metric, start, end, points=points, resolution=resolution,
+            stats=stats)
 
     def create_alarm(self, notification_plan, criteria=None, disabled=False,
-            label=None, name=None, metadata=None):
+                     label=None, name=None, metadata=None):
         """
         Creates an alarm that binds this check with a notification plan.
         """
-        return self.manager.create_alarm(self.entity, self, notification_plan,
-                criteria=criteria, disabled=disabled, label=label, name=name,
-                metadata=metadata)
-
+        return self.manager.create_alarm(
+            self.entity, self, notification_plan, criteria=criteria,
+            disabled=disabled, label=label, name=name, metadata=metadata)
 
 
 class CloudMonitorCheckType(BaseResource):
@@ -875,7 +847,6 @@ class CloudMonitorCheckType(BaseResource):
         """
         return [field["name"] for field in self.fields]
 
-
     @property
     def required_field_names(self):
         """
@@ -884,7 +855,6 @@ class CloudMonitorCheckType(BaseResource):
         return [field["name"] for field in self.fields
                 if not field["optional"]]
 
-
     @property
     def optional_field_names(self):
         """
@@ -892,7 +862,6 @@ class CloudMonitorCheckType(BaseResource):
         """
         return [field["name"] for field in self.fields
                 if field["optional"]]
-
 
 
 class CloudMonitorZone(BaseResource):
@@ -904,7 +873,6 @@ class CloudMonitorZone(BaseResource):
         return self.label
 
 
-
 class CloudMonitorNotification(BaseResource):
     """
     Represents an action to take when an alarm is triggered.
@@ -913,13 +881,11 @@ class CloudMonitorNotification(BaseResource):
     def name(self):
         return self.label
 
-
     def update(self, details):
         """
         Updates this notification with the supplied details.
         """
         return self.manager.update_notification(self, details)
-
 
 
 class CloudMonitorNotificationType(BaseResource):
@@ -929,7 +895,6 @@ class CloudMonitorNotificationType(BaseResource):
     @property
     def name(self):
         return self.label
-
 
 
 class CloudMonitorNotificationPlan(BaseResource):
@@ -942,13 +907,11 @@ class CloudMonitorNotificationPlan(BaseResource):
         return self.label
 
 
-
 class CloudMonitorMetric(BaseResource):
     """
     Metrics represent statistics about the checks defined on an entity.
     """
     pass
-
 
 
 class CloudMonitorAlarm(BaseResource):
@@ -958,22 +921,21 @@ class CloudMonitorAlarm(BaseResource):
     """
     def __init__(self, manager, info, entity=None, key=None, loaded=False):
         super(CloudMonitorAlarm, self).__init__(manager, info, key=key,
-                loaded=loaded)
+                                                loaded=loaded)
         if entity is None:
             entity = info['entity_id']
         if not isinstance(entity, CloudMonitorEntity):
             entity = manager.entity_manager.get(entity)
         self.entity = entity
 
-
     def update(self, criteria=None, disabled=False, label=None, name=None,
-            metadata=None):
+               metadata=None):
         """
         Updates this alarm.
         """
-        return self.entity.update_alarm(self, criteria=criteria,
-                disabled=disabled, label=label, name=name, metadata=metadata)
-
+        return self.entity.update_alarm(
+            self, criteria=criteria, disabled=disabled, label=label,
+            name=name, metadata=metadata)
 
     def get(self):
         """
@@ -985,7 +947,6 @@ class CloudMonitorAlarm(BaseResource):
             self._add_details(new_alarm._info)
     # Alias reload() to get()
     reload = get
-
 
     @property
     def name(self):
@@ -1003,7 +964,6 @@ class CloudMonitorAgentToken(BaseResource):
         return self.label
 
 
-
 class CloudMonitorClient(BaseClient):
     """
     This is the base client for creating and managing Cloud Monitoring.
@@ -1013,44 +973,41 @@ class CloudMonitorClient(BaseClient):
         super(CloudMonitorClient, self).__init__(*args, **kwargs)
         self.name = "Cloud Monitoring"
 
-
     def _configure_manager(self):
         """
         Creates the Manager instances to handle monitoring.
         """
-        self._entity_manager = CloudMonitorEntityManager(self,
-                uri_base="entities", resource_class=CloudMonitorEntity,
-                response_key=None, plural_response_key=None)
-        self._check_type_manager = _PaginationManager(self,
-                uri_base="check_types", resource_class=CloudMonitorCheckType,
-                response_key=None, plural_response_key=None)
-        self._monitoring_zone_manager = BaseManager(self,
-                uri_base="monitoring_zones", resource_class=CloudMonitorZone,
-                response_key=None, plural_response_key=None)
-        self._notification_manager = CloudMonitorNotificationManager(self,
-                uri_base="notifications",
-                resource_class=CloudMonitorNotification,
-                response_key=None, plural_response_key=None)
+        self._entity_manager = CloudMonitorEntityManager(
+            self, uri_base="entities", resource_class=CloudMonitorEntity,
+            response_key=None, plural_response_key=None)
+        self._check_type_manager = _PaginationManager(
+            self, uri_base="check_types", resource_class=CloudMonitorCheckType,
+            response_key=None, plural_response_key=None)
+        self._monitoring_zone_manager = BaseManager(
+            self, uri_base="monitoring_zones", resource_class=CloudMonitorZone,
+            response_key=None, plural_response_key=None)
+        self._notification_manager = CloudMonitorNotificationManager(
+            self, uri_base="notifications",
+            resource_class=CloudMonitorNotification,
+            response_key=None, plural_response_key=None)
         self._notification_plan_manager = CloudMonitorNotificationPlanManager(
-                self, uri_base="notification_plans",
-                resource_class=CloudMonitorNotificationPlan,
-                response_key=None, plural_response_key=None)
-        self._changelog_manager = _EntityFilteringManger(self,
-                uri_base="changelogs/alarms", resource_class=None,
-                response_key=None, plural_response_key=None)
-        self._overview_manager = _EntityFilteringManger(self,
-                uri_base="views/overview", resource_class=None,
-                response_key="value", plural_response_key=None)
+            self, uri_base="notification_plans",
+            resource_class=CloudMonitorNotificationPlan,
+            response_key=None, plural_response_key=None)
+        self._changelog_manager = _EntityFilteringManger(
+            self, uri_base="changelogs/alarms", resource_class=None,
+            response_key=None, plural_response_key=None)
+        self._overview_manager = _EntityFilteringManger(
+            self, uri_base="views/overview", resource_class=None,
+            response_key="value", plural_response_key=None)
         self._token_manager = CloudMonitorTokenManager(self)
-
 
     def get_account(self):
         """
-        Returns a dict with the following keys: id, webhook_token, and metadata.
+        Returns a dict with the following keys: id, webhook_token, and metadata
         """
         resp, resp_body = self.method_get("/account")
         return resp_body
-
 
     def get_audits(self):
         """
@@ -1066,60 +1023,52 @@ class CloudMonitorClient(BaseClient):
         resp, resp_body = self.method_get("/audits")
         return resp_body["values"]
 
-
     def list_entities(self, limit=None, marker=None, return_next=False):
         return self._entity_manager.list(limit=limit, marker=marker,
-                return_next=return_next)
-
+                                         return_next=return_next)
 
     def get_entity(self, entity):
         return self._entity_manager.get(entity)
 
-
     def create_entity(self, label=None, name=None, agent=None,
-            ip_addresses=None, metadata=None):
+                      ip_addresses=None, metadata=None):
         # NOTE: passing a non-None value for ip_addresses is required so that
         # the _create_body() method can distinguish this as a request for a
         # body dict for entities.
         ip_addresses = ip_addresses or {}
-        resp = self._entity_manager.create(label=label, name=name, agent=agent,
-                ip_addresses=ip_addresses, metadata=metadata,
-                return_response=True)
+        resp = self._entity_manager.create(
+            label=label, name=name, agent=agent, ip_addresses=ip_addresses,
+            metadata=metadata, return_response=True)
         if resp.status_code == 201:
             ent_id = resp.headers["x-object-id"]
             return self.get_entity(ent_id)
-
 
     def update_entity(self, entity, agent=None, metadata=None):
         """
         Only the agent_id and metadata are able to be updated via the API.
         """
         self._entity_manager.update_entity(entity, agent=agent,
-                metadata=metadata)
-
+                                           metadata=metadata)
 
     def delete_entity(self, entity):
         """Deletes the specified entity."""
         self._entity_manager.delete(entity)
 
-
     def list_check_types(self, limit=None, marker=None, return_next=False):
         return self._check_type_manager.list(limit=limit, marker=marker,
-                return_next=return_next)
-
+                                             return_next=return_next)
 
     def get_check_type(self, check_type):
         return self._check_type_manager.get(check_type)
 
-
     @assure_entity
     def list_checks(self, entity, limit=None, marker=None, return_next=False):
         return entity.list_checks(limit=limit, marker=marker,
-                return_next=return_next)
-
+                                  return_next=return_next)
 
     @assure_entity
-    def create_check(self, entity, label=None, name=None, check_type=None,
+    def create_check(
+            self, entity, label=None, name=None, check_type=None,
             disabled=False, metadata=None, details=None,
             monitoring_zones_poll=None, timeout=None, period=None,
             target_alias=None, target_hostname=None, target_receiver=None,
@@ -1129,20 +1078,18 @@ class CloudMonitorClient(BaseClient):
         'details' parameter should be a dict with the keys as the option name,
         and the value as the desired setting.
         """
-        return entity.create_check(label=label, name=name,
-                check_type=check_type, disabled=disabled, metadata=metadata,
-                details=details, monitoring_zones_poll=monitoring_zones_poll,
-                timeout=timeout, period=period, target_alias=target_alias,
-                target_hostname=target_hostname,
-                target_receiver=target_receiver, test_only=test_only,
-                include_debug=include_debug)
-
+        return entity.create_check(
+            label=label, name=name, check_type=check_type, disabled=disabled,
+            metadata=metadata, details=details,
+            monitoring_zones_poll=monitoring_zones_poll, timeout=timeout,
+            period=period, target_alias=target_alias,
+            target_hostname=target_hostname, target_receiver=target_receiver,
+            test_only=test_only, include_debug=include_debug)
 
     @assure_entity
     def get_check(self, entity, check):
         """Returns the current check for the given entity."""
         return entity.get_check(check)
-
 
     @assure_entity
     def find_all_checks(self, entity, **kwargs):
@@ -1155,21 +1102,21 @@ class CloudMonitorClient(BaseClient):
         """
         return entity.find_all_checks(**kwargs)
 
-
     @assure_entity
-    def update_check(self, entity, check, label=None, name=None, disabled=None,
+    def update_check(
+            self, entity, check, label=None, name=None, disabled=None,
             metadata=None, monitoring_zones_poll=None, timeout=None,
             period=None, target_alias=None, target_hostname=None,
             target_receiver=None):
         """
         Updates an existing check with any of the parameters.
         """
-        entity.update_check(check, label=label, name=name, disabled=disabled,
-                metadata=metadata, monitoring_zones_poll=monitoring_zones_poll,
-                timeout=timeout, period=period, target_alias=target_alias,
-                target_hostname=target_hostname,
-                target_receiver=target_receiver)
-
+        entity.update_check(
+            check, label=label, name=name, disabled=disabled,
+            metadata=metadata, monitoring_zones_poll=monitoring_zones_poll,
+            timeout=timeout, period=period, target_alias=target_alias,
+            target_hostname=target_hostname,
+            target_receiver=target_receiver)
 
     @assure_entity
     def delete_check(self, entity, check):
@@ -1178,20 +1125,18 @@ class CloudMonitorClient(BaseClient):
         """
         return entity.delete_check(check)
 
-
     @assure_entity
     def list_metrics(self, entity, check, limit=None, marker=None,
-            return_next=False):
+                     return_next=False):
         """
         Returns a list of all the metrics associated with the specified check.
         """
         return entity.list_metrics(check, limit=limit, marker=marker,
-                return_next=return_next)
-
+                                   return_next=return_next)
 
     @assure_entity
     def get_metric_data_points(self, entity, check, metric, start, end,
-            points=None, resolution=None, stats=None):
+                               points=None, resolution=None, stats=None):
         """
         Returns the data points for a given metric for the given period. The
         'start' and 'end' times must be specified; they can be be either Python
@@ -1217,14 +1162,13 @@ class CloudMonitorClient(BaseClient):
             min
             max
         """
-        return entity.get_metric_data_points(check, metric, start, end,
-                points=points, resolution=resolution, stats=stats)
-
+        return entity.get_metric_data_points(
+            check, metric, start, end, points=points, resolution=resolution,
+            stats=stats)
 
     def list_notifications(self):
         """Returns a list of all defined notifications."""
         return self._notification_manager.list()
-
 
     def get_notification(self, notification_id):
         """
@@ -1232,9 +1176,8 @@ class CloudMonitorClient(BaseClient):
         """
         return self._notification_manager.get(notification_id)
 
-
     def test_notification(self, notification=None, notification_type=None,
-            details=None):
+                          details=None):
         """
         This allows you to test either an existing notification, or a potential
         notification before creating it. The actual notification comes from the
@@ -1251,23 +1194,20 @@ class CloudMonitorClient(BaseClient):
                 notification=notification, notification_type=notification_type,
                 details=details)
 
-
     def create_notification(self, notification_type, label=None, name=None,
-            details=None):
+                            details=None):
         """
         Defines a notification for handling an alarm.
         """
-        return self._notification_manager.create(notification_type,
-                label=label, name=name, details=details)
-
+        return self._notification_manager.create(
+            notification_type, label=label, name=name, details=details)
 
     def update_notification(self, notification, details):
         """
         Updates the specified notification with the supplied details.
         """
         return self._notification_manager.update_notification(notification,
-                details)
-
+                                                              details)
 
     def delete_notification(self, notification):
         """
@@ -1275,17 +1215,16 @@ class CloudMonitorClient(BaseClient):
         """
         return self._notification_manager.delete(notification)
 
-
-    def create_notification_plan(self, label=None, name=None,
-            critical_state=None, ok_state=None, warning_state=None):
+    def create_notification_plan(
+            self, label=None, name=None, critical_state=None, ok_state=None,
+            warning_state=None):
         """
         Creates a notification plan to be executed when a monitoring check
         triggers an alarm.
         """
-        return self._notification_plan_manager.create(label=label, name=name,
-                critical_state=critical_state, ok_state=ok_state,
-                warning_state=warning_state)
-
+        return self._notification_plan_manager.create(
+            label=label, name=name, critical_state=critical_state,
+            ok_state=ok_state, warning_state=warning_state)
 
     def list_notification_plans(self):
         """
@@ -1293,13 +1232,11 @@ class CloudMonitorClient(BaseClient):
         """
         return self._notification_plan_manager.list()
 
-
     def get_notification_plan(self, notification_plan_id):
         """
         Returns the CloudMonitorNotificationPlan object for the specified ID.
         """
         return self._notification_plan_manager.get(notification_plan_id)
-
 
     def delete_notification_plan(self, notification_plan):
         """
@@ -1309,23 +1246,24 @@ class CloudMonitorClient(BaseClient):
 
     @assure_entity
     def create_alarm(self, entity, check, notification_plan, criteria=None,
-            disabled=False, label=None, name=None, metadata=None):
+                     disabled=False, label=None, name=None, metadata=None):
         """
         Creates an alarm that binds the check on the given entity with a
         notification plan.
         """
-        return entity.create_alarm(check, notification_plan, criteria=criteria,
+        return entity.create_alarm(
+            check, notification_plan, criteria=criteria,
             disabled=disabled, label=label, name=name, metadata=metadata)
 
     @assure_entity
     def update_alarm(self, entity, alarm, criteria=None, disabled=False,
-            label=None, name=None, metadata=None):
+                     label=None, name=None, metadata=None):
         """
         Updates an existing alarm on the given entity.
         """
-        return entity.update_alarm(alarm, criteria=criteria, disabled=disabled,
+        return entity.update_alarm(
+            alarm, criteria=criteria, disabled=disabled,
             label=label, name=name, metadata=metadata)
-
 
     @assure_entity
     def list_alarms(self, entity, limit=None, marker=None, return_next=False):
@@ -1333,8 +1271,7 @@ class CloudMonitorClient(BaseClient):
         Returns a list of all the alarms created on the specified entity.
         """
         return entity.list_alarms(limit=limit, marker=marker,
-                return_next=return_next)
-
+                                  return_next=return_next)
 
     @assure_entity
     def get_alarm(self, entity, alarm_id):
@@ -1343,7 +1280,6 @@ class CloudMonitorClient(BaseClient):
         """
         return entity.get_alarm(alarm_id)
 
-
     @assure_entity
     def delete_alarm(self, entity, alarm):
         """
@@ -1351,14 +1287,11 @@ class CloudMonitorClient(BaseClient):
         """
         return entity.delete_alarm(alarm)
 
-
     def list_notification_types(self):
         return self._notification_manager.list_types()
 
-
     def get_notification_type(self, nt_id):
         return self._notification_manager.get_type(nt_id)
-
 
     def list_monitoring_zones(self):
         """
@@ -1366,13 +1299,11 @@ class CloudMonitorClient(BaseClient):
         """
         return self._monitoring_zone_manager.list()
 
-
     def get_monitoring_zone(self, mz_id):
         """
         Returns the monitoring zone for the given ID.
         """
         return self._monitoring_zone_manager.get(mz_id)
-
 
     def get_changelogs(self, entity=None):
         """
@@ -1383,7 +1314,6 @@ class CloudMonitorClient(BaseClient):
         for the specified entity.
         """
         return self._changelog_manager.list(entity=entity)
-
 
     def get_overview(self, entity=None):
         """
@@ -1414,7 +1344,6 @@ class CloudMonitorClient(BaseClient):
 
     def delete_agent_token(self, token):
         self._token_manager.delete(token)
-
 
     #################################################################
     # The following methods are defined in the generic client class,
