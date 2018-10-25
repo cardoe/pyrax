@@ -7,16 +7,13 @@ import logging
 import random
 import unittest
 
-from mock import patch
 from mock import MagicMock as Mock
 
 import pyrax
 import pyrax.utils as utils
 import pyrax.exceptions as exc
-from pyrax import client
 
 from pyrax import fakes
-
 
 
 class HttpTest(unittest.TestCase):
@@ -41,7 +38,7 @@ class HttpTest(unittest.TestCase):
         headers = {hk: hv}
         self.http.request(mthd, uri, headers=headers)
         self.http.req_methods[mthd].assert_called_once_with(uri,
-                headers=headers)
+                                                            headers=headers)
         self.http.req_methods[mthd] = sav_method
 
     def test_request_no_json(self):
@@ -56,12 +53,11 @@ class HttpTest(unittest.TestCase):
         headers = {hk: hv}
         self.http.request(mthd, uri, headers=headers)
         self.http.req_methods[mthd].assert_called_once_with(uri,
-                headers=headers)
+                                                            headers=headers)
         self.http.req_methods[mthd] = sav_method
 
     def test_request_exception(self):
         mthd = random.choice(list(self.http.req_methods.keys()))
-        sav_method = self.http.req_methods[mthd]
         resp = fakes.FakeResponse()
         resp.status_code = 404
         self.http.req_methods[mthd] = Mock(return_value=resp)
@@ -70,7 +66,7 @@ class HttpTest(unittest.TestCase):
         hv = utils.random_unicode()
         headers = {hk: hv}
         self.assertRaises(exc.NotFound, self.http.request, mthd, uri,
-                headers=headers)
+                          headers=headers)
 
     def test_request_data(self):
         mthd = random.choice(list(self.http.req_methods.keys()))
@@ -83,8 +79,8 @@ class HttpTest(unittest.TestCase):
         headers = {hk: hv}
         data = utils.random_unicode()
         self.http.request(mthd, uri, headers=headers, data=data)
-        self.http.req_methods[mthd].assert_called_once_with(uri,
-                headers=headers, data=data)
+        self.http.req_methods[mthd].assert_called_once_with(
+            uri, headers=headers, data=data)
         self.http.req_methods[mthd] = sav_method
 
     def test_request_body(self):
@@ -99,8 +95,8 @@ class HttpTest(unittest.TestCase):
         body = utils.random_unicode()
         jbody = json.dumps(body)
         self.http.request(mthd, uri, headers=headers, body=body)
-        self.http.req_methods[mthd].assert_called_once_with(uri,
-                headers=headers, data=jbody)
+        self.http.req_methods[mthd].assert_called_once_with(
+            uri, headers=headers, data=jbody)
         self.http.req_methods[mthd] = sav_method
 
     def test_http_log_req(self):
