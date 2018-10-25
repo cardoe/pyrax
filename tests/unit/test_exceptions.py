@@ -4,10 +4,6 @@ from __future__ import absolute_import, unicode_literals
 
 import pickle
 import unittest
-
-from mock import MagicMock as Mock
-
-import pyrax.utils as utils
 import pyrax.exceptions as exc
 
 from pyrax import fakes
