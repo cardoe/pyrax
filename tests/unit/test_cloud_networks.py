@@ -2,16 +2,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
-import random
 import unittest
 
-from mock import patch
 from mock import MagicMock as Mock
 
 import pyrax.cloudnetworks
-from pyrax.cloudnetworks import CloudNetwork
 from pyrax.cloudnetworks import CloudNetworkManager
-from pyrax.cloudnetworks import CloudNetworkClient
 from pyrax.cloudnetworks import _get_server_networks
 
 import pyrax.exceptions as exc
@@ -50,7 +46,7 @@ class CloudNetworksTest(unittest.TestCase):
         iso_network = fakes.FakeCloudNetwork()
         iso_id = iso_network.id
         exp = [{"net-id": iso_id}, {"net-id": clt.PUBLIC_NET_ID},
-                {"net-id": clt.SERVICE_NET_ID}]
+               {"net-id": clt.SERVICE_NET_ID}]
         ret = _get_server_networks(iso_network, public=True, private=True)
         self.assertEqual(ret, exp)
 
@@ -62,7 +58,7 @@ class CloudNetworksTest(unittest.TestCase):
         self.assertEqual(ret, [{"net-id": iso_id}])
         ret = clt.get_server_networks(iso_network, private=True)
         self.assertEqual(ret, [{"net-id": iso_id},
-                {"net-id": clt.SERVICE_NET_ID}])
+                               {"net-id": clt.SERVICE_NET_ID}])
 
     def test_get_server_networks_by_network(self):
         clt = self.client
@@ -72,7 +68,7 @@ class CloudNetworksTest(unittest.TestCase):
         self.assertEqual(ret, [{"net-id": iso_id}])
         ret = iso_network.get_server_networks(private=True)
         self.assertEqual(ret, [{"net-id": iso_id},
-                {"net-id": clt.SERVICE_NET_ID}])
+                               {"net-id": clt.SERVICE_NET_ID}])
 
     def test_create_manager(self):
         clt = self.client
@@ -89,9 +85,9 @@ class CloudNetworksTest(unittest.TestCase):
         clt = self.client
         clt._manager.create = Mock(return_value=fakes.FakeCloudNetwork())
         nm = utils.random_unicode()
-        new = clt.create(label=nm, cidr=example_cidr)
+        clt.create(label=nm, cidr=example_cidr)
         clt._manager.create.assert_called_once_with(label=nm, name=None,
-                cidr=example_cidr)
+                                                    cidr=example_cidr)
 
     def test_create_fail_count(self):
         clt = self.client
@@ -100,7 +96,7 @@ class CloudNetworksTest(unittest.TestCase):
         clt._manager.create = Mock(side_effect=err)
         nm = utils.random_unicode()
         self.assertRaises(exc.NetworkCountExceeded, clt.create, label=nm,
-                cidr=example_cidr)
+                          cidr=example_cidr)
 
     def test_create_fail_cidr(self):
         clt = self.client
@@ -109,7 +105,7 @@ class CloudNetworksTest(unittest.TestCase):
         clt._manager.create = Mock(side_effect=err)
         nm = utils.random_unicode()
         self.assertRaises(exc.NetworkCIDRInvalid, clt.create, label=nm,
-                cidr=example_cidr)
+                          cidr=example_cidr)
 
     def test_create_fail_cidr_malformed(self):
         clt = self.client
@@ -118,7 +114,7 @@ class CloudNetworksTest(unittest.TestCase):
         clt._manager.create = Mock(side_effect=err)
         nm = utils.random_unicode()
         self.assertRaises(exc.NetworkCIDRMalformed, clt.create, label=nm,
-                cidr=example_cidr)
+                          cidr=example_cidr)
 
     def test_create_fail_other(self):
         clt = self.client
@@ -127,7 +123,7 @@ class CloudNetworksTest(unittest.TestCase):
         clt._manager.create = Mock(side_effect=err)
         nm = utils.random_unicode()
         self.assertRaises(exc.BadRequest, clt.create, label=nm,
-                cidr=example_cidr)
+                          cidr=example_cidr)
 
     def test_find_network_by_label(self):
         clt = self.client
@@ -145,7 +141,7 @@ class CloudNetworksTest(unittest.TestCase):
         net3 = fakes.FakeCloudNetwork(name="Third")
         clt.list = Mock(return_value=[net1, net2, net3])
         self.assertRaises(exc.NetworkNotFound, clt.find_network_by_label,
-                "Fourth")
+                          "Fourth")
 
     def test_find_network_by_label_multiple(self):
         clt = self.client
@@ -154,10 +150,9 @@ class CloudNetworksTest(unittest.TestCase):
         net3 = fakes.FakeCloudNetwork(name="Third")
         clt.list = Mock(return_value=[net1, net2, net3])
         self.assertRaises(exc.NetworkLabelNotUnique, clt.find_network_by_label,
-                "Third")
+                          "Third")
 
     def test_network_name(self):
-        clt = self.client
         nm = "fake"
         net = fakes.FakeCloudNetwork(name=nm)
         self.assertEqual(net.label, nm)
@@ -166,7 +161,6 @@ class CloudNetworksTest(unittest.TestCase):
         self.assertEqual(net.name, net.label)
 
     def test_delete_network(self):
-        clt = self.client
         nm = "fake"
         net = fakes.FakeCloudNetwork(name=nm)
         net.manager = fakes.FakeManager()
@@ -183,7 +177,6 @@ class CloudNetworksTest(unittest.TestCase):
         clt.method_delete.assert_called_once_with("/os-networksv2/%s" % net.id)
 
     def test_delete_network_fail(self):
-        clt = self.client
         nm = "fake"
         net = fakes.FakeCloudNetwork(name=nm)
         net.manager = fakes.FakeManager()

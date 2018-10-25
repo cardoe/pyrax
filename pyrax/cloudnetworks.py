@@ -40,7 +40,6 @@ def _get_server_networks(network, public=False, private=False, key=None):
     return ret
 
 
-
 class CloudNetwork(BaseResource):
     """
     This represents a network in the cloud. It can be either an isolated
@@ -54,7 +53,6 @@ class CloudNetwork(BaseResource):
     cidr = None
     label = None
 
-
     def _get_name(self):
         return self.label
 
@@ -63,19 +61,16 @@ class CloudNetwork(BaseResource):
 
     name = property(_get_name, _set_name)
 
-
     @property
     def is_isolated(self):
         """Returns True if this is a user-defined network."""
         return self.id not in PSEUDO_NETWORKS
-
 
     def get(self):
         if not self.is_isolated:
             # These are placeholders, not actual networks
             return
         return super(CloudNetwork, self).get()
-
 
     def delete(self):
         """
@@ -84,10 +79,10 @@ class CloudNetwork(BaseResource):
         """
         try:
             return super(CloudNetwork, self).delete()
-        except exc.Forbidden as e:
+        except exc.Forbidden:
             # Network is in use
-            raise exc.NetworkInUse("Cannot delete a network in use by a server.")
-
+            raise exc.NetworkInUse(
+                "Cannot delete a network in use by a server.")
 
     def get_server_networks(self, public=False, private=False, key=None):
         """
@@ -102,8 +97,7 @@ class CloudNetwork(BaseResource):
         networks, you have to pass those parameters in with values of True.
         """
         return _get_server_networks(self, public=public, private=private,
-                key=key)
-
+                                    key=key)
 
 
 class CloudNetworkManager(BaseManager):
@@ -123,7 +117,6 @@ class CloudNetworkManager(BaseManager):
         return body
 
 
-
 class CloudNetworkClient(BaseClient):
     """
     This is the base client for creating and managing Cloud Networks.
@@ -137,14 +130,13 @@ class CloudNetworkClient(BaseClient):
         self.SERVICE_NET_ID = SERVICE_NET_ID
         self.PSEUDO_NETWORKS = PSEUDO_NETWORKS
 
-
     def _configure_manager(self):
         """
         Creates the Manager instance to handle networks.
         """
-        self._manager = CloudNetworkManager(self, resource_class=CloudNetwork,
-                response_key="network", uri_base="os-networksv2")
-
+        self._manager = CloudNetworkManager(
+            self, resource_class=CloudNetwork, response_key="network",
+            uri_base="os-networksv2")
 
     def create(self, label=None, name=None, cidr=None):
         """
@@ -152,21 +144,23 @@ class CloudNetworkClient(BaseClient):
         """
         try:
             return super(CloudNetworkClient, self).create(label=label,
-                    name=name, cidr=cidr)
+                                                          name=name, cidr=cidr)
         except exc.BadRequest as e:
-            msg = e.message
+            msg = str(e)
             if "too many networks" in msg:
-                raise exc.NetworkCountExceeded("Cannot create network; the "
-                        "maximum number of isolated networks already exist.")
+                raise exc.NetworkCountExceeded(
+                    "Cannot create network; the maximum number of isolated "
+                    "networks already exist.")
             elif "does not contain enough" in msg:
-                raise exc.NetworkCIDRInvalid("Networks must contain two or "
-                        "more hosts; the CIDR '%s' is too restrictive." % cidr)
+                raise exc.NetworkCIDRInvalid(
+                    "Networks must contain two or more hosts; the CIDR '%s' "
+                    "is too restrictive." % cidr)
             elif "CIDR is malformed" in msg:
-                raise exc.NetworkCIDRMalformed("The CIDR '%s' is not valid." % cidr)
+                raise exc.NetworkCIDRMalformed(
+                        "The CIDR '%s' is not valid." % cidr)
             else:
                 # Something unexpected
                 raise
-
 
     def delete(self, network):
         """
@@ -175,10 +169,10 @@ class CloudNetworkClient(BaseClient):
         """
         try:
             return super(CloudNetworkClient, self).delete(network)
-        except exc.Forbidden as e:
+        except exc.Forbidden:
             # Network is in use
-            raise exc.NetworkInUse("Cannot delete a network in use by a server.")
-
+            raise exc.NetworkInUse(
+                "Cannot delete a network in use by a server.")
 
     def find_network_by_label(self, label):
         """
@@ -187,20 +181,20 @@ class CloudNetworkClient(BaseClient):
         """
         networks = self.list()
         match = [network for network in networks
-                if network.label == label]
+                 if network.label == label]
         if not match:
-            raise exc.NetworkNotFound("No network with the label '%s' exists" %
-                    label)
+            raise exc.NetworkNotFound(
+                "No network with the label '%s' exists" % label)
         elif len(match) > 1:
-            raise exc.NetworkLabelNotUnique("There were %s matches for the label "
-                    "'%s'." % (len(match), label))
+            raise exc.NetworkLabelNotUnique(
+                "There were %s matches for the label '%s'."
+                % (len(match), label))
         return match[0]
     # Create an alias using 'name'
     find_network_by_name = find_network_by_label
 
-
     def get_server_networks(self, network, public=False, private=False,
-            key=None):
+                            key=None):
         """
         Creates the dict of network UUIDs required by Cloud Servers when
         creating a new server with isolated networks. By default, the UUID
@@ -213,4 +207,4 @@ class CloudNetworkClient(BaseClient):
         networks, you have to pass those parameters in with values of True.
         """
         return _get_server_networks(network, public=public, private=private,
-                key=key)
+                                    key=key)
