@@ -2,17 +2,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
-import random
 import unittest
 
-from mock import patch
 from mock import MagicMock as Mock
 
-from pyrax.cloudloadbalancers import CloudLoadBalancerClient
-from pyrax.cloudloadbalancers import CloudLoadBalancer
 from pyrax.cloudloadbalancers import Node
 from pyrax.cloudloadbalancers import VirtualIP
-from pyrax.cloudloadbalancers import assure_parent
 from pyrax.cloudloadbalancers import assure_loadbalancer
 import pyrax.exceptions as exc
 import pyrax.utils as utils
@@ -40,13 +35,13 @@ class CloudLoadBalancerTest(unittest.TestCase):
 
     def test_assure_parent_succeed(self):
         adopted_node = Node(address="fake", port="fake",
-                parent=fakes.FakeLoadBalancer())
+                            parent=fakes.FakeLoadBalancer())
         diff = "DIFF"
         adopted_node._diff = Mock(return_value=diff)
         adopted_node.parent.update_node = Mock()
         adopted_node.update()
         adopted_node.parent.update_node.assert_called_once_with(adopted_node,
-                diff)
+                                                                diff)
 
     def test_assure_loadbalancer(self):
 
@@ -105,7 +100,8 @@ class CloudLoadBalancerTest(unittest.TestCase):
 
     def test_add_details_nodes(self):
         fake_node_info = {"address": "0.0.0.0", "id": 1, "type": "PRIMARY",
-                "port": 80, "status": "OFFLINE", "condition": "ENABLED"}
+                          "port": 80, "status": "OFFLINE",
+                          "condition": "ENABLED"}
         info = {"nodes": [fake_node_info]}
         lb = fakes.FakeLoadBalancer(name="fake", info=info)
         node = lb.nodes[0]
@@ -113,7 +109,7 @@ class CloudLoadBalancerTest(unittest.TestCase):
 
     def test_add_details_virtualips(self):
         fake_vip_info = {"address": "0.0.0.0", "id": 1, "type": "PUBLIC",
-                "ipVersion": "IPV4"}
+                         "ipVersion": "IPV4"}
         info = {"virtualIps": [fake_vip_info]}
         lb = fakes.FakeLoadBalancer(name="fake", info=info)
         vip = lb.virtual_ips[0]
@@ -123,7 +119,7 @@ class CloudLoadBalancerTest(unittest.TestCase):
         info = {"sessionPersistence": {"persistenceType": "fake"}}
         lb = fakes.FakeLoadBalancer(name="fake", info=info)
         self.assertEqual(lb.sessionPersistence,
-                info["sessionPersistence"]["persistenceType"])
+                         info["sessionPersistence"]["persistenceType"])
 
     def test_add_details_cluster(self):
         info = {"cluster": {"name": "fake"}}
@@ -140,10 +136,10 @@ class CloudLoadBalancerTest(unittest.TestCase):
         timeout = utils.random_unicode()
         httpsRedirect = utils.random_unicode()
         clt.update(lb, name=name, algorithm=algorithm, timeout=timeout,
-                httpsRedirect=httpsRedirect)
-        mgr.update.assert_called_once_with(lb, name=name, algorithm=algorithm,
-                protocol=None, halfClosed=None, port=None, timeout=timeout,
-                httpsRedirect=httpsRedirect)
+                   httpsRedirect=httpsRedirect)
+        mgr.update.assert_called_once_with(
+            lb, name=name, algorithm=algorithm, protocol=None, halfClosed=None,
+            port=None, timeout=timeout, httpsRedirect=httpsRedirect)
 
     def test_lb_update_lb(self):
         lb = self.loadbalancer
@@ -154,10 +150,10 @@ class CloudLoadBalancerTest(unittest.TestCase):
         timeout = utils.random_unicode()
         httpsRedirect = utils.random_unicode()
         lb.update(name=name, algorithm=algorithm, timeout=timeout,
-                httpsRedirect=httpsRedirect)
-        mgr.update.assert_called_once_with(lb, name=name, algorithm=algorithm,
-                protocol=None, halfClosed=None, port=None, timeout=timeout,
-                httpsRedirect=httpsRedirect)
+                  httpsRedirect=httpsRedirect)
+        mgr.update.assert_called_once_with(
+            lb, name=name, algorithm=algorithm, protocol=None, halfClosed=None,
+            port=None, timeout=timeout, httpsRedirect=httpsRedirect)
 
     def test_mgr_update_lb(self):
         lb = self.loadbalancer
@@ -169,7 +165,7 @@ class CloudLoadBalancerTest(unittest.TestCase):
         mgr.update(lb, name=name, algorithm=algorithm, timeout=timeout)
         exp_uri = "/loadbalancers/%s" % lb.id
         exp_body = {"loadBalancer": {"name": name, "algorithm": algorithm,
-                "timeout": timeout}}
+                                     "timeout": timeout}}
         mgr.api.method_put.assert_called_once_with(exp_uri, body=exp_body)
 
     def test_client_delete_node(self):
@@ -230,7 +226,7 @@ class CloudLoadBalancerTest(unittest.TestCase):
         fake_ids = [1, 2, 3]
         clt.delete_access_list_items(lb, fake_ids)
         lb.manager.delete_access_list_items.assert_called_once_with(lb,
-                fake_ids)
+                                                                    fake_ids)
 
     def test_client_get_health_monitor(self):
         clt = self.client
@@ -251,16 +247,16 @@ class CloudLoadBalancerTest(unittest.TestCase):
         fake_statusRegex = ".*fake.*"
         fake_bodyRegex = ".*fake.*"
         fake_hostHeader = "fake"
-        clt.add_health_monitor(lb, type=fake_type, delay=fake_delay,
-                timeout=fake_timeout,
-                attemptsBeforeDeactivation=fake_attemptsBeforeDeactivation,
-                path=fake_path, statusRegex=fake_statusRegex,
-                bodyRegex=fake_bodyRegex, hostHeader=fake_hostHeader)
-        lb.manager.add_health_monitor.assert_called_once_with(lb,
-                type=fake_type, delay=fake_delay, timeout=fake_timeout,
-                attemptsBeforeDeactivation=fake_attemptsBeforeDeactivation,
-                path=fake_path, statusRegex=fake_statusRegex,
-                bodyRegex=fake_bodyRegex, hostHeader=fake_hostHeader)
+        clt.add_health_monitor(
+            lb, type=fake_type, delay=fake_delay, timeout=fake_timeout,
+            attemptsBeforeDeactivation=fake_attemptsBeforeDeactivation,
+            path=fake_path, statusRegex=fake_statusRegex,
+            bodyRegex=fake_bodyRegex, hostHeader=fake_hostHeader)
+        lb.manager.add_health_monitor.assert_called_once_with(
+            lb, type=fake_type, delay=fake_delay, timeout=fake_timeout,
+            attemptsBeforeDeactivation=fake_attemptsBeforeDeactivation,
+            path=fake_path, statusRegex=fake_statusRegex,
+            bodyRegex=fake_bodyRegex, hostHeader=fake_hostHeader)
 
     def test_client_delete_health_monitor(self):
         clt = self.client
@@ -281,21 +277,20 @@ class CloudLoadBalancerTest(unittest.TestCase):
         lb = self.loadbalancer
         lb.manager.add_connection_throttle = Mock()
         fake_maxConnectionRate = 99
-        fake_maxConnections = 99
         fake_minConnections = 99
         fake_rateInterval = 99
         clt.add_connection_throttle(lb)
         self.assertEqual(lb.manager.add_connection_throttle.call_count, 0)
-        clt.add_connection_throttle(lb,
-                maxConnectionRate=fake_maxConnectionRate,
-                maxConnections=fake_minConnections,
-                minConnections=fake_minConnections,
-                rateInterval=fake_rateInterval)
-        lb.manager.add_connection_throttle.assert_called_once_with(lb,
-                maxConnectionRate=fake_maxConnectionRate,
-                maxConnections=fake_minConnections,
-                minConnections=fake_minConnections,
-                rateInterval=fake_rateInterval)
+        clt.add_connection_throttle(
+            lb, maxConnectionRate=fake_maxConnectionRate,
+            maxConnections=fake_minConnections,
+            minConnections=fake_minConnections,
+            rateInterval=fake_rateInterval)
+        lb.manager.add_connection_throttle.assert_called_once_with(
+            lb, maxConnectionRate=fake_maxConnectionRate,
+            maxConnections=fake_minConnections,
+            minConnections=fake_minConnections,
+            rateInterval=fake_rateInterval)
 
     def test_client_delete_connection_throttle(self):
         clt = self.client
@@ -321,15 +316,16 @@ class CloudLoadBalancerTest(unittest.TestCase):
         fake_intermediateCertificate = "fake"
         fake_enabled = True
         fake_secureTrafficOnly = False
-        clt.add_ssl_termination(lb, securePort=fake_securePort,
-                privatekey=fake_privatekey, certificate=fake_certificate,
-                intermediateCertificate=fake_intermediateCertificate,
-                enabled=fake_enabled, secureTrafficOnly=fake_secureTrafficOnly)
-        lb.manager.add_ssl_termination.assert_called_once_with(lb,
-                securePort=fake_securePort, privatekey=fake_privatekey,
-                certificate=fake_certificate,
-                intermediateCertificate=fake_intermediateCertificate,
-                enabled=fake_enabled, secureTrafficOnly=fake_secureTrafficOnly)
+        clt.add_ssl_termination(
+            lb, securePort=fake_securePort, privatekey=fake_privatekey,
+            certificate=fake_certificate,
+            intermediateCertificate=fake_intermediateCertificate,
+            enabled=fake_enabled, secureTrafficOnly=fake_secureTrafficOnly)
+        lb.manager.add_ssl_termination.assert_called_once_with(
+            lb, securePort=fake_securePort, privatekey=fake_privatekey,
+            certificate=fake_certificate,
+            intermediateCertificate=fake_intermediateCertificate,
+            enabled=fake_enabled, secureTrafficOnly=fake_secureTrafficOnly)
 
     def test_client_update_ssl_termination(self):
         clt = self.client
@@ -338,11 +334,12 @@ class CloudLoadBalancerTest(unittest.TestCase):
         fake_securePort = 99
         fake_enabled = True
         fake_secureTrafficOnly = False
-        clt.update_ssl_termination(lb, securePort=fake_securePort,
-                enabled=fake_enabled, secureTrafficOnly=fake_secureTrafficOnly)
-        lb.manager.update_ssl_termination.assert_called_once_with(lb,
-                securePort=fake_securePort, enabled=fake_enabled,
-                secureTrafficOnly=fake_secureTrafficOnly)
+        clt.update_ssl_termination(
+            lb, securePort=fake_securePort, enabled=fake_enabled,
+            secureTrafficOnly=fake_secureTrafficOnly)
+        lb.manager.update_ssl_termination.assert_called_once_with(
+            lb, securePort=fake_securePort, enabled=fake_enabled,
+            secureTrafficOnly=fake_secureTrafficOnly)
 
     def test_client_delete_ssl_termination(self):
         clt = self.client
@@ -416,7 +413,7 @@ class CloudLoadBalancerTest(unittest.TestCase):
         keys = [1, 2, 3]
         clt.delete_metadata_for_node(lb, nd, keys=keys)
         lb.manager.delete_metadata.assert_called_once_with(lb, node=nd,
-                keys=keys)
+                                                           keys=keys)
 
     def test_client_get_error_page(self):
         clt = self.client
@@ -480,15 +477,15 @@ class CloudLoadBalancerTest(unittest.TestCase):
         lb = self.loadbalancer
         lb.manager.set_session_persistence = Mock()
         self.assertRaises(exc.InvalidSessionPersistenceType,
-                clt.set_session_persistence, lb, "BAD")
+                          clt.set_session_persistence, lb, "BAD")
 
     def test_client_set_session_persistence(self):
         clt = self.client
         lb = self.loadbalancer
         lb.manager.set_session_persistence = Mock()
         clt.set_session_persistence(lb, "HTTP_COOKIE")
-        lb.manager.set_session_persistence.assert_called_once_with(lb,
-                "HTTP_COOKIE")
+        lb.manager.set_session_persistence.assert_called_once_with(
+            lb, "HTTP_COOKIE")
 
     def test_client_clear_session_persistence(self):
         clt = self.client
@@ -506,7 +503,7 @@ class CloudLoadBalancerTest(unittest.TestCase):
         uri = "/loadbalancers/%s/nodes" % lb.id
         ndict = nd.to_dict()
         mgr.api.method_post.assert_called_once_with(uri,
-                body={"nodes": [ndict]})
+                                                    body={"nodes": [ndict]})
 
     def test_mgr_delete_node(self):
         lb = self.loadbalancer
@@ -567,7 +564,7 @@ class CloudLoadBalancerTest(unittest.TestCase):
         mgr.api.method_put = Mock(return_value=({}, {}))
         vip = fakes.FakeVirtualIP()
         self.assertRaises(exc.UnattachedVirtualIP, mgr.delete_virtualip, lb,
-                vip)
+                          vip)
 
     def test_mgr_get_access_list(self):
         lb = self.loadbalancer
@@ -614,7 +611,7 @@ class CloudLoadBalancerTest(unittest.TestCase):
         acc_ids = [{"id": 1}, {"id": 2}, {"id": 3}]
         mgr.get_access_list = Mock(return_value=acc_ids)
         self.assertRaises(exc.AccessListIDNotFound,
-                mgr.delete_access_list_items, lb, ids)
+                          mgr.delete_access_list_items, lb, ids)
 
     def test_mgr_get_health_monitor(self):
         lb = self.loadbalancer
@@ -637,11 +634,11 @@ class CloudLoadBalancerTest(unittest.TestCase):
         fake_bodyRegex = ".*fake.*"
         fake_hostHeader = "fake"
         lb.protocol = fake_type
-        mgr.add_health_monitor(lb, type=fake_type, delay=fake_delay,
-                timeout=fake_timeout,
-                attemptsBeforeDeactivation=fake_attemptsBeforeDeactivation,
-                path=fake_path, statusRegex=fake_statusRegex,
-                bodyRegex=fake_bodyRegex, hostHeader=fake_hostHeader)
+        mgr.add_health_monitor(
+            lb, type=fake_type, delay=fake_delay, timeout=fake_timeout,
+            attemptsBeforeDeactivation=fake_attemptsBeforeDeactivation,
+            path=fake_path, statusRegex=fake_statusRegex,
+            bodyRegex=fake_bodyRegex, hostHeader=fake_hostHeader)
         uri = "/loadbalancers/%s/healthmonitor" % lb.id
         req_body = {"healthMonitor": {
                 "type": fake_type,
@@ -668,11 +665,12 @@ class CloudLoadBalancerTest(unittest.TestCase):
         fake_bodyRegex = ".*fake.*"
         fake_hostHeader = "fake"
         lb.protocol = "BAD"
-        self.assertRaises(exc.ProtocolMismatch, mgr.add_health_monitor, lb,
-                type=fake_type, delay=fake_delay, timeout=fake_timeout,
-                attemptsBeforeDeactivation=fake_attemptsBeforeDeactivation,
-                path=fake_path, statusRegex=fake_statusRegex,
-                bodyRegex=fake_bodyRegex, hostHeader=fake_hostHeader)
+        self.assertRaises(
+            exc.ProtocolMismatch, mgr.add_health_monitor, lb,
+            type=fake_type, delay=fake_delay, timeout=fake_timeout,
+            attemptsBeforeDeactivation=fake_attemptsBeforeDeactivation,
+            path=fake_path, statusRegex=fake_statusRegex,
+            bodyRegex=fake_bodyRegex, hostHeader=fake_hostHeader)
 
     def test_mgr_add_health_monitor_missing_cert(self):
         lb = self.loadbalancer
@@ -687,12 +685,12 @@ class CloudLoadBalancerTest(unittest.TestCase):
         fake_bodyRegex = None
         fake_hostHeader = "fake"
         lb.protocol = fake_type
-        self.assertRaises(exc.MissingHealthMonitorSettings,
-                mgr.add_health_monitor, lb, type=fake_type, delay=fake_delay,
-                timeout=fake_timeout,
-                attemptsBeforeDeactivation=fake_attemptsBeforeDeactivation,
-                path=fake_path, statusRegex=fake_statusRegex,
-                bodyRegex=fake_bodyRegex, hostHeader=fake_hostHeader)
+        self.assertRaises(
+            exc.MissingHealthMonitorSettings, mgr.add_health_monitor, lb,
+            type=fake_type, delay=fake_delay, timeout=fake_timeout,
+            attemptsBeforeDeactivation=fake_attemptsBeforeDeactivation,
+            path=fake_path, statusRegex=fake_statusRegex,
+            bodyRegex=fake_bodyRegex, hostHeader=fake_hostHeader)
 
     def test_mgr_delete_health_monitor(self):
         lb = self.loadbalancer
@@ -715,14 +713,13 @@ class CloudLoadBalancerTest(unittest.TestCase):
         mgr = lb.manager
         mgr.api.method_put = Mock(return_value=({}, {}))
         fake_maxConnectionRate = 99
-        fake_maxConnections = 99
         fake_minConnections = 99
         fake_rateInterval = 99
-        mgr.add_connection_throttle(lb,
-                maxConnectionRate=fake_maxConnectionRate,
-                maxConnections=fake_minConnections,
-                minConnections=fake_minConnections,
-                rateInterval=fake_rateInterval)
+        mgr.add_connection_throttle(
+            lb, maxConnectionRate=fake_maxConnectionRate,
+            maxConnections=fake_minConnections,
+            minConnections=fake_minConnections,
+            rateInterval=fake_rateInterval)
         uri = "/loadbalancers/%s/connectionthrottle" % lb.id
         req_body = {"connectionThrottle": {
                 "maxConnectionRate": fake_maxConnectionRate,
@@ -765,10 +762,11 @@ class CloudLoadBalancerTest(unittest.TestCase):
         fake_intermediateCertificate = "fake"
         fake_enabled = True
         fake_secureTrafficOnly = False
-        mgr.add_ssl_termination(lb, securePort=fake_securePort,
-                privatekey=fake_privatekey, certificate=fake_certificate,
-                intermediateCertificate=fake_intermediateCertificate,
-                enabled=fake_enabled, secureTrafficOnly=fake_secureTrafficOnly)
+        mgr.add_ssl_termination(
+            lb, securePort=fake_securePort, privatekey=fake_privatekey,
+            certificate=fake_certificate,
+            intermediateCertificate=fake_intermediateCertificate,
+            enabled=fake_enabled, secureTrafficOnly=fake_secureTrafficOnly)
         uri = "/loadbalancers/%s/ssltermination" % lb.id
         req_body = {"sslTermination": {
                 "certificate": fake_certificate,
@@ -785,7 +783,7 @@ class CloudLoadBalancerTest(unittest.TestCase):
         mgr = lb.manager
         mgr.get_ssl_termination = Mock(return_value=None)
         self.assertRaises(exc.NoSSLTerminationConfiguration,
-                mgr.update_ssl_termination, lb)
+                          mgr.update_ssl_termination, lb)
 
     def test_mgr_update_ssl_termination(self):
         lb = self.loadbalancer
@@ -795,8 +793,8 @@ class CloudLoadBalancerTest(unittest.TestCase):
         fake_enabled = True
         fake_secureTrafficOnly = False
         fake_config = {"securePort": fake_securePort,
-                "enabled": fake_enabled,
-                "secureTrafficOnly": fake_secureTrafficOnly}
+                       "enabled": fake_enabled,
+                       "secureTrafficOnly": fake_secureTrafficOnly}
         mgr.get_ssl_termination = Mock(return_value=fake_config)
 
         mgr.update_ssl_termination(lb)
@@ -822,7 +820,7 @@ class CloudLoadBalancerTest(unittest.TestCase):
         fake_meta = {"fakekey": "fakeval"}
         fake_screwy_meta = [{"key": "fakekey", "value": "fakeval", "id": 1}]
         mgr.api.method_get = Mock(return_value=({},
-                {"metadata": fake_screwy_meta}))
+                                  {"metadata": fake_screwy_meta}))
         ret = mgr.get_metadata(lb)
         uri = "/loadbalancers/%s/metadata" % lb.id
         mgr.api.method_get.assert_called_once_with(uri)
@@ -834,7 +832,7 @@ class CloudLoadBalancerTest(unittest.TestCase):
         fake_meta = {"fakekey": "fakeval"}
         fake_screwy_meta = [{"key": "fakekey", "value": "fakeval", "id": 1}]
         mgr.api.method_get = Mock(return_value=({},
-                {"metadata": fake_screwy_meta}))
+                                  {"metadata": fake_screwy_meta}))
         nd = fakes.FakeNode()
         ret = mgr.get_metadata(lb, node=nd)
         uri = "/loadbalancers/%s/nodes/%s/metadata" % (lb.id, nd.id)
@@ -844,10 +842,9 @@ class CloudLoadBalancerTest(unittest.TestCase):
     def test_mgr_get_metadata_raw(self):
         lb = self.loadbalancer
         mgr = lb.manager
-        fake_meta = {"fakekey": "fakeval"}
         fake_screwy_meta = [{"key": "fakekey", "value": "fakeval", "id": 1}]
         mgr.api.method_get = Mock(return_value=({},
-                {"metadata": fake_screwy_meta}))
+                                  {"metadata": fake_screwy_meta}))
         ret = mgr.get_metadata(lb, raw=True)
         uri = "/loadbalancers/%s/metadata" % lb.id
         mgr.api.method_get.assert_called_once_with(uri)
@@ -860,7 +857,7 @@ class CloudLoadBalancerTest(unittest.TestCase):
         fake_meta = {"fakekey": "fakeval"}
         fake_screwy_meta = [{"key": "fakekey", "value": "fakeval"}]
         mgr.api.method_post = Mock(return_value=({},
-                {"metadata": fake_screwy_meta}))
+                                   {"metadata": fake_screwy_meta}))
         mgr.set_metadata(lb, fake_meta)
         uri = "/loadbalancers/%s/metadata" % lb.id
         req_body = {"metadata": fake_screwy_meta}
@@ -873,7 +870,7 @@ class CloudLoadBalancerTest(unittest.TestCase):
         fake_meta = {"fakekey": "fakeval"}
         fake_screwy_meta = [{"key": "fakekey", "value": "fakeval"}]
         mgr.api.method_post = Mock(return_value=({},
-                {"metadata": fake_screwy_meta}))
+                                   {"metadata": fake_screwy_meta}))
         nd = fakes.FakeNode()
         mgr.set_metadata(lb, fake_meta, node=nd)
         uri = "/loadbalancers/%s/nodes/%s/metadata" % (lb.id, nd.id)
@@ -883,10 +880,8 @@ class CloudLoadBalancerTest(unittest.TestCase):
     def test_mgr_update_metadata(self):
         lb = self.loadbalancer
         mgr = lb.manager
-        fake_meta = {"fakekey": "fakeval"}
         fake_screwy_meta = [{"key": "fakekey", "value": "fakeval", "id": 1}]
         fake_new_meta = {"fakekey": "updated", "fakeNEWkey": "fakeNEWval"}
-        fake_screwy_upd_meta = [{"key": "fakekey", "value": "updated"}]
         fake_screwy_new_meta = [{"key": "fakeNEWkey", "value": "fakeNEWval"}]
         mgr.get_metadata = Mock(return_value=fake_screwy_meta)
         mgr.api.method_post = Mock(return_value=({}, {}))
@@ -902,10 +897,8 @@ class CloudLoadBalancerTest(unittest.TestCase):
         lb = self.loadbalancer
         mgr = lb.manager
         nd = fakes.FakeNode()
-        fake_meta = {"fakekey": "fakeval"}
         fake_screwy_meta = [{"key": "fakekey", "value": "fakeval", "id": 1}]
         fake_new_meta = {"fakekey": "updated", "fakeNEWkey": "fakeNEWval"}
-        fake_screwy_upd_meta = [{"key": "fakekey", "value": "updated"}]
         fake_screwy_new_meta = [{"key": "fakeNEWkey", "value": "fakeNEWval"}]
         mgr.get_metadata = Mock(return_value=fake_screwy_meta)
         mgr.api.method_post = Mock(return_value=({}, {}))
@@ -921,7 +914,6 @@ class CloudLoadBalancerTest(unittest.TestCase):
     def test_mgr_delete_metadata(self):
         lb = self.loadbalancer
         mgr = lb.manager
-        fake_meta = {"fakekey": "fakeval"}
         fake_screwy_meta = [{"key": "fakekey", "value": "fakeval", "id": 1}]
         fake_meta_key = fake_screwy_meta[0]["key"]
         fake_meta_id = fake_screwy_meta[0]["id"]
@@ -938,7 +930,6 @@ class CloudLoadBalancerTest(unittest.TestCase):
         lb = self.loadbalancer
         mgr = lb.manager
         nd = fakes.FakeNode()
-        fake_meta = {"fakekey": "fakeval"}
         fake_screwy_meta = [{"key": "fakekey", "value": "fakeval", "id": 1}]
         fake_meta_key = fake_screwy_meta[0]["key"]
         fake_meta_id = fake_screwy_meta[0]["id"]
@@ -949,7 +940,7 @@ class CloudLoadBalancerTest(unittest.TestCase):
         self.assertEqual(mgr.api.method_delete.call_count, 0)
         mgr.delete_metadata(lb, keys=fake_meta_key, node=nd)
         uri = "/loadbalancers/%s/nodes/%s/metadata?id=%s" % (lb.id, nd.id,
-                fake_meta_id)
+                                                             fake_meta_id)
         mgr.api.method_delete.assert_called_once_with(uri)
 
     def test_mgr_get_error_page(self):
@@ -1004,7 +995,7 @@ class CloudLoadBalancerTest(unittest.TestCase):
         end_iso = "2000-01-01T00:00:00"
         mgr.get_usage(start=start, end=end)
         uri = "/loadbalancers/usage?startTime=%s&endTime=%s" % (start_iso,
-                end_iso)
+                                                                end_iso)
         mgr.api.method_get.assert_called_once_with(uri)
 
     def test_mgr_get_stats(self):
@@ -1098,11 +1089,11 @@ class CloudLoadBalancerTest(unittest.TestCase):
     def test_node_to_dict(self):
         nd = fakes.FakeNode()
         expected = {"address": nd.address,
-                "port": nd.port,
-                "condition": nd.condition,
-                "type": nd.type,
-                "id": nd.id,
-                }
+                    "port": nd.port,
+                    "condition": nd.condition,
+                    "type": nd.type,
+                    "id": nd.id,
+                    }
         self.assertEqual(nd.to_dict(), expected)
 
     def test_node_delete(self):
@@ -1134,7 +1125,7 @@ class CloudLoadBalancerTest(unittest.TestCase):
 
     def test_vip_bad_ip_version(self):
         self.assertRaises(exc.InvalidVirtualIPVersion, VirtualIP,
-                ipVersion="FAKE")
+                          ipVersion="FAKE")
 
     def test_vip_repr(self):
         vip = fakes.FakeVirtualIP(address="1.2.3.4")
@@ -1145,10 +1136,10 @@ class CloudLoadBalancerTest(unittest.TestCase):
         vip = fakes.FakeVirtualIP(id="fake_id")
         self.assertEqual(vip.to_dict(), {"id": "fake_id"})
 
-    def test_vip_to_dict(self):
+    def test_vip_to_dict2(self):
         vip = fakes.FakeVirtualIP()
         expected = {"type": vip.type,
-                "ipVersion": vip.ip_version}
+                    "ipVersion": vip.ip_version}
         self.assertEqual(vip.to_dict(), expected)
 
     def test_vip_delete(self):
@@ -1194,7 +1185,8 @@ class CloudLoadBalancerTest(unittest.TestCase):
                 "sessionPersistence": fake_sessionPersistence,
                 "httpsRedirect": fake_httpsRedirect,
                 }}
-        ret = mgr._create_body(fake_name, port=fake_port,
+        ret = mgr._create_body(
+                fake_name, port=fake_port,
                 protocol=fake_protocol, nodes=fake_nodes,
                 virtual_ips=fake_virtual_ips, algorithm=fake_algorithm,
                 accessList=fake_accessList,
@@ -1227,7 +1219,8 @@ class CloudLoadBalancerTest(unittest.TestCase):
         fake_timeout = 42
         fake_sessionPersistence = True
         fake_httpsRedirect = True
-        self.assertRaises(exc.InvalidNodeCondition, mgr._create_body,
+        self.assertRaises(
+                exc.InvalidNodeCondition, mgr._create_body,
                 fake_name, port=fake_port, protocol=fake_protocol,
                 nodes=fake_nodes, virtual_ips=fake_virtual_ips,
                 algorithm=fake_algorithm, accessList=fake_accessList,
@@ -1242,7 +1235,6 @@ class CloudLoadBalancerTest(unittest.TestCase):
     def test_missing_lb_parameters(self):
         mgr = self.client._manager
         nd = fakes.FakeNode()
-        vip = fakes.FakeVirtualIP()
         fake_name = "FAKE"
         fake_port = 999
         fake_protocol = "FAKE"
@@ -1258,7 +1250,8 @@ class CloudLoadBalancerTest(unittest.TestCase):
         fake_timeout = 42
         fake_sessionPersistence = True
         fake_httpsRedirect = True
-        self.assertRaises(exc.MissingLoadBalancerParameters, mgr._create_body,
+        self.assertRaises(
+                exc.MissingLoadBalancerParameters, mgr._create_body,
                 fake_name, port=fake_port, protocol=fake_protocol,
                 nodes=fake_nodes, virtual_ips=fake_virtual_ips,
                 algorithm=fake_algorithm, accessList=fake_accessList,
@@ -1276,13 +1269,13 @@ class CloudLoadBalancerTest(unittest.TestCase):
         clt._manager.get_usage = Mock()
         clt.get_usage(lb)
         clt._manager.get_usage.assert_called_once_with(loadbalancer=lb,
-                start=None, end=None)
+                                                       start=None, end=None)
 
     def test_client_allowed_domains(self):
         clt = self.client
         fake_name = utils.random_unicode()
-        fake_body = {"allowedDomains": [{"allowedDomain":
-                {"name": fake_name}}]}
+        fake_body = {"allowedDomains":
+                     [{"allowedDomain": {"name": fake_name}}]}
         clt.method_get = Mock(return_value=({}, fake_body))
         ret = clt.allowed_domains
         self.assertEqual(ret, [fake_name])
