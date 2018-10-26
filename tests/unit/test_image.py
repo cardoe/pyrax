@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
-import os
 import random
 import unittest
 
@@ -11,12 +10,9 @@ from mock import MagicMock as Mock
 
 from collections import OrderedDict
 
-import pyrax
 from pyrax.manager import BaseManager
-import pyrax.image
 from pyrax.image import assure_image
 from pyrax.image import ImageMember
-from pyrax.image import ImageTasksManager
 from pyrax.image import JSONSchemaManager
 
 import pyrax.exceptions as exc
@@ -89,8 +85,8 @@ class ImageTest(unittest.TestCase):
         project_id = utils.random_unicode()
         img._member_manager.create = Mock()
         img.add_member(project_id)
-        img._member_manager.create.assert_called_once_with(name=None,
-                project_id=project_id)
+        img._member_manager.create.assert_called_once_with(
+            name=None, project_id=project_id)
 
     def test_img_delete_member(self):
         img = self.image
@@ -155,9 +151,9 @@ class ImageTest(unittest.TestCase):
         utils.dict_to_qs = Mock(return_value=qs)
         expected = "/%s?%s" % (mgr.uri_base, qs)
         mgr.list(limit=limit, marker=marker, name=name, visibility=visibility,
-                member_status=member_status, owner=owner, tag=tag,
-                status=status, size_min=size_min, size_max=size_max,
-                sort_key=sort_key, sort_dir=sort_dir, return_raw=return_raw)
+                 member_status=member_status, owner=owner, tag=tag,
+                 status=status, size_min=size_min, size_max=size_max,
+                 sort_key=sort_key, sort_dir=sort_dir, return_raw=return_raw)
         mgr._list.assert_called_once_with(expected, return_raw=return_raw)
         utils.dict_to_qs = sav
 
@@ -165,16 +161,17 @@ class ImageTest(unittest.TestCase):
         clt = self.client
         mgr = clt._manager
         next_link = "/images?marker=00000000-0000-0000-0000-0000000000"
-        fake_body = {"images": [{"name": "fake1"}], "next": "/v2%s" % next_link}
+        fake_body = {"images": [{"name": "fake1"}],
+                     "next": "/v2%s" % next_link}
         mgr.list = Mock(return_value=(None, fake_body))
         fake_last_body = {"images": [{"name": "fake2"}], "next": ""}
         mgr.api.method_get = Mock(return_value=(None, fake_last_body))
         ret = mgr.list_all()
         self.assertEqual(len(ret), 2)
-        mgr.list.assert_called_once_with(name=None, visibility=None,
-                member_status=None, owner=None, tag=None, status=None,
-                size_min=None, size_max=None, sort_key=None, sort_dir=None,
-                return_raw=True)
+        mgr.list.assert_called_once_with(
+            name=None, visibility=None, member_status=None, owner=None,
+            tag=None, status=None, size_min=None, size_max=None, sort_key=None,
+            sort_dir=None, return_raw=True)
         mgr.api.method_get.assert_called_once_with(next_link)
 
     def test_imgmgr_update(self):
@@ -187,12 +184,12 @@ class ImageTest(unittest.TestCase):
         mgr.get = Mock(return_value=img)
         exp_uri = "/%s/%s" % (mgr.uri_base, img.id)
         exp_body = [{"op": "replace", "path": "/foo", "value": "new"},
-                {"op": "add", "path": "/bar", "value": "new"}]
+                    {"op": "add", "path": "/bar", "value": "new"}]
         exp_hdrs = {"Content-Type":
-                "application/openstack-images-v2.1-json-patch"}
+                    "application/openstack-images-v2.1-json-patch"}
         mgr.update(img, valdict)
-        mgr.api.method_patch.assert_called_once_with(exp_uri, body=exp_body,
-                headers=exp_hdrs)
+        mgr.api.method_patch.assert_called_once_with(
+            exp_uri, body=exp_body, headers=exp_hdrs)
 
     def test_imgmgr_update_member(self):
         clt = self.client
@@ -212,8 +209,8 @@ class ImageTest(unittest.TestCase):
         mgr = clt._manager
         img = self.image
         bad_status = "BAD"
-        self.assertRaises(exc.InvalidImageMemberStatus, mgr.update_image_member,
-                img.id, bad_status)
+        self.assertRaises(exc.InvalidImageMemberStatus,
+                          mgr.update_image_member, img.id, bad_status)
 
     def test_imgmgr_update_member_not_found(self):
         clt = self.client
@@ -222,11 +219,9 @@ class ImageTest(unittest.TestCase):
         status = random.choice(("pending", "accepted", "rejected"))
         project_id = utils.random_unicode()
         clt.identity.tenant_id = project_id
-        exp_uri = "/%s/%s/members/%s" % (mgr.uri_base, img.id, project_id)
-        exp_body = {"status": status}
         mgr.api.method_put = Mock(side_effect=exc.NotFound(""))
         self.assertRaises(exc.InvalidImageMember, mgr.update_image_member,
-                img.id, status)
+                          img.id, status)
 
     def test_img_member_mgr_create_body(self):
         img = self.image
@@ -292,7 +287,7 @@ class ImageTest(unittest.TestCase):
         img_name = utils.random_unicode()
         name = "export"
         ret = mgr._create_body(name, img=img, cont=cont, img_format=img_format,
-                img_name=img_name)
+                               img_name=img_name)
         exp = {"type": name, "input": {
                 "image_uuid": img.id,
                 "receiving_swift_container": cont}}
@@ -307,7 +302,7 @@ class ImageTest(unittest.TestCase):
         img_name = utils.random_unicode()
         name = "import"
         ret = mgr._create_body(name, img=img, cont=cont, img_format=img_format,
-                img_name=img_name)
+                               img_name=img_name)
         exp = {"type": name, "input": {
                 "image_properties": {"name": img_name},
                 "import_from": "%s/%s" % (cont, img.id),
@@ -399,22 +394,24 @@ class ImageTest(unittest.TestCase):
         sort_dir = utils.random_unicode()
         mgr.list = Mock()
         clt.list(limit=limit, marker=marker, name=name, visibility=visibility,
-                member_status=member_status, owner=owner, tag=tag,
-                status=status, size_min=size_min, size_max=size_max,
-                sort_key=sort_key, sort_dir=sort_dir)
-        mgr.list.assert_called_once_with(limit=limit, marker=marker, name=name,
-                visibility=visibility, member_status=member_status,
-                owner=owner, tag=tag, status=status, size_min=size_min,
-                size_max=size_max, sort_key=sort_key, sort_dir=sort_dir)
+                 member_status=member_status, owner=owner, tag=tag,
+                 status=status, size_min=size_min, size_max=size_max,
+                 sort_key=sort_key, sort_dir=sort_dir)
+        mgr.list.assert_called_once_with(
+            limit=limit, marker=marker, name=name, visibility=visibility,
+            member_status=member_status, owner=owner, tag=tag, status=status,
+            size_min=size_min, size_max=size_max, sort_key=sort_key,
+            sort_dir=sort_dir)
 
     def test_clt_list_all(self):
         clt = self.client
         mgr = clt._manager
         mgr.list_all = Mock()
         clt.list_all()
-        mgr.list_all.assert_called_once_with(name=None, visibility=None,
-                member_status=None, owner=None, tag=None, status=None,
-                size_min=None, size_max=None, sort_key=None, sort_dir=None)
+        mgr.list_all.assert_called_once_with(
+            name=None, visibility=None, member_status=None, owner=None,
+            tag=None, status=None, size_min=None, size_max=None, sort_key=None,
+            sort_dir=None)
 
     def test_clt_update(self):
         clt = self.client
@@ -429,7 +426,6 @@ class ImageTest(unittest.TestCase):
 
     def test_clt_change_image_name(self):
         clt = self.client
-        mgr = clt._manager
         img = self.image
         nm = utils.random_unicode()
         clt.update = Mock()
@@ -525,8 +521,9 @@ class ImageTest(unittest.TestCase):
         img_name = utils.random_unicode()
         mgr.create = Mock()
         clt.import_task(img, cont, img_format=img_format, img_name=img_name)
-        mgr.create.assert_called_once_with("import", img=img, cont=cont,
-                img_format=img_format, img_name=img_name)
+        mgr.create.assert_called_once_with(
+            "import", img=img, cont=cont, img_format=img_format,
+            img_name=img_name)
 
     def test_clt_get_images_schema(self):
         clt = self.client
@@ -569,9 +566,6 @@ class ImageTest(unittest.TestCase):
         mgr.image_task = Mock()
         clt.get_image_task_schema()
         mgr.image_task.assert_called_once_with()
-
-
-
 
 
 if __name__ == "__main__":

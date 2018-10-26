@@ -19,7 +19,6 @@ from __future__ import absolute_import, unicode_literals
 
 from functools import wraps
 
-import pyrax
 from pyrax.object_storage import StorageObject
 from pyrax.client import BaseClient
 import pyrax.exceptions as exc
@@ -44,24 +43,22 @@ def assure_image(fnc):
     return _wrapped
 
 
-
 class Image(BaseResource):
     """
     This class represents an Image.
     """
     def __init__(self, manager, info, key=None, loaded=False,
-            member_manager_class=None, tag_manager_class=None):
+                 member_manager_class=None, tag_manager_class=None):
         super(Image, self).__init__(manager, info, key=key, loaded=loaded)
         member_manager_class = member_manager_class or ImageMemberManager
         tag_manager_class = tag_manager_class or ImageTagManager
-        self._member_manager = member_manager_class(self.manager.api,
-                resource_class=ImageMember, response_key="",
-                plural_response_key="members", uri_base="images/%s/members" %
-                self.id)
-        self._tag_manager = tag_manager_class(self.manager.api,
-                resource_class=ImageTag, response_key="",
-                plural_response_key="tags", uri_base="images/%s/tags" %
-                self.id)
+        self._member_manager = member_manager_class(
+            self.manager.api, resource_class=ImageMember, response_key="",
+            plural_response_key="members", uri_base="images/%s/members" %
+            self.id)
+        self._tag_manager = tag_manager_class(
+            self.manager.api, resource_class=ImageTag, response_key="",
+            plural_response_key="tags", uri_base="images/%s/tags" % self.id)
         self._non_display = [
                 "com.rackspace__1__build_core",
                 "com.rackspace__1__build_managed",
@@ -97,7 +94,6 @@ class Image(BaseResource):
                 "self",
                 ]
 
-
     def update(self, value_dict):
         """
         Accepts a and dictionary of key/value pairs, where the key is an
@@ -106,7 +102,6 @@ class Image(BaseResource):
         """
         return self.manager.update(self, value_dict)
 
-
     def change_name(self, newname):
         """
         Image name can be changed via the update() method. This is simply a
@@ -114,20 +109,17 @@ class Image(BaseResource):
         """
         return self.update({"name": newname})
 
-
     def list_members(self):
         """
         Returns a list of all Members for this image.
         """
         return self._member_manager.list()
 
-
     def get_member(self, member):
         """
         Returns the ImageMember object representing the specified member
         """
         return self._member_manager.get(member)
-
 
     def add_member(self, project_id):
         """
@@ -136,7 +128,6 @@ class Image(BaseResource):
         """
         return self._member_manager.create(name=None, project_id=project_id)
 
-
     def delete_member(self, project_id):
         """
         Removes the project (tenant) represented by the project_id as a member
@@ -144,20 +135,17 @@ class Image(BaseResource):
         """
         return self._member_manager.delete(project_id)
 
-
     def add_tag(self, tag):
         """
         Adds the tag to this image.
         """
         return self._tag_manager.add(tag)
 
-
     def delete_tag(self, tag):
         """
         Deletes the tag from this image.
         """
         return self._tag_manager.delete(tag)
-
 
 
 class ImageMember(BaseResource):
@@ -169,7 +157,6 @@ class ImageMember(BaseResource):
         return self.member_id
 
 
-
 class ImageTag(BaseResource):
     """
     This class represents a tag for an Image.
@@ -177,13 +164,11 @@ class ImageTag(BaseResource):
     pass
 
 
-
 class ImageTask(BaseResource):
     """
     This class represents a ImageTask.
     """
     pass
-
 
 
 class ImageManager(BaseManager):
@@ -200,31 +185,31 @@ class ImageManager(BaseManager):
             body = {"metadata": metadata}
         return body
 
-
     def list(self, limit=None, marker=None, name=None, visibility=None,
-            member_status=None, owner=None, tag=None, status=None,
-            size_min=None, size_max=None, sort_key=None, sort_dir=None,
-            return_raw=False):
+             member_status=None, owner=None, tag=None, status=None,
+             size_min=None, size_max=None, sort_key=None, sort_dir=None,
+             return_raw=False):
         """
         Returns a list of resource objects. Pagination is supported through the
         optional 'marker' and 'limit' parameters. Filtering the returned value
         is possible by specifying values for any of the other parameters.
         """
         uri = "/%s" % self.uri_base
-        qs = utils.dict_to_qs(dict(limit=limit, marker=marker, name=name,
-                visibility=visibility, member_status=member_status,
-                owner=owner, tag=tag, status=status, size_min=size_min,
-                size_max=size_max, sort_key=sort_key, sort_dir=sort_dir))
+        qs = utils.dict_to_qs(
+            dict(limit=limit, marker=marker, name=name, visibility=visibility,
+                 member_status=member_status, owner=owner, tag=tag,
+                 status=status, size_min=size_min, size_max=size_max,
+                 sort_key=sort_key, sort_dir=sort_dir))
         if qs:
             uri = "%s?%s" % (uri, qs)
         return self._list(uri, return_raw=return_raw)
 
-
-    def list_all(self, name=None, visibility=None, member_status=None,
+    def list_all(
+            self, name=None, visibility=None, member_status=None,
             owner=None, tag=None, status=None, size_min=None, size_max=None,
             sort_key=None, sort_dir=None):
         """
-        Returns all of the images in one call, rather than in paginated batches.
+        Returns all of the images in one call, rather than in paginated batches
         """
 
         def strip_version(uri):
@@ -236,10 +221,11 @@ class ImageManager(BaseManager):
             return uri[pos:]
 
         obj_class = self.resource_class
-        resp, resp_body = self.list(name=name, visibility=visibility,
-                member_status=member_status, owner=owner, tag=tag,
-                status=status, size_min=size_min, size_max=size_max,
-                sort_key=sort_key, sort_dir=sort_dir, return_raw=True)
+        resp, resp_body = self.list(
+            name=name, visibility=visibility, member_status=member_status,
+            owner=owner, tag=tag, status=status, size_min=size_min,
+            size_max=size_max, sort_key=sort_key, sort_dir=sort_dir,
+            return_raw=True)
         data = resp_body.get(self.plural_response_key, resp_body)
         next_uri = strip_version(resp_body.get("next", ""))
         ret = [obj_class(manager=self, info=res) for res in data if res]
@@ -248,12 +234,11 @@ class ImageManager(BaseManager):
             data = resp_body.get(self.plural_response_key, resp_body)
             next_uri = strip_version(resp_body.get("next", ""))
             ret.extend([obj_class(manager=self, info=res)
-                    for res in data if res])
+                        for res in data if res])
         return ret
 
-
     def create(self, name, img_format=None, img_container_format=None,
-            data=None, container=None, obj=None, metadata=None):
+               data=None, container=None, obj=None, metadata=None):
         """
         Creates a new image with the specified name. The image data can either
         be supplied directly in the 'data' parameter, or it can be an image
@@ -286,10 +271,8 @@ class ImageManager(BaseManager):
                 obj = clt.get_object(container, obj)
             img_data = obj.fetch()
         uri = "%s/images" % self.uri_base
-        resp, resp_body = self.api.method_post(uri, headers=headers,
-                data=img_data)
-
-
+        resp, resp_body = self.api.method_post(
+            uri, headers=headers, data=img_data)
 
     def update(self, img, value_dict):
         """
@@ -309,12 +292,12 @@ class ImageManager(BaseManager):
         for key, val in value_dict.items():
             op = "replace" if key in img.__dict__ else "add"
             body.append({"op": op,
-                    "path": "/%s" % key,
-                    "value": val})
+                         "path": "/%s" % key,
+                         "value": val})
         headers = {"Content-Type":
-                "application/openstack-images-v2.1-json-patch"}
-        resp, resp_body = self.api.method_patch(uri, body=body, headers=headers)
-
+                   "application/openstack-images-v2.1-json-patch"}
+        resp, resp_body = self.api.method_patch(uri, body=body,
+                                                headers=headers)
 
     def update_image_member(self, img_id, status):
         """
@@ -331,19 +314,19 @@ class ImageManager(BaseManager):
         being raised.
         """
         if status not in ("pending", "accepted", "rejected"):
-            raise exc.InvalidImageMemberStatus("The status value must be one "
-                    "of 'accepted', 'rejected', or 'pending'. Received: '%s'" %
-                    status)
+            raise exc.InvalidImageMemberStatus(
+                "The status value must be one of 'accepted', 'rejected', or "
+                "'pending'. Received: '%s'" % status)
         api = self.api
         project_id = api.identity.tenant_id
         uri = "/%s/%s/members/%s" % (self.uri_base, img_id, project_id)
         body = {"status": status}
         try:
             resp, resp_body = self.api.method_put(uri, body=body)
-        except exc.NotFound as e:
-            raise exc.InvalidImageMember("The update member request could not "
-                    "be completed. No member request for that image was found.")
-
+        except exc.NotFound:
+            raise exc.InvalidImageMember(
+                "The update member request could not be completed. No member "
+                "request for that image was found.")
 
 
 class ImageMemberManager(BaseManager):
@@ -357,19 +340,18 @@ class ImageMemberManager(BaseManager):
         body = {"member": project_id}
         return body
 
-
     def create(self, name, *args, **kwargs):
         """
         Need to wrap the default call to handle exceptions.
         """
         try:
-            return super(ImageMemberManager, self).create(name, *args, **kwargs)
+            return super(ImageMemberManager, self).create(name,
+                                                          *args, **kwargs)
         except Exception as e:
             if e.http_status == 403:
                 raise exc.UnsharableImage("You cannot share a public image.")
             else:
                 raise
-
 
 
 class ImageTagManager(BaseManager):
@@ -382,7 +364,6 @@ class ImageTagManager(BaseManager):
         """
         return {}
 
-
     def add(self, tag):
         """
         """
@@ -390,13 +371,12 @@ class ImageTagManager(BaseManager):
         resp, resp_body = self.api.method_put(uri)
 
 
-
 class ImageTasksManager(BaseManager):
     """
     Manager class for ImageTasks.
     """
     def _create_body(self, name, img=None, cont=None, img_format=None,
-            img_name=None):
+                     img_name=None):
         """
         Used to create a new task. Since tasks don't have names, the required
         'name' parameter is used for the type of task: 'import' or 'export'.
@@ -416,7 +396,6 @@ class ImageTasksManager(BaseManager):
                     "import_from_format": img_format or DEFAULT_FORMAT}
         return body
 
-
     def create(self, name, *args, **kwargs):
         """
         Standard task creation, but first check for the existence of the
@@ -433,7 +412,6 @@ class ImageTasksManager(BaseManager):
         return super(ImageTasksManager, self).create(name, *args, **kwargs)
 
 
-
 class JSONSchemaManager(BaseManager):
     """
     Manager class for retrieving JSON schemas.
@@ -444,7 +422,6 @@ class JSONSchemaManager(BaseManager):
         """
         pass
 
-
     def images(self):
         """
         Returns a json-schema document that represents an image members entity,
@@ -454,7 +431,6 @@ class JSONSchemaManager(BaseManager):
         resp, resp_body = self.api.method_get(uri)
         return resp_body
 
-
     def image(self):
         """
         Returns a json-schema document that represents a single image entity.
@@ -462,7 +438,6 @@ class JSONSchemaManager(BaseManager):
         uri = "/%s/image" % self.uri_base
         resp, resp_body = self.api.method_get(uri)
         return resp_body
-
 
     def image_members(self):
         """
@@ -473,7 +448,6 @@ class JSONSchemaManager(BaseManager):
         resp, resp_body = self.api.method_get(uri)
         return resp_body
 
-
     def image_member(self):
         """
         Returns a json-schema document that represents an image member entity.
@@ -482,7 +456,6 @@ class JSONSchemaManager(BaseManager):
         uri = "/%s/member" % self.uri_base
         resp, resp_body = self.api.method_get(uri)
         return resp_body
-
 
     def image_tasks(self):
         """
@@ -493,7 +466,6 @@ class JSONSchemaManager(BaseManager):
         resp, resp_body = self.api.method_get(uri)
         return resp_body
 
-
     def image_task(self):
         """
         Returns a json-schema document that represents an task entity.
@@ -503,55 +475,53 @@ class JSONSchemaManager(BaseManager):
         return resp_body
 
 
-
 class ImageClient(BaseClient):
     """
     This is the primary class for interacting with Images.
     """
     name = "Images"
 
-
     def _configure_manager(self):
         """
         Create the manager to handle queues.
         """
-        self._manager = ImageManager(self, resource_class=Image,
-                response_key="", plural_response_key="images",
-                uri_base="images")
-        self._tasks_manager = ImageTasksManager(self, resource_class=ImageTask,
-                response_key="", plural_response_key="tasks",
-                uri_base="tasks")
-        self._schema_manager = JSONSchemaManager(self, resource_class=None,
-                response_key="", plural_response_key="", uri_base="schemas")
-
+        self._manager = ImageManager(
+            self, resource_class=Image, response_key="",
+            plural_response_key="images", uri_base="images")
+        self._tasks_manager = ImageTasksManager(
+            self, resource_class=ImageTask, response_key="",
+            plural_response_key="tasks", uri_base="tasks")
+        self._schema_manager = JSONSchemaManager(
+            self, resource_class=None, response_key="", plural_response_key="",
+            uri_base="schemas")
 
     def list(self, limit=None, marker=None, name=None, visibility=None,
-            member_status=None, owner=None, tag=None, status=None,
-            size_min=None, size_max=None, sort_key=None, sort_dir=None):
+             member_status=None, owner=None, tag=None, status=None,
+             size_min=None, size_max=None, sort_key=None, sort_dir=None):
         """
         Returns a list of resource objects. Pagination is supported through the
         optional 'marker' and 'limit' parameters. Filtering the returned value
         is possible by specifying values for any of the other parameters.
         """
-        return self._manager.list(limit=limit, marker=marker, name=name,
-                visibility=visibility, member_status=member_status,
-                owner=owner, tag=tag, status=status, size_min=size_min,
-                size_max=size_max, sort_key=sort_key, sort_dir=sort_dir)
+        return self._manager.list(
+            limit=limit, marker=marker, name=name, visibility=visibility,
+            member_status=member_status, owner=owner, tag=tag, status=status,
+            size_min=size_min, size_max=size_max, sort_key=sort_key,
+            sort_dir=sort_dir)
 
-
-    def list_all(self, name=None, visibility=None, member_status=None,
-            owner=None, tag=None, status=None, size_min=None, size_max=None,
-            sort_key=None, sort_dir=None):
+    def list_all(
+            self, name=None, visibility=None, member_status=None, owner=None,
+            tag=None, status=None, size_min=None, size_max=None, sort_key=None,
+            sort_dir=None):
         """
-        Returns all of the images in one call, rather than in paginated batches.
+        Returns all of the images in one call, rather than in paginated batches
         The same filtering options available in list() apply here, with the
         obvious exception of limit and marker.
         """
-        return self._manager.list_all(name=name, visibility=visibility,
-                member_status=member_status, owner=owner, tag=tag,
-                status=status, size_min=size_min, size_max=size_max,
-                sort_key=sort_key, sort_dir=sort_dir)
-
+        return self._manager.list_all(
+            name=name, visibility=visibility, member_status=member_status,
+            owner=owner, tag=tag, status=status, size_min=size_min,
+            size_max=size_max, sort_key=sort_key, sort_dir=sort_dir)
 
     def update(self, img, value_dict):
         """
@@ -561,9 +531,8 @@ class ImageClient(BaseClient):
         """
         return self._manager.update(img, value_dict)
 
-
     def create(self, name, img_format=None, data=None, container=None,
-            obj=None, metadata=None):
+               obj=None, metadata=None):
         """
         Creates a new image with the specified name. The image data can either
         be supplied directly in the 'data' parameter, or it can be an image
@@ -572,8 +541,7 @@ class ImageClient(BaseClient):
         StorageObject reference.
         """
         return self._manager.create(name, img_format, data=data,
-                container=container, obj=obj)
-
+                                    container=container, obj=obj)
 
     def change_image_name(self, img, newname):
         """
@@ -582,7 +550,6 @@ class ImageClient(BaseClient):
         """
         return self.update(img, {"name": newname})
 
-
     @assure_image
     def list_image_members(self, img):
         """
@@ -590,15 +557,13 @@ class ImageClient(BaseClient):
         """
         return img.list_members()
 
-
     @assure_image
     def get_image_member(self, img, member):
         """
-        Returns the ImageMember object representing the specified member for the
-        specified image.
+        Returns the ImageMember object representing the specified member for
+        the specified image.
         """
         return img.get_member(member)
-
 
     @assure_image
     def add_image_member(self, img, project_id):
@@ -608,7 +573,6 @@ class ImageClient(BaseClient):
         """
         return img.add_member(project_id)
 
-
     @assure_image
     def delete_image_member(self, img, project_id):
         """
@@ -616,7 +580,6 @@ class ImageClient(BaseClient):
         of the specified image.
         """
         return img.delete_member(project_id)
-
 
     def update_image_member(self, img_id, status):
         """
@@ -636,14 +599,12 @@ class ImageClient(BaseClient):
         """
         return self._manager.update_image_member(img_id, status)
 
-
     @assure_image
     def add_image_tag(self, img, tag):
         """
         Adds the tag to the specified image.
         """
         return img.add_tag(tag)
-
 
     @assure_image
     def delete_image_tag(self, img, tag):
@@ -652,20 +613,17 @@ class ImageClient(BaseClient):
         """
         return img.delete_tag(tag)
 
-
     def list_tasks(self):
         """
         Returns a list of all tasks.
         """
         return self._tasks_manager.list()
 
-
     def get_task(self, task):
         """
         Returns the ImageTask object for the supplied ID.
         """
         return self._tasks_manager.get(task)
-
 
     def export_task(self, img, cont):
         """
@@ -679,7 +637,6 @@ class ImageClient(BaseClient):
         """
         return self._tasks_manager.create("export", img=img, cont=cont)
 
-
     def import_task(self, img, cont, img_format=None, img_name=None):
         """
         Creates a task to import the specified image from the swift container
@@ -690,9 +647,9 @@ class ImageClient(BaseClient):
         By default it is assumed that the image is in 'vhd' format; if it is
         another format, you must specify that in the 'img_format' parameter.
         """
-        return self._tasks_manager.create("import", img=img, cont=cont,
-                img_format=img_format, img_name=img_name)
-
+        return self._tasks_manager.create(
+            "import", img=img, cont=cont, img_format=img_format,
+            img_name=img_name)
 
     def get_images_schema(self):
         """
@@ -701,13 +658,11 @@ class ImageClient(BaseClient):
         """
         return self._schema_manager.images()
 
-
     def get_image_schema(self):
         """
         Returns a json-schema document that represents a single image entity.
         """
         return self._schema_manager.image()
-
 
     def get_image_members_schema(self):
         """
@@ -716,7 +671,6 @@ class ImageClient(BaseClient):
         """
         return self._schema_manager.image_members()
 
-
     def get_image_member_schema(self):
         """
         Returns a json-schema document that represents an image member entity.
@@ -724,14 +678,12 @@ class ImageClient(BaseClient):
         """
         return self._schema_manager.image_member()
 
-
     def get_image_tasks_schema(self):
         """
         Returns a json-schema document that represents a container of tasks
         entities.
         """
         return self._schema_manager.image_tasks()
-
 
     def get_image_task_schema(self):
         """
