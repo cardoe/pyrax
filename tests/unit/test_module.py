@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
-import json
 import os
 import unittest
 import warnings
@@ -17,7 +16,6 @@ import pyrax
 import pyrax.exceptions as exc
 import pyrax.utils as utils
 from pyrax import fakes
-
 
 
 class PyraxInitTest(unittest.TestCase):
@@ -129,13 +127,13 @@ class PyraxInitTest(unittest.TestCase):
         api_key = utils.random_unicode()
         verify_ssl = utils.random_unicode()
         pyrax.create_context(id_type=id_type, username=username,
-                password=password, tenant_id=tenant_id,
-                tenant_name=tenant_name, api_key=api_key,
-                verify_ssl=verify_ssl)
-        pyrax._create_identity.assert_called_once_with(id_type=id_type,
-                username=username, password=password, tenant_id=tenant_id,
-                tenant_name=tenant_name, api_key=api_key,
-                verify_ssl=verify_ssl, return_context=True)
+                             password=password, tenant_id=tenant_id,
+                             tenant_name=tenant_name, api_key=api_key,
+                             verify_ssl=verify_ssl)
+        pyrax._create_identity.assert_called_once_with(
+            id_type=id_type, username=username, password=password,
+            tenant_id=tenant_id, tenant_name=tenant_name, api_key=api_key,
+            verify_ssl=verify_ssl, return_context=True)
         pyrax._create_identity = sav
 
     def test_settings_get(self):
@@ -153,7 +151,6 @@ class PyraxInitTest(unittest.TestCase):
         sav_imp = pyrax._import_identity
         pyrax._import_identity = Mock(return_value=ident)
         os.environ = {"fake": typ}
-        ret = pyrax.get_setting("identity_class")
         pyrax._import_identity = sav_imp
         os.environ = sav_env
 
@@ -161,7 +158,7 @@ class PyraxInitTest(unittest.TestCase):
         key = utils.random_unicode()
         val = utils.random_unicode()
         self.assertRaises(exc.EnvironmentNotFound, pyrax.settings.set, key,
-                val, "bad_env")
+                          val, "bad_env")
 
     def test_settings_set_bad_key(self):
         key = utils.random_unicode()
@@ -242,7 +239,7 @@ class PyraxInitTest(unittest.TestCase):
             with open(cfgfile, "w") as cfg:
                 cfg.write("FAKE")
             self.assertRaises(exc.InvalidConfigurationFile,
-                    pyrax.settings.read_config, cfgfile)
+                              pyrax.settings.read_config, cfgfile)
         pyrax.default_region = sav_region
         pyrax.USER_AGENT = sav_USER_AGENT
 
@@ -254,12 +251,12 @@ class PyraxInitTest(unittest.TestCase):
 
     def test_set_bad_credentials(self):
         self.assertRaises(exc.AuthenticationFailed, pyrax.set_credentials,
-                "bad", "creds")
+                          "bad", "creds")
         self.assertFalse(pyrax.identity.authenticated)
 
     def test_set_credential_file(self):
         with utils.SelfDeletingTempfile() as tmpname:
-            with open(tmpname, "wb") as tmp:
+            with open(tmpname, "w") as tmp:
                 tmp.write("[keystone]\n")
                 tmp.write("username = %s\n" % self.username)
                 tmp.write("password = %s\n" % self.password)
@@ -271,13 +268,13 @@ class PyraxInitTest(unittest.TestCase):
 
     def test_set_bad_credential_file(self):
         with utils.SelfDeletingTempfile() as tmpname:
-            with open(tmpname, "wb") as tmp:
+            with open(tmpname, "w") as tmp:
                 tmp.write("[keystone]\n")
                 tmp.write("username = bad\n")
                 tmp.write("password = creds\n")
                 tmp.write("tenant_id = stuff\n")
             self.assertRaises(exc.AuthenticationFailed,
-                    pyrax.set_credential_file, tmpname)
+                              pyrax.set_credential_file, tmpname)
         self.assertFalse(pyrax.identity.authenticated)
 
     def test_keyring_auth_no_module(self):
@@ -318,7 +315,6 @@ class PyraxInitTest(unittest.TestCase):
         pyrax.cloudfiles = object()
         pyrax.cloud_loadbalancers = object()
         pyrax.cloud_databases = object()
-        default_region = object()
         self.assertTrue(pyrax.identity.authenticated)
         self.assertIsNotNone(pyrax.cloudfiles)
         pyrax.clear_credentials()
@@ -449,9 +445,9 @@ class PyraxInitTest(unittest.TestCase):
         pyrax.connect_to_cloudfiles = self.orig_connect_to_cloudfiles
         sav = pyrax._create_client
         pyrax._create_client = Mock()
-        cf = pyrax.connect_to_cloudfiles(public=False)
-        pyrax._create_client.assert_called_once_with(ep_name="object_store",
-                region=None, public=False)
+        pyrax.connect_to_cloudfiles(public=False)
+        pyrax._create_client.assert_called_once_with(
+            ep_name="object_store", region=None, public=False)
         pyrax.set_setting("use_servicenet", orig)
         pyrax._create_client = sav
 
@@ -503,7 +499,6 @@ class PyraxInitTest(unittest.TestCase):
         self.assertRaises(ImportError, reload, pyrax)
         _builtin.__import__ = sav_import
         reload(pyrax)
-
 
 
 if __name__ == "__main__":
