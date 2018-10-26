@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
-import random
 import unittest
 
 from mock import MagicMock as Mock
@@ -37,10 +36,10 @@ class ManagerTest(unittest.TestCase):
         mgr._list = Mock()
         mgr.uri_base = "test"
         mgr.list(limit=limit, marker=marker, return_raw=return_raw,
-                other_keys=other_keys)
+                 other_keys=other_keys)
         exp_uri = "/test?limit=%s&marker=%s" % (limit, marker)
         mgr._list.assert_called_once_with(exp_uri, return_raw=return_raw,
-                other_keys=other_keys)
+                                          other_keys=other_keys)
 
     def test_under_list_return_raw(self):
         mgr = self.manager
@@ -61,10 +60,10 @@ class ManagerTest(unittest.TestCase):
         return_raw = utils.random_unicode()
         other_keys = utils.random_unicode()
         mgr.list(limit=limit, marker=marker, return_raw=return_raw,
-                other_keys=other_keys)
+                 other_keys=other_keys)
         expected_uri = "/test?limit=%s&marker=%s" % (limit, marker)
         mgr._list.assert_called_once_with(expected_uri, return_raw=return_raw,
-                other_keys=other_keys)
+                                          other_keys=other_keys)
 
     def test_head(self):
         mgr = self.manager
@@ -111,8 +110,9 @@ class ManagerTest(unittest.TestCase):
         mgr._create_body = Mock(return_value="body")
         nm = utils.random_unicode()
         mgr.create(nm)
-        mgr._create.assert_called_once_with("/test", "body", return_none=False,
-                return_raw=False, return_response=False)
+        mgr._create.assert_called_once_with(
+            "/test", "body", return_none=False, return_raw=False,
+            return_response=False)
 
     def test_delete(self):
         mgr = self.manager
@@ -211,8 +211,8 @@ class ManagerTest(unittest.TestCase):
         mgr.api.method_post = Mock()
         item = fakes.FakeEntity()
         mgr.action(item, "fake")
-        mgr.api.method_post.assert_called_once_with("/testing/%s/action" %
-                item.id, body={"fake": {}})
+        mgr.api.method_post.assert_called_once_with(
+            "/testing/%s/action" % item.id, body={"fake": {}})
 
     def test_find_no_match(self):
         mgr = self.manager
@@ -276,7 +276,6 @@ class ManagerTest(unittest.TestCase):
         mgr.add_hook("test", tfunc)
         mgr.run_hooks("test", "dummy_arg")
         tfunc.assert_called_once_with("dummy_arg")
-
 
 
 if __name__ == "__main__":

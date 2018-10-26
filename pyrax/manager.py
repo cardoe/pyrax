@@ -34,7 +34,6 @@ except NameError:
         return True not in (not x for x in iterable)
 
 
-
 class BaseManager(object):
     """
     Managers interact with a particular type of API (servers, databases, dns,
@@ -46,9 +45,8 @@ class BaseManager(object):
     uri_base = None
     _hooks_map = {}
 
-
     def __init__(self, api, resource_class=None, response_key=None,
-            plural_response_key=None, uri_base=None):
+                 plural_response_key=None, uri_base=None):
         self.api = api
         self.resource_class = resource_class
         self.response_key = response_key
@@ -57,7 +55,6 @@ class BaseManager(object):
             # Default to adding 's'
             self.plural_response_key = "%ss" % response_key
         self.uri_base = uri_base
-
 
     def list(self, limit=None, marker=None, return_raw=False, other_keys=None):
         """
@@ -89,18 +86,15 @@ class BaseManager(object):
             uri = "%s?%s" % (uri, pagination)
         return self._list(uri, return_raw=return_raw, other_keys=other_keys)
 
-
     def head(self, item):
         """Makes a HEAD request on a specific item."""
         uri = "/%s/%s" % (self.uri_base, utils.get_id(item))
         return self._head(uri)
 
-
     def get(self, item):
         """Gets a specific item."""
         uri = "/%s/%s" % (self.uri_base, utils.get_id(item))
         return self._get(uri)
-
 
     def create(self, name, *args, **kwargs):
         """
@@ -122,27 +116,24 @@ class BaseManager(object):
         return_response = kwargs.pop("return_response", False)
         body = self._create_body(name, *args, **kwargs)
         return self._create("/%s" % self.uri_base, body,
-                return_none=return_none, return_raw=return_raw,
-                return_response=return_response)
-
+                            return_none=return_none, return_raw=return_raw,
+                            return_response=return_response)
 
     def _create_body(self, name, *args, **kwargs):
         """
         Creates the dictionary that is passed in the POST call to create a new
         resource. Must be defined in each subclass.
         """
-        raise NotImplementedError("Managers must define their _create_body() "
-                "method.")
-
+        raise NotImplementedError(
+            "Managers must define their _create_body() method.")
 
     def delete(self, item):
         """Deletes the specified item."""
         uri = "/%s/%s" % (self.uri_base, utils.get_id(item))
         return self._delete(uri)
 
-
     def _list(self, uri, obj_class=None, body=None, return_raw=False,
-            other_keys=None):
+              other_keys=None):
         """
         Handles the communication with the API when getting
         a full listing of the resources managed by this class.
@@ -165,7 +156,6 @@ class BaseManager(object):
         else:
             return ret
 
-
     def _data_from_response(self, resp_body, key=None):
         """
         This works for most API responses, but some don't structure their
@@ -186,7 +176,6 @@ class BaseManager(object):
                 pass
         return data
 
-
     def _head(self, uri):
         """
         Handles the communication with the API when performing a HEAD request
@@ -196,7 +185,6 @@ class BaseManager(object):
         resp, resp_body = self.api.method_head(uri)
         return resp
 
-
     def _get(self, uri):
         """
         Handles the communication with the API when getting
@@ -204,11 +192,10 @@ class BaseManager(object):
         """
         resp, resp_body = self.api.method_get(uri)
         return self.resource_class(self, resp_body, self.response_key,
-                loaded=True)
-
+                                   loaded=True)
 
     def _create(self, uri, body, return_none=False, return_raw=False,
-            return_response=None, **kwargs):
+                return_response=None, **kwargs):
         """
         Handles the communication with the API when creating a new
         resource managed by this class.
@@ -227,14 +214,12 @@ class BaseManager(object):
                 return resp_body
         return self.resource_class(self, resp_body, self.response_key)
 
-
     def _delete(self, uri):
         """
         Handles the communication with the API when deleting
         a specific resource managed by this class.
         """
         _resp, _body = self.api.method_delete(uri)
-
 
     def _update(self, uri, body, **kwargs):
         """
@@ -245,7 +230,6 @@ class BaseManager(object):
         resp, resp_body = self.api.method_put(uri, body=body)
         return resp_body
 
-
     def action(self, item, action_type, body={}):
         """
         Several API calls are lumped under the 'action' API. This
@@ -254,7 +238,6 @@ class BaseManager(object):
         uri = "/%s/%s/action" % (self.uri_base, utils.get_id(item))
         action_body = {action_type: body}
         return self.api.method_post(uri, body=action_body)
-
 
     def find(self, **kwargs):
         """
@@ -266,7 +249,8 @@ class BaseManager(object):
         matches = self.findall(**kwargs)
         num_matches = len(matches)
         if not num_matches:
-            msg = "No %s matching: %s." % (self.resource_class.__name__, kwargs)
+            msg = ("No %s matching: %s."
+                   % (self.resource_class.__name__, kwargs))
             raise exc.NotFound(404, msg)
         if num_matches > 1:
             msg = "More than one %s matching: %s." % (
@@ -274,7 +258,6 @@ class BaseManager(object):
             raise exc.NoUniqueMatch(400, msg)
         else:
             return matches[0]
-
 
     def findall(self, **kwargs):
         """
@@ -284,17 +267,16 @@ class BaseManager(object):
         the Python side.
         """
         found = []
-        searches = kwargs.items()
+        searches = kwargs
 
         for obj in self.list():
             try:
                 if all(getattr(obj, attr) == value
-                        for (attr, value) in searches):
+                        for (attr, value) in searches.items()):
                     found.append(obj)
             except AttributeError:
                 continue
         return found
-
 
     @classmethod
     def add_hook(cls, hook_type, hook_func):
@@ -302,7 +284,6 @@ class BaseManager(object):
             cls._hooks_map[hook_type] = []
 
         cls._hooks_map[hook_type].append(hook_func)
-
 
     @classmethod
     def run_hooks(cls, hook_type, *args, **kwargs):
