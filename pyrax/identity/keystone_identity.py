@@ -3,8 +3,8 @@
 from __future__ import absolute_import
 
 import pyrax
-from ..base_identity import BaseIdentity
-from .. import exceptions as exc
+from pyrax.base_identity import BaseIdentity
+from pyrax import exceptions as exc
 
 
 class KeystoneIdentity(BaseIdentity):
@@ -20,5 +20,6 @@ class KeystoneIdentity(BaseIdentity):
     def _get_auth_endpoint(self):
         ep = self._auth_endpoint or pyrax.get_setting("auth_endpoint")
         if ep is None:
-            raise exc.EndpointNotDefined("No auth endpoint has been specified.")
+            raise exc.EndpointNotDefined(
+                "No auth endpoint has been specified.")
         return ep

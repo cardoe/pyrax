@@ -10,4 +10,4 @@ pypath = opth.join(path, "*.py")
 pyfiles = glob.glob(pypath)
 fnames = [opth.basename(pyfile) for pyfile in pyfiles]
 __all__ = [opth.splitext(fname)[0] for fname in fnames
-        if not fname.startswith("_")]
+           if not fname.startswith("_")]

@@ -31,27 +31,25 @@ http://github.com/pycontribs/pyrax
 from __future__ import absolute_import, unicode_literals
 from functools import wraps
 import inspect
+import keyring
 import logging
 import os
 import re
 import six.moves.configparser as ConfigParser
+import pyrax.utils as utils
 import warnings
 
-# keyring is an optional import
-try:
-    import keyring
-except ImportError:
-    keyring = None
 
 # The following try block is only needed when first installing pyrax,
 # since importing the version info in setup.py tries to import this
 # entire module.
 try:
-    from .identity import *
+    import pyrax.identity  # noqa: F401
+    from pyrax.identity import keystone_identity  # noqa: F401
+    from pyrax.identity import rax_identity  # noqa: F401
 
-    from . import exceptions as exc
-    from . import http
-    from . import version
+    from pyrax import exceptions as exc
+    from pyrax import version
     __version__ = version.version
 
     from novaclient import exceptions as _cs_exceptions
@@ -59,19 +57,18 @@ try:
     from novaclient import client as nc
     from novaclient import client as _cs_client
     from novaclient import API_MAX_VERSION as _cs_max_version
-    from novaclient.v2.servers import Server as CloudServer
 
-    from .autoscale import AutoScaleClient
-    from .cloudcdn import CloudCDNClient
-    from .clouddatabases import CloudDatabaseClient
-    from .cloudloadbalancers import CloudLoadBalancerClient
-    from .cloudblockstorage import CloudBlockStorageClient
-    from .clouddns import CloudDNSClient
-    from .cloudnetworks import CloudNetworkClient
-    from .cloudmonitoring import CloudMonitorClient
-    from .image import ImageClient
-    from .object_storage import StorageClient
-    from .queueing import QueueClient
+    from pyrax.autoscale import AutoScaleClient
+    from pyrax.cloudcdn import CloudCDNClient
+    from pyrax.clouddatabases import CloudDatabaseClient
+    from pyrax.cloudloadbalancers import CloudLoadBalancerClient
+    from pyrax.cloudblockstorage import CloudBlockStorageClient
+    from pyrax.clouddns import CloudDNSClient
+    from pyrax.cloudnetworks import CloudNetworkClient
+    from pyrax.cloudmonitoring import CloudMonitorClient
+    from pyrax.image import ImageClient
+    from pyrax.object_storage import StorageClient
+    from pyrax.queueing import QueueClient
 except ImportError:
     # See if this is the result of the importing of version.py in setup.py
     callstack = inspect.stack()
@@ -151,7 +148,6 @@ def _import_identity(import_str):
     return utils.import_class(import_str)
 
 
-
 class Settings(object):
     """
     Holds and manages the settings for pyrax.
@@ -206,7 +202,6 @@ class Settings(object):
                 ret = os.environ.get(env_var)
         return ret
 
-
     def set(self, key, val, env=None):
         """
         Changes the value for the setting specified by 'key' to the new value.
@@ -218,8 +213,8 @@ class Settings(object):
             env = self.environment
         else:
             if env not in self._settings:
-                raise exc.EnvironmentNotFound("There is no environment named "
-                        "'%s'." % env)
+                raise exc.EnvironmentNotFound(
+                    "There is no environment named '%s'." % env)
         dct = self._settings[env]
         if key not in dct:
             raise exc.InvalidSetting("The setting '%s' is not defined." % key)
@@ -241,33 +236,31 @@ class Settings(object):
                 return
             identity.verify_ssl = val
 
-
     def _getEnvironment(self):
         return self._environment or "default"
 
     def _setEnvironment(self, val):
         if val not in self._settings:
-            raise exc.EnvironmentNotFound("The environment '%s' has not been "
-                    "defined." % val)
+            raise exc.EnvironmentNotFound(
+                "The environment '%s' has not been defined." % val)
         if val != self.environment:
             self._environment = val
             clear_credentials()
             _create_identity()
 
-    environment = property(_getEnvironment, _setEnvironment, None,
-            """Users can define several environments for use with pyrax. This
-            holds the name of the current environment they are working in.
-            Changing this value will discard any existing authentication
-            credentials, and will set all the individual clients for cloud
-            services, such as `pyrax.cloudservers`, to None. You must
-            authenticate against the new environment with the credentials
-            appropriate for that cloud provider.""")
-
+    environment = property(
+        _getEnvironment, _setEnvironment, None,
+        """Users can define several environments for use with pyrax. This
+        holds the name of the current environment they are working in.
+        Changing this value will discard any existing authentication
+        credentials, and will set all the individual clients for cloud
+        services, such as `pyrax.cloudservers`, to None. You must
+        authenticate against the new environment with the credentials
+        appropriate for that cloud provider.""")
 
     @property
     def environments(self):
         return list(self._settings.keys())
-
 
     def read_config(self, config_file):
         """
@@ -335,12 +328,13 @@ class Settings(object):
                 self._settings["default"] = self._settings[section]
                 self._default_set = True
         if creds_found:
-            warnings.warn("Login credentials were detected in your .pyrax.cfg "
-                    "file. These have been ignored, but you should remove "
-                    "them and either place them in a credential file, or "
-                    "consider using another means of authentication. More "
-                    "information on the use of credential files can be found "
-                    "in the 'docs/getting_started.md' document.")
+            warnings.warn(
+                "Login credentials were detected in your .pyrax.cfg file. "
+                "These have been ignored, but you should remove them and "
+                "either place them in a credential file, or consider using "
+                "another means of authentication. More information on the use"
+                " of credential files can be found in the "
+                "'docs/getting_started.md' document.")
 
 
 def get_environment():
@@ -388,7 +382,8 @@ def set_default_region(region):
 
 
 def create_context(id_type=None, env=None, username=None, password=None,
-        tenant_id=None, tenant_name=None, api_key=None, verify_ssl=None):
+                   tenant_id=None, tenant_name=None, api_key=None,
+                   verify_ssl=None):
     """
     Returns an instance of the specified identity class, or if none is
     specified, an instance of the current setting for 'identity_class'.
@@ -398,14 +393,15 @@ def create_context(id_type=None, env=None, username=None, password=None,
     """
     if env:
         set_environment(env)
-    return _create_identity(id_type=id_type, username=username,
-            password=password, tenant_id=tenant_id, tenant_name=tenant_name,
-            api_key=api_key, verify_ssl=verify_ssl, return_context=True)
+    return _create_identity(
+        id_type=id_type, username=username, password=password,
+        tenant_id=tenant_id, tenant_name=tenant_name, api_key=api_key,
+        verify_ssl=verify_ssl, return_context=True)
 
 
-def _create_identity(id_type=None, username=None, password=None, tenant_id=None,
-            tenant_name=None, api_key=None, verify_ssl=None,
-            return_context=False):
+def _create_identity(id_type=None, username=None, password=None,
+                     tenant_id=None, tenant_name=None, api_key=None,
+                     verify_ssl=None, return_context=False):
     """
     Creates an instance of the current identity_class and assigns it to the
     module-level name 'identity' by default. If 'return_context' is True, the
@@ -416,12 +412,13 @@ def _create_identity(id_type=None, username=None, password=None, tenant_id=None,
     else:
         cls = settings.get("identity_class")
     if not cls:
-        raise exc.IdentityClassNotDefined("No identity class has "
-                "been defined for the current environment.")
+        raise exc.IdentityClassNotDefined(
+            "No identity class has been defined for the current environment.")
     if verify_ssl is None:
         verify_ssl = get_setting("verify_ssl")
     context = cls(username=username, password=password, tenant_id=tenant_id,
-            tenant_name=tenant_name, api_key=api_key, verify_ssl=verify_ssl)
+                  tenant_name=tenant_name, api_key=api_key,
+                  verify_ssl=verify_ssl)
     if return_context:
         return context
     else:
@@ -477,7 +474,7 @@ def auth_with_token(token, tenant_id=None, tenant_name=None, region=None):
     """
     global regions, services
     identity.auth_with_token(token, tenant_id=tenant_id,
-            tenant_name=tenant_name)
+                             tenant_name=tenant_name)
     regions = tuple(identity.regions)
     services = tuple(identity.services.keys())
     connect_to_services(region=region)
@@ -485,7 +482,7 @@ def auth_with_token(token, tenant_id=None, tenant_name=None, region=None):
 
 @_assure_identity
 def set_credentials(username, api_key=None, password=None, region=None,
-        tenant_id=None, authenticate=True):
+                    tenant_id=None, authenticate=True):
     """
     Set the credentials directly, and then try to authenticate.
 
@@ -497,7 +494,8 @@ def set_credentials(username, api_key=None, password=None, region=None,
     region = _safe_region(region)
     tenant_id = tenant_id or settings.get("tenant_id")
     identity.set_credentials(username=username, password=pw_key,
-            tenant_id=tenant_id, region=region, authenticate=authenticate)
+                             tenant_id=tenant_id, region=region,
+                             authenticate=authenticate)
     regions = tuple(identity.regions)
     services = tuple(identity.services.keys())
     connect_to_services(region=region)
@@ -527,7 +525,7 @@ def set_credential_file(cred_file, region=None, authenticate=True):
     global regions, services
     region = _safe_region(region)
     identity.set_credential_file(cred_file, region=region,
-            authenticate=authenticate)
+                                 authenticate=authenticate)
     regions = tuple(identity.regions)
     services = tuple(identity.services.keys())
     connect_to_services(region=region)
@@ -548,19 +546,19 @@ def keyring_auth(username=None, region=None, authenticate=True):
     """
     if not keyring:
         # Module not installed
-        raise exc.KeyringModuleNotInstalled("The 'keyring' Python module is "
-                "not installed on this system.")
+        raise exc.KeyringModuleNotInstalled(
+            "The 'keyring' Python module is not installed on this system.")
     if username is None:
         username = settings.get("keyring_username")
     if not username:
-        raise exc.KeyringUsernameMissing("No username specified for keyring "
-                "authentication.")
+        raise exc.KeyringUsernameMissing(
+            "No username specified for keyring authentication.")
     password = keyring.get_password("pyrax", username)
     if password is None:
-        raise exc.KeyringPasswordNotFound("No password was found for the "
-                "username '%s'." % username)
+        raise exc.KeyringPasswordNotFound(
+            "No password was found for the username '%s'." % username)
     set_credentials(username, password, region=region,
-            authenticate=authenticate)
+                    authenticate=authenticate)
 
 
 @_assure_identity
@@ -655,7 +653,8 @@ def _get_service_endpoint(context, svc, region=None, public=True):
     return ep
 
 
-def connect_to_cloudservers(region=None, context=None, verify_ssl=None, **kwargs):
+def connect_to_cloudservers(region=None, context=None, verify_ssl=None,
+                            **kwargs):
     """Creates a client for working with cloud servers."""
     context = context or identity
     _cs_auth_plugin.discover_auth_systems()
@@ -679,7 +678,8 @@ def connect_to_cloudservers(region=None, context=None, verify_ssl=None, **kwargs
     except AttributeError:
         extensions = None
     clt_class = _cs_client.get_client_class(_cs_max_version)
-    cloudservers = clt_class(context.username, context.password,
+    cloudservers = clt_class(
+            context.username, context.password,
             project_id=context.tenant_id, auth_url=context.auth_endpoint,
             auth_system=id_type, region_name=region, service_type="compute",
             auth_plugin=auth_plugin, insecure=insecure, extensions=extensions,
@@ -704,8 +704,8 @@ def connect_to_cloudservers(region=None, context=None, verify_ssl=None, **kwargs
 
     def list_snapshots():
         """
-        Returns a list of all images created by this account; in other words, it
-        excludes all the base images.
+        Returns a list of all images created by this account; in other words,
+        it excludes all the base images.
         """
         return [image for image in cloudservers.images.list()
                 if hasattr(image, "server")]
@@ -734,12 +734,12 @@ def connect_to_cloudfiles(region=None, public=None):
     else:
         is_public = public
     ret = _create_client(ep_name="object_store", region=region,
-            public=is_public)
+                         public=is_public)
     if ret:
         # Add CDN endpoints, if available
         region = _safe_region(region)
-        ret.cdn_management_url = _get_service_endpoint(None, "object_cdn",
-                region, public=is_public)
+        ret.cdn_management_url = _get_service_endpoint(
+            None, "object_cdn", region, public=is_public)
     return ret
 
 
@@ -747,14 +747,14 @@ def connect_to_cloudfiles(region=None, public=None):
 def _create_client(ep_name, region, public=True, verify_ssl=None):
     region = _safe_region(region)
     ep = _get_service_endpoint(None, ep_name.split(":")[0], region,
-            public=public)
+                               public=public)
     if not ep:
         return
     if verify_ssl is None:
         verify_ssl = get_setting("verify_ssl")
     cls = _client_classes[ep_name]
     client = cls(identity, region_name=region, management_url=ep,
-            verify_ssl=verify_ssl, http_log_debug=_http_debug)
+                 verify_ssl=verify_ssl, http_log_debug=_http_debug)
     client.user_agent = _make_agent_name(client.user_agent)
     return client
 
@@ -844,8 +844,8 @@ def set_http_debug(val):
     if identity:
         identity.http_log_debug = val
     for svc in (cloudservers, cloudfiles, cloud_loadbalancers,
-            cloud_blockstorage, cloud_databases, cloud_dns, cloud_networks,
-            autoscale, images, queues):
+                cloud_blockstorage, cloud_databases, cloud_dns, cloud_networks,
+                autoscale, images, queues):
         if svc is not None:
             svc.http_log_debug = val
 

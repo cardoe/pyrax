@@ -22,7 +22,6 @@ import unicodedata
 
 import six
 
-import pyrax
 import pyrax.exceptions as exc
 
 try:
@@ -48,7 +47,7 @@ def runproc(cmd):
     command completed successfully.
     """
     proc = Popen([cmd], shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE,
-            close_fds=True)
+                 close_fds=True)
     stdoutdata, stderrdata = proc.communicate()
     return (stdoutdata, stderrdata)
 

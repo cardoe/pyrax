@@ -3,22 +3,17 @@
 
 from __future__ import absolute_import, unicode_literals
 
+import keyring
+
 import six.moves.configparser as ConfigParser
 import datetime
-import json
 import re
-import requests
-import warnings
-
-try:
-    import keyring
-except ImportError:
-    keyring = None
 
 import pyrax
+import pyrax.http as http
 from pyrax import exceptions as exc
-from .resource import BaseResource
-from . import utils as utils
+from pyrax.resource import BaseResource
+import pyrax.utils as utils
 
 
 _pat = r"""
@@ -82,15 +77,14 @@ class Service(object):
         eps = catalog.get("endpoints", [])
         for ep in eps:
             rgn = ep.get("region", "ALL")
-            self.endpoints[rgn] = Endpoint(ep, self.service_type, rgn, identity,
-                                           verify_ssl=self.identity.verify_ssl)
+            self.endpoints[rgn] = Endpoint(
+                ep, self.service_type, rgn, identity,
+                verify_ssl=self.identity.verify_ssl)
         return
-
 
     def __repr__(self):
         memloc = hex(id(self))
         return "<'%s' Service object at %s>" % (self.service_type, memloc)
-
 
     def _ep_for_region(self, region):
         """
@@ -102,16 +96,15 @@ class Service(object):
         rgn = region.upper()
         try:
             rgn_ep = [ep for ep in list(self.endpoints.values())
-                    if ep.region.upper() == rgn][0]
+                      if ep.region.upper() == rgn][0]
         except IndexError:
             # See if there is an 'ALL' region.
             try:
                 rgn_ep = [ep for ep in list(self.endpoints.values())
-                        if ep.region.upper() == "ALL"][0]
+                          if ep.region.upper() == "ALL"][0]
             except IndexError:
                 rgn_ep = None
         return rgn_ep
-
 
     def get_client(self, region):
         """
@@ -121,11 +114,10 @@ class Service(object):
         """
         ep = self._ep_for_region(region)
         if not ep:
-            raise exc.NoEndpointForRegion("There is no endpoint defined for the "
-                    "region '%s' for the '%s' service." % (region,
-                    self.service_type))
+            raise exc.NoEndpointForRegion(
+                "There is no endpoint defined for the region '%s' for the "
+                "'%s' service." % (region, self.service_type))
         return ep.client
-
 
     @property
     def regions(self):
@@ -133,7 +125,6 @@ class Service(object):
         Returns a list of all regions which support this service.
         """
         return list(self.endpoints.keys())
-
 
 
 class Endpoint(object):
@@ -148,11 +139,10 @@ class Endpoint(object):
     _client = None
     _client_private = None
     attr_map = {"publicURL": "public_url",
-            "privateURL": "private_url",
-            "internalURL": "private_url",
-            "tenantId": "tenant_id",
-            }
-
+                "privateURL": "private_url",
+                "internalURL": "private_url",
+                "tenantId": "tenant_id",
+                }
 
     def __init__(self, ep_dict, service, region, identity, verify_ssl=True):
         """
@@ -166,13 +156,11 @@ class Endpoint(object):
             att_name = self.attr_map.get(key, key)
             setattr(self, att_name, val)
 
-
     def get_new_client(self, public=True):
         """
         Returns a new instance of the client for this endpoint.
         """
         return self._get_client(public=public, cached=False)
-
 
     def _get_client(self, public=True, cached=True, client_class=None):
         client_att = "_client" if public else "_client_private"
@@ -192,22 +180,23 @@ class Endpoint(object):
         else:
             clt_class = pyrax.client_class_for_service(self.service)
         if clt_class is None:
-            noclass = exc.NoClientForService("No client for the '%s' service "
-                    "has been registered." % self.service)
+            noclass = exc.NoClientForService(
+                "No client for the '%s' service has been registered."
+                % self.service)
             setattr(self, client_att, noclass)
             raise noclass
         url_att = "public_url" if public else "private_url"
         url = getattr(self, url_att)
         if not url:
-            nourl = exc.NoEndpointForService("No %s endpoint is available for "
-                    "the '%s' service." % (url_att, self.service))
+            nourl = exc.NoEndpointForService(
+                "No %s endpoint is available for the '%s' service."
+                % (url_att, self.service))
             setattr(self, client_att, nourl)
             raise nourl
-        clt = self._create_client(clt_class, url, public=public,
-                special=special_class)
+        clt = self._create_client(
+            clt_class, url, public=public, special=special_class)
         setattr(self, client_att, clt)
         return clt
-
 
     def get(self, url_type):
         """
@@ -220,9 +209,9 @@ class Endpoint(object):
         elif lowtype == "private":
             return self.private_url
         else:
-            raise ValueError("Valid values are 'public' or 'private'; "
-                    "received '%s'." % url_type)
-
+            raise ValueError(
+                "Valid values are 'public' or 'private'; received '%s'."
+                % url_type)
 
     def __getattr__(self, att):
         clt = self.client
@@ -230,19 +219,17 @@ class Endpoint(object):
         if ret:
             return ret
         else:
-            raise AttributeError("Endpoint for service '%s' in region '%s' "
-                    "has no attribute '%s'." % (self.service, self.region, att))
-
+            raise AttributeError(
+                "Endpoint for service '%s' in region '%s' has no attribute "
+                "'%s'." % (self.service, self.region, att))
 
     @property
     def client(self):
         return self._get_client(public=True)
 
-
     @property
     def client_private(self):
         return self._get_client(public=False)
-
 
     def _create_client(self, clt_class, url, public=True, special=False):
         """
@@ -250,14 +237,15 @@ class Endpoint(object):
         """
         if self.service == "compute" and not special:
             # Novaclient requires different parameters.
-            client = pyrax.connect_to_cloudservers(region=self.region,
-                    context=self.identity, verify_ssl=self.verify_ssl)
+            client = pyrax.connect_to_cloudservers(
+                region=self.region, context=self.identity,
+                verify_ssl=self.verify_ssl)
             client.identity = self.identity
         else:
-            client = clt_class(self.identity, region_name=self.region,
-                    management_url=url, verify_ssl=self.verify_ssl)
+            client = clt_class(
+                self.identity, region_name=self.region, management_url=url,
+                verify_ssl=self.verify_ssl)
         return client
-
 
 
 class BaseIdentity(object):
@@ -267,7 +255,8 @@ class BaseIdentity(object):
     """
     _creds_style = "password"
 
-    def __init__(self, username=None, password=None, tenant_id=None,
+    def __init__(
+            self, username=None, password=None, tenant_id=None,
             tenant_name=None, auth_endpoint=None, api_key=None, token=None,
             credential_file=None, region=None, timeout=None, verify_ssl=True):
         """
@@ -314,12 +303,10 @@ class BaseIdentity(object):
                 "marconi": "queues",
                 }
 
-
     @property
     def auth_token(self):
         """Simple alias to self.token."""
         return self.token
-
 
     @property
     def auth_endpoint(self):
@@ -328,18 +315,15 @@ class BaseIdentity(object):
         """
         return self._get_auth_endpoint()
 
-
     @auth_endpoint.setter
     def auth_endpoint(self, val):
         self._auth_endpoint = val
-
 
     def _get_auth_endpoint(self):
         """
         Broken out in case subclasses need to determine endpoints dynamically.
         """
         return self._auth_endpoint or pyrax.get_setting("auth_endpoint")
-
 
     def get_default_region(self):
         """
@@ -348,7 +332,6 @@ class BaseIdentity(object):
         the appropriate default value.
         """
         return self._default_region
-
 
     def __getattr__(self, att):
         """
@@ -361,13 +344,13 @@ class BaseIdentity(object):
         region should be returned.
         """
         if not self.authenticated:
-            raise exc.NotAuthenticated("Authentication required before "
-                    "accessing the context.")
+            raise exc.NotAuthenticated(
+                "Authentication required before accessing the context.")
         # First see if it's a service
         att = self.service_mapping.get(att) or att
-        svc = self.services.get(att)
-        if svc is not None:
-            return svc.endpoints
+        service = self.services.get(att)
+        if service is not None:
+            return service.endpoints
         # Either invalid service, or a region
         ret = utils.DotDict([(stype, svc_.endpoints.get(att))
                 for stype, svc_ in list(self.services.items())
@@ -378,9 +361,8 @@ class BaseIdentity(object):
         # Invalid attribute
         raise AttributeError("No such attribute '%s'." % att)
 
-
     def get_client(self, service, region, public=True, cached=True,
-            client_class=None):
+                   client_class=None):
         """
         Returns the client object for the specified service and region.
 
@@ -392,8 +374,8 @@ class BaseIdentity(object):
         to be created, pass 'cached=False'.
         """
         if not self.authenticated:
-            raise exc.NotAuthenticated("You must authenticate before trying "
-                    "to create clients.")
+            raise exc.NotAuthenticated(
+                "You must authenticate before trying to create clients.")
         clt = ep = None
         mapped_service = self.service_mapping.get(service) or service
         svc = self.services.get(mapped_service)
@@ -401,15 +383,15 @@ class BaseIdentity(object):
             ep = svc.endpoints.get(region)
         if ep:
             clt = ep._get_client(public=public, cached=cached,
-                    client_class=client_class)
+                                 client_class=client_class)
         if not clt:
-            raise exc.NoSuchClient("There is no client available for the "
-                    "service '%s' in the region '%s'." % (service, region))
+            raise exc.NoSuchClient(
+                "There is no client available for the service '%s' in the "
+                "region '%s'." % (service, region))
         return clt
 
-
     def set_credentials(self, username, password=None, region=None,
-            tenant_id=None, authenticate=False):
+                        tenant_id=None, authenticate=False):
         """Sets the username and password directly."""
         self.username = username
         self.password = password
@@ -419,9 +401,8 @@ class BaseIdentity(object):
         if authenticate:
             self.authenticate()
 
-
     def set_credential_file(self, credential_file, region=None,
-            tenant_id=None, authenticate=False):
+                            tenant_id=None, authenticate=False):
         """
         Reads in the credentials from the supplied file. It should be
         a standard config file in the format:
@@ -438,8 +419,9 @@ class BaseIdentity(object):
             if not cfg.read(credential_file):
                 # If the specified file does not exist, the parser returns an
                 # empty list.
-                raise exc.FileNotFound("The specified credential file '%s' "
-                        "does not exist" % credential_file)
+                raise exc.FileNotFound(
+                    "The specified credential file '%s' does not exist"
+                    % credential_file)
         except ConfigParser.MissingSectionHeaderError as e:
             # The file exists, but doesn't have the correct format.
             raise exc.InvalidCredentialFile(e)
@@ -452,7 +434,6 @@ class BaseIdentity(object):
         if authenticate:
             self.authenticate()
 
-
     def auth_with_token(self, token, tenant_id=None, tenant_name=None):
         """
         If a valid token is already known, this call uses it to generate the
@@ -461,7 +442,6 @@ class BaseIdentity(object):
         resp, resp_body = self._call_token_auth(token, tenant_id, tenant_name)
         self._parse_response(resp_body)
         self.authenticated = True
-
 
     def _call_token_auth(self, token, tenant_id, tenant_name):
         key = val = None
@@ -480,19 +460,19 @@ class BaseIdentity(object):
             body["auth"][key] = val
 
         headers = {"Content-Type": "application/json",
-                "Accept": "application/json",
-                }
-        resp, resp_body = self.method_post("tokens", data=body, headers=headers,
-                std_headers=False)
+                   "Accept": "application/json",
+                   }
+        resp, resp_body = self.method_post("tokens", data=body,
+                                           headers=headers,
+                                           std_headers=False)
         if resp.status_code == 401:
             # Invalid authorization
-            raise exc.AuthenticationFailed("Incorrect/unauthorized "
-                    "credentials received")
+            raise exc.AuthenticationFailed(
+                "Incorrect/unauthorized credentials received")
         elif resp.status_code > 299:
             msg = resp_body[next(iter(resp_body))]["message"]
             raise exc.AuthenticationFailed("%s - %s." % (resp.reason, msg))
         return resp, resp_body
-
 
     def _read_credential_file(self, cfg):
         """
@@ -502,13 +482,11 @@ class BaseIdentity(object):
         self.password = cfg.get("keystone", "password", raw=True)
         self.tenant_id = cfg.get("keystone", "tenant_id")
 
-
     def _format_credentials(self):
         """
         Returns the current credentials in the format expected by
         the authentication service.
         """
-        tenant_name = self.tenant_name or self.username
         tenant_id = self.tenant_id or self.username
         return {"auth": {"passwordCredentials":
                 {"username": tenant_name,
@@ -516,34 +494,32 @@ class BaseIdentity(object):
                 },
                 "tenantId": tenant_id}}
 
-
     # The following method_* methods wrap the _call() method.
     def method_head(self, uri, admin=False, data=None, headers=None,
-            std_headers=True):
+                    std_headers=True):
         return self._call("HEAD", uri, admin, data, headers, std_headers)
 
     def method_get(self, uri, admin=False, data=None, headers=None,
-            std_headers=True):
+                   std_headers=True):
         return self._call("GET", uri, admin, data, headers, std_headers)
 
     def method_post(self, uri, admin=False, data=None, headers=None,
-            std_headers=True):
+                    std_headers=True):
         return self._call("POST", uri, admin, data, headers, std_headers)
 
     def method_put(self, uri, admin=False, data=None, headers=None,
-            std_headers=True):
+                   std_headers=True):
         return self._call("PUT", uri, admin, data, headers, std_headers)
 
     def method_delete(self, uri, admin=False, data=None, headers=None,
-            std_headers=True):
+                      std_headers=True):
         return self._call("DELETE", uri, admin, data, headers,
-                std_headers)
+                          std_headers)
 
     def method_patch(self, uri, admin=False, data=None, headers=None,
-            std_headers=True):
+                     std_headers=True):
         return self._call("PATCH", uri, admin, data, headers,
-                std_headers)
-
+                          std_headers)
 
     def _call(self, mthd, uri, admin, data, headers, std_headers):
         """
@@ -567,11 +543,10 @@ class BaseIdentity(object):
         if "tokens" in uri:
             # We'll handle the exception here
             kwargs["raise_exception"] = False
-        return pyrax.http.request(mthd, uri, verify=self.verify_ssl, **kwargs)
-
+        return http.request(mthd, uri, verify=self.verify_ssl, **kwargs)
 
     def authenticate(self, username=None, password=None, api_key=None,
-            tenant_id=None, connect=False):
+                     tenant_id=None, connect=False):
         """
         Using the supplied credentials, connects to the specified
         authentication endpoint and attempts to log in.
@@ -593,15 +568,15 @@ class BaseIdentity(object):
                 "tenant_id")
         creds = self._format_credentials()
         headers = {"Content-Type": "application/json",
-                "Accept": "application/json",
-                }
+                   "Accept": "application/json",
+                   }
         resp, resp_body = self.method_post("tokens", data=creds,
-                headers=headers, std_headers=False)
+                                           headers=headers, std_headers=False)
 
         if resp.status_code == 401:
             # Invalid authorization
-            raise exc.AuthenticationFailed("Incorrect/unauthorized "
-                    "credentials received")
+            raise exc.AuthenticationFailed(
+                "Incorrect/unauthorized credentials received")
         elif 500 <= resp.status_code < 600:
             # Internal Server Error
             try:
@@ -622,7 +597,6 @@ class BaseIdentity(object):
         self._parse_response(resp_body)
         self.authenticated = True
 
-
     def _parse_response(self, resp):
         """Gets the authentication information from the returned JSON."""
         access = resp["access"]
@@ -638,7 +612,6 @@ class BaseIdentity(object):
         self.user["id"] = user["id"]
         self.username = self.user["name"] = user["name"]
         self.user["roles"] = user["roles"]
-
 
     def _parse_service_catalog(self):
         self.services = utils.DotDict()
@@ -663,24 +636,23 @@ class BaseIdentity(object):
                 for rgn in self.regions:
                     eps[rgn] = ep
 
-
     def keyring_auth(self, username=None):
         """
         Uses the keyring module to retrieve the user's password or api_key.
         """
         if not keyring:
             # Module not installed
-            raise exc.KeyringModuleNotInstalled("The 'keyring' Python module "
-                    "is not installed on this system.")
+            raise exc.KeyringModuleNotInstalled(
+                "The 'keyring' Python module is not installed on this system.")
         if username is None:
             username = pyrax.get_setting("keyring_username")
         if not username:
-            raise exc.KeyringUsernameMissing("No username specified for "
-                    "keyring authentication.")
+            raise exc.KeyringUsernameMissing(
+                "No username specified for keyring authentication.")
         password = keyring.get_password("pyrax", username)
         if password is None:
-            raise exc.KeyringPasswordNotFound("No password was found for the "
-                    "username '%s'." % username)
+            raise exc.KeyringPasswordNotFound(
+                "No password was found for the username '%s'." % username)
         style = self._creds_style or self._default_creds_style
         # Keyring username may be different than the credentials. Use the
         # existing username, if present; otherwise, use the supplied username.
@@ -689,7 +661,6 @@ class BaseIdentity(object):
             return self.authenticate(username=username, api_key=password)
         else:
             return self.authenticate(username=username, password=password)
-
 
     def unauthenticate(self):
         """
@@ -708,7 +679,6 @@ class BaseIdentity(object):
         self.regions = utils.DotDict()
         self.authenticated = False
 
-
     def _standard_headers(self):
         """
         Returns a dict containing the standard headers for API calls.
@@ -719,14 +689,12 @@ class BaseIdentity(object):
                 "X-Auth-Project-Id": self.tenant_id,
                 }
 
-
     def get_extensions(self):
         """
         Returns a list of extensions enabled on this service.
         """
         resp, resp_body = self.method_get("extensions")
         return resp_body.get("extensions", {}).get("values")
-
 
     def get_token(self, force=False):
         """
@@ -739,7 +707,6 @@ class BaseIdentity(object):
             self.authenticate()
         return self.token
 
-
     def _has_valid_token(self):
         """
         This only checks the token's existence and expiration. If it has been
@@ -748,7 +715,6 @@ class BaseIdentity(object):
         """
         return bool(self.token and (self.expires > datetime.datetime.now()))
 
-
     def list_tokens(self):
         """
         ADMIN ONLY. Returns a dict containing tokens, endpoints, user info, and
@@ -756,10 +722,9 @@ class BaseIdentity(object):
         """
         resp, resp_body = self.method_get("tokens/%s" % self.token, admin=True)
         if resp.status_code in (401, 403):
-            raise exc.AuthorizationFailure("You must be an admin to make this "
-                    "call.")
+            raise exc.AuthorizationFailure(
+                "You must be an admin to make this call.")
         return resp_body.get("access")
-
 
     def check_token(self, token=None):
         """
@@ -770,10 +735,9 @@ class BaseIdentity(object):
             token = self.token
         resp, resp_body = self.method_head("tokens/%s" % token, admin=True)
         if resp.status_code in (401, 403):
-            raise exc.AuthorizationFailure("You must be an admin to make this "
-                    "call.")
+            raise exc.AuthorizationFailure(
+                "You must be an admin to make this call.")
         return 200 <= resp.status_code < 300
-
 
     def revoke_token(self, token):
         """
@@ -782,22 +746,20 @@ class BaseIdentity(object):
         """
         resp, resp_body = self.method_delete("tokens/%s" % token, admin=True)
         if resp.status_code in (401, 403):
-            raise exc.AuthorizationFailure("You must be an admin to make this "
-                    "call.")
+            raise exc.AuthorizationFailure(
+                "You must be an admin to make this call.")
         return 200 <= resp.status_code < 300
-
 
     def get_token_endpoints(self):
         """
         ADMIN ONLY. Returns a list of all endpoints for the current auth token.
         """
         resp, resp_body = self.method_get("tokens/%s/endpoints" % self.token,
-                admin=True)
+                                          admin=True)
         if resp.status_code in (401, 403, 404):
-            raise exc.AuthorizationFailure("You are not authorized to list "
-                    "token endpoints.")
+            raise exc.AuthorizationFailure(
+                "You are not authorized to list token endpoints.")
         return resp_body.get("access", {}).get("endpoints")
-
 
     def list_users(self):
         """
@@ -807,8 +769,8 @@ class BaseIdentity(object):
         """
         resp, resp_body = self.method_get("users", admin=True)
         if resp.status_code in (401, 403, 404):
-            raise exc.AuthorizationFailure("You are not authorized to list "
-                    "users.")
+            raise exc.AuthorizationFailure(
+                "You are not authorized to list users.")
         # The API is inconsistent; if only one user exists, it does not return
         # a list.
         if "users" in resp_body:
@@ -818,11 +780,10 @@ class BaseIdentity(object):
         # The returned values may contain password data. Strip that out.
         for user in users:
             bad_keys = [key for key in list(user.keys())
-                    if "password" in key.lower()]
+                        if "password" in key.lower()]
             for bad_key in bad_keys:
                 user.pop(bad_key)
         return [User(self, user) for user in users]
-
 
     def create_user(self, name, email, password=None, enabled=True):
         """
@@ -837,7 +798,7 @@ class BaseIdentity(object):
         passing False to the enabled parameter.
         """
         # NOTE: the OpenStack docs say that the name key in the following dict
-        # is supposed to be 'username', but the service actually expects 'name'.
+        # is supposed to be 'username', but the service actually expects 'name'
         data = {"user": {
                 "username": name,
                 "email": email,
@@ -849,8 +810,8 @@ class BaseIdentity(object):
         if resp.status_code == 201:
             return User(self, resp_body.get("user", resp_body))
         elif resp.status_code in (401, 403, 404):
-            raise exc.AuthorizationFailure("You are not authorized to create "
-                    "users.")
+            raise exc.AuthorizationFailure(
+                "You are not authorized to create users.")
         elif resp.status_code == 409:
             raise exc.DuplicateUser("User '%s' already exists." % name)
         elif resp.status_code == 400:
@@ -860,14 +821,12 @@ class BaseIdentity(object):
             else:
                 raise exc.BadRequest(message)
 
-
     def find_user_by_name(self, name):
         """
         Returns a User object by searching for the supplied user name. Returns
         None if there is no match for the given name.
         """
         raise NotImplementedError("This method is not supported.")
-
 
     def find_user_by_email(self, email):
         """
@@ -876,14 +835,12 @@ class BaseIdentity(object):
         """
         raise NotImplementedError("This method is not supported.")
 
-
     def find_user_by_id(self, uid):
         """
         Returns a User object by searching for the supplied user ID. Returns
         None if there is no match for the given ID.
         """
         raise NotImplementedError("This method is not supported.")
-
 
     def get_user(self, user_id=None, username=None, email=None):
         """
@@ -899,10 +856,9 @@ class BaseIdentity(object):
         """
         raise NotImplementedError("This method is not supported.")
 
-
     # Can we really update the ID? Docs seem to say we can
     def update_user(self, user, email=None, username=None,
-            uid=None, enabled=None):
+                    uid=None, enabled=None):
         """
         ADMIN ONLY. Updates the user attributes with the supplied values.
         """
@@ -918,10 +874,9 @@ class BaseIdentity(object):
         data = {"user": upd}
         resp, resp_body = self.method_put(uri, data=data)
         if resp.status_code in (401, 403, 404):
-            raise exc.AuthorizationFailure("You are not authorized to update "
-                    "users.")
+            raise exc.AuthorizationFailure(
+                "You are not authorized to update users.")
         return User(self, resp_body)
-
 
     def delete_user(self, user):
         """
@@ -935,9 +890,8 @@ class BaseIdentity(object):
         if resp.status_code == 404:
             raise exc.UserNotFound("User '%s' does not exist." % user)
         elif resp.status_code in (401, 403):
-            raise exc.AuthorizationFailure("You are not authorized to delete "
-                    "users.")
-
+            raise exc.AuthorizationFailure(
+                "You are not authorized to delete users.")
 
     def list_roles_for_user(self, user):
         """
@@ -949,11 +903,10 @@ class BaseIdentity(object):
         uri = "users/%s/roles" % user_id
         resp, resp_body = self.method_get(uri)
         if resp.status_code in (401, 403):
-            raise exc.AuthorizationFailure("You are not authorized to list "
-                    "user roles.")
+            raise exc.AuthorizationFailure(
+                "You are not authorized to list user roles.")
         roles = resp_body.get("roles")
         return roles
-
 
     def list_credentials(self, user=None):
         """
@@ -969,14 +922,12 @@ class BaseIdentity(object):
         resp, resp_body = self.method_get(uri)
         return resp_body.get("credentials")
 
-
     def reset_api_key(self, user=None):
         """
         Not available in basic Keystone identity.
         """
-        raise NotImplementedError("The reset_api_key method is not "
-                "implemented.")
-
+        raise NotImplementedError(
+            "The reset_api_key method is not implemented.")
 
     def get_tenant(self):
         """
@@ -987,14 +938,12 @@ class BaseIdentity(object):
             return tenants[0]
         return None
 
-
     def list_tenants(self, admin=True):
         """
         Lists all tenants associated with the currently authenticated
         user (admin=False), or all tenants (admin=True).
         """
         return self._list_tenants(admin)
-
 
     def _list_tenants(self, admin):
         """
@@ -1006,11 +955,10 @@ class BaseIdentity(object):
             tenants = resp_body.get("tenants", [])
             return [Tenant(self, tenant) for tenant in tenants]
         elif resp.status_code in (401, 403):
-            raise exc.AuthorizationFailure("You are not authorized to list "
-                    "tenants.")
+            raise exc.AuthorizationFailure(
+                "You are not authorized to list tenants.")
         else:
             raise exc.TenantNotFound("Could not get a list of tenants.")
-
 
     def create_tenant(self, name, description=None, enabled=True):
         """
@@ -1024,7 +972,6 @@ class BaseIdentity(object):
             data["tenant"]["description"] = description
         resp, resp_body = self.method_post("tenants", data=data)
         return Tenant(self, resp_body)
-
 
     def update_tenant(self, tenant, name=None, description=None, enabled=True):
         """
@@ -1041,7 +988,6 @@ class BaseIdentity(object):
         resp, resp_body = self.method_put("tenants/%s" % tenant_id, data=data)
         return Tenant(self, resp_body)
 
-
     def delete_tenant(self, tenant):
         """
         ADMIN ONLY. Removes the tenant from the system. There is no 'undo'
@@ -1053,7 +999,6 @@ class BaseIdentity(object):
         resp, resp_body = self.method_delete(uri)
         if resp.status_code == 404:
             raise exc.TenantNotFound("Tenant '%s' does not exist." % tenant)
-
 
     def list_roles(self, service_id=None, limit=None, marker=None):
         """
@@ -1076,7 +1021,6 @@ class BaseIdentity(object):
         roles = resp_body.get("roles", [])
         return [Role(self, role) for role in roles]
 
-
     def get_role(self, role):
         """
         Returns a Role object representing the specified parameter. The 'role'
@@ -1089,7 +1033,6 @@ class BaseIdentity(object):
         role = Role(self, resp_body.get("role"))
         return role
 
-
     def add_role_to_user(self, role, user):
         """
         Adds the specified role to the specified user.
@@ -1098,9 +1041,8 @@ class BaseIdentity(object):
         user raises a NotFound exception.
         """
         uri = "users/%s/roles/OS-KSADM/%s" % (utils.get_id(user),
-                utils.get_id(role))
+                                              utils.get_id(role))
         resp, resp_body = self.method_put(uri)
-
 
     def delete_role_from_user(self, role, user):
         """
@@ -1110,9 +1052,8 @@ class BaseIdentity(object):
         user raises a NotFound exception.
         """
         uri = "users/%s/roles/OS-KSADM/%s" % (utils.get_id(user),
-                utils.get_id(role))
+                                              utils.get_id(role))
         resp, resp_body = self.method_delete(uri)
-
 
     @staticmethod
     def _parse_api_time(timestr):
@@ -1135,7 +1076,7 @@ class BaseIdentity(object):
             off_sign = "+"
             off_hr = off_mn = 0
         base_dt = datetime.datetime(int(yr), int(mth), int(dy), int(hr),
-                int(mn), int(sc))
+                                    int(mn), int(sc))
         delta = datetime.timedelta(hours=int(off_hr), minutes=int(off_mn))
         if off_sign == "+":
             # Time is greater than UTC
