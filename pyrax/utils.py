@@ -330,7 +330,11 @@ def folder_size(pth, ignore=None):
                 paths.remove(pth)
         total += sum(os.stat(pth).st_size for pth in paths)
 
-    return total
+    # Need a mutable to pass
+    total = [0]
+    for root, dirs, files in os.walk(pth):
+        get_size(total, root, files)
+    return total[0]
 
 
 def add_method(obj, func, name=None):

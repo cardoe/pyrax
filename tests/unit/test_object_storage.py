@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
-import logging
-import mimetypes
 import os
 import random
 import time
@@ -29,7 +27,6 @@ from pyrax.object_storage import _handle_container_not_found
 from pyrax.object_storage import _handle_object_not_found
 from pyrax.object_storage import OBJECT_META_PREFIX
 from pyrax.object_storage import _massage_metakeys
-from pyrax.object_storage import StorageClient
 from pyrax.object_storage import StorageObject
 from pyrax.object_storage import StorageObjectIterator
 from pyrax.object_storage import _validate_file_or_path
@@ -38,7 +35,6 @@ import pyrax.exceptions as exc
 import pyrax.utils as utils
 
 import pyrax.fakes as fakes
-
 
 
 class ObjectStorageTest(unittest.TestCase):
@@ -52,8 +48,9 @@ class ObjectStorageTest(unittest.TestCase):
         self.container = self.client.create("fake")
         nm = "fake_object"
         ctype = "text/fake"
-        self.obj = StorageObject(self.container.object_manager,
-                {"name": nm, "content_type": ctype, "bytes": 42})
+        self.obj = StorageObject(
+            self.container.object_manager,
+            {"name": nm, "content_type": ctype, "bytes": 42})
 
     def tearDown(self):
         pass
@@ -96,7 +93,7 @@ class ObjectStorageTest(unittest.TestCase):
         pth = utils.random_unicode()
         obj_name = utils.random_unicode()
         self.assertRaises(exc.FileNotFound, _validate_file_or_path, pth,
-                obj_name)
+                          obj_name)
 
     def test_validate_file_or_path_object(self):
         pth = object()
@@ -131,7 +128,6 @@ class ObjectStorageTest(unittest.TestCase):
         self.assertRaises(exc.InvalidUploadID, test, clt, bad_key)
 
     def test_handle_container_not_found(self):
-        clt = self.client
         msg = utils.random_unicode()
 
         @_handle_container_not_found
@@ -142,7 +138,6 @@ class ObjectStorageTest(unittest.TestCase):
         self.assertRaises(exc.NoSuchContainer, test, self, container)
 
     def test_handle_object_not_found(self):
-        clt = self.client
         msg = utils.random_unicode()
 
         @_handle_object_not_found
@@ -159,7 +154,7 @@ class ObjectStorageTest(unittest.TestCase):
         self.assertEqual(sz, ret)
 
     @patch('pyrax.object_storage.StorageObjectManager',
-            new=fakes.FakeStorageObjectManager)
+           new=fakes.FakeStorageObjectManager)
     def test_container_create(self):
         api = utils.random_unicode()
         mgr = fakes.FakeManager()
@@ -224,7 +219,7 @@ class ObjectStorageTest(unittest.TestCase):
     def test_fetch_cdn_data_no_headers(self):
         cont = self.container
         cont._cdn_enabled = True
-        ret = cont._fetch_cdn_data()
+        cont._fetch_cdn_data()
         self.assertTrue(cont._cdn_enabled)
 
     def test_fetch_cdn_data_not_enabled(self):
@@ -249,8 +244,8 @@ class ObjectStorageTest(unittest.TestCase):
         metadata = {key: val}
         cont.manager.set_metadata = Mock()
         cont.set_metadata(metadata, prefix=prefix)
-        cont.manager.set_metadata.assert_called_once_with(cont, metadata,
-                prefix=prefix, clear=False)
+        cont.manager.set_metadata.assert_called_once_with(
+            cont, metadata, prefix=prefix, clear=False)
 
     def test_cont_remove_metadata_key(self):
         cont = self.container
@@ -258,8 +253,8 @@ class ObjectStorageTest(unittest.TestCase):
         key = utils.random_unicode()
         cont.manager.remove_metadata_key = Mock()
         cont.remove_metadata_key(key, prefix=prefix)
-        cont.manager.remove_metadata_key.assert_called_once_with(cont, key,
-                prefix=prefix)
+        cont.manager.remove_metadata_key.assert_called_once_with(
+            cont, key, prefix=prefix)
 
     def test_cont_set_web_index_page(self):
         cont = self.container
@@ -294,8 +289,8 @@ class ObjectStorageTest(unittest.TestCase):
         email_addresses = utils.random_unicode()
         cont.object_manager.purge = Mock()
         cont.purge_cdn_object(obj, email_addresses=email_addresses)
-        cont.object_manager.purge.assert_called_once_with(obj,
-                email_addresses=email_addresses)
+        cont.object_manager.purge.assert_called_once_with(
+            obj, email_addresses=email_addresses)
 
     def test_cont_get(self):
         cont = self.container
@@ -316,11 +311,11 @@ class ObjectStorageTest(unittest.TestCase):
         return_raw = utils.random_unicode()
         cont.object_manager.list = Mock()
         cont.list(marker=marker, limit=limit, prefix=prefix,
-                delimiter=delimiter, end_marker=end_marker,
-                full_listing=full_listing, return_raw=return_raw)
-        cont.object_manager.list.assert_called_once_with(marker=marker,
-                limit=limit, prefix=prefix, delimiter=delimiter,
-                end_marker=end_marker, return_raw=return_raw)
+                  delimiter=delimiter, end_marker=end_marker,
+                  full_listing=full_listing, return_raw=return_raw)
+        cont.object_manager.list.assert_called_once_with(
+            marker=marker, limit=limit, prefix=prefix, delimiter=delimiter,
+            end_marker=end_marker, return_raw=return_raw)
 
     def test_cont_list_full(self):
         cont = self.container
@@ -333,18 +328,18 @@ class ObjectStorageTest(unittest.TestCase):
         return_raw = utils.random_unicode()
         cont.manager.object_listing_iterator = Mock()
         cont.list(marker=marker, limit=limit, prefix=prefix,
-                delimiter=delimiter, end_marker=end_marker,
-                full_listing=full_listing, return_raw=return_raw)
-        cont.manager.object_listing_iterator.assert_called_once_with(cont,
-                prefix=prefix)
+                  delimiter=delimiter, end_marker=end_marker,
+                  full_listing=full_listing, return_raw=return_raw)
+        cont.manager.object_listing_iterator.assert_called_once_with(
+            cont, prefix=prefix)
 
     def test_cont_list_all(self):
         cont = self.container
         prefix = utils.random_unicode()
         cont.manager.object_listing_iterator = Mock()
         cont.list_all(prefix=prefix)
-        cont.manager.object_listing_iterator.assert_called_once_with(cont,
-                prefix=prefix)
+        cont.manager.object_listing_iterator.assert_called_once_with(
+            cont, prefix=prefix)
 
     def test_cont_list_object_names_full(self):
         cont = self.container
@@ -359,9 +354,9 @@ class ObjectStorageTest(unittest.TestCase):
         obj1 = fakes.FakeStorageObject(cont.object_manager, name=name1)
         obj2 = fakes.FakeStorageObject(cont.object_manager, name=name2)
         cont.list_all = Mock(return_value=[obj1, obj2])
-        nms = cont.list_object_names(marker=marker, limit=limit, prefix=prefix,
-                delimiter=delimiter, end_marker=end_marker,
-                full_listing=full_listing)
+        nms = cont.list_object_names(
+            marker=marker, limit=limit, prefix=prefix, delimiter=delimiter,
+            end_marker=end_marker, full_listing=full_listing)
         cont.list_all.assert_called_once_with(prefix=prefix)
         self.assertEqual(nms, [name1, name2])
 
@@ -378,19 +373,18 @@ class ObjectStorageTest(unittest.TestCase):
         obj1 = fakes.FakeStorageObject(cont.object_manager, name=name1)
         obj2 = fakes.FakeStorageObject(cont.object_manager, name=name2)
         cont.list = Mock(return_value=[obj1, obj2])
-        nms = cont.list_object_names(marker=marker, limit=limit, prefix=prefix,
-                delimiter=delimiter, end_marker=end_marker,
-                full_listing=full_listing)
-        cont.list.assert_called_once_with(marker=marker, limit=limit,
-                prefix=prefix, delimiter=delimiter, end_marker=end_marker)
+        nms = cont.list_object_names(
+            marker=marker, limit=limit, prefix=prefix, delimiter=delimiter,
+            end_marker=end_marker, full_listing=full_listing)
+        cont.list.assert_called_once_with(
+            marker=marker, limit=limit, prefix=prefix, delimiter=delimiter,
+            end_marker=end_marker)
         self.assertEqual(nms, [name1, name2])
 
     def test_cont_find(self):
         cont = self.container
         cont.object_manager.find = Mock()
-        key1 = utils.random_unicode()
         val1 = utils.random_unicode()
-        key2 = utils.random_unicode()
         val2 = utils.random_unicode()
         cont.find(key1=val1, key2=val2)
         cont.object_manager.find.assert_called_once_with(key1=val1, key2=val2)
@@ -398,13 +392,11 @@ class ObjectStorageTest(unittest.TestCase):
     def test_cont_findall(self):
         cont = self.container
         cont.object_manager.findall = Mock()
-        key1 = utils.random_unicode()
         val1 = utils.random_unicode()
-        key2 = utils.random_unicode()
         val2 = utils.random_unicode()
         cont.findall(key1=val1, key2=val2)
-        cont.object_manager.findall.assert_called_once_with(key1=val1,
-                key2=val2)
+        cont.object_manager.findall.assert_called_once_with(
+            key1=val1, key2=val2)
 
     def test_cont_create(self):
         cont = self.container
@@ -423,11 +415,11 @@ class ObjectStorageTest(unittest.TestCase):
         headers = utils.random_unicode()
         return_none = utils.random_unicode()
         cont.create(file_or_path=file_or_path, data=data, obj_name=obj_name,
-                content_type=content_type, etag=etag,
-                content_encoding=content_encoding,
-                content_length=content_length, ttl=ttl, chunked=chunked,
-                metadata=metadata, chunk_size=chunk_size, headers=headers,
-                return_none=return_none)
+                    content_type=content_type, etag=etag,
+                    content_encoding=content_encoding,
+                    content_length=content_length, ttl=ttl, chunked=chunked,
+                    metadata=metadata, chunk_size=chunk_size, headers=headers,
+                    return_none=return_none)
         cont.object_manager.create.assert_called_once_with(
                 file_or_path=file_or_path, data=data, obj_name=obj_name,
                 content_type=content_type, etag=etag,
@@ -448,13 +440,14 @@ class ObjectStorageTest(unittest.TestCase):
         return_none = utils.random_unicode()
         headers = utils.random_unicode()
         extra_info = utils.random_unicode()
-        cont.store_object(obj_name, data, content_type=content_type, etag=etag,
-                content_encoding=content_encoding, ttl=ttl,
-                return_none=return_none, headers=headers, extra_info=extra_info)
-        cont.create.assert_called_once_with(obj_name=obj_name, data=data,
-                content_type=content_type, etag=etag, headers=headers,
-                content_encoding=content_encoding, ttl=ttl,
-                return_none=return_none)
+        cont.store_object(
+            obj_name, data, content_type=content_type, etag=etag,
+            content_encoding=content_encoding, ttl=ttl,
+            return_none=return_none, headers=headers, extra_info=extra_info)
+        cont.create.assert_called_once_with(
+            obj_name=obj_name, data=data, content_type=content_type, etag=etag,
+            headers=headers, content_encoding=content_encoding, ttl=ttl,
+            return_none=return_none)
 
     def test_cont_upload_file(self):
         cont = self.container
@@ -468,16 +461,16 @@ class ObjectStorageTest(unittest.TestCase):
         return_none = utils.random_unicode()
         content_length = utils.random_unicode()
         headers = utils.random_unicode()
-        cont.upload_file(file_or_path, obj_name=obj_name,
-                content_type=content_type, etag=etag,
-                content_encoding=content_encoding, ttl=ttl,
-                return_none=return_none, content_length=content_length,
-                headers=headers)
-        cont.create.assert_called_once_with(file_or_path=file_or_path,
-                obj_name=obj_name, content_type=content_type, etag=etag,
-                content_encoding=content_encoding, headers=headers,
-                content_length=content_length, ttl=ttl,
-                return_none=return_none)
+        cont.upload_file(
+            file_or_path, obj_name=obj_name, content_type=content_type,
+            etag=etag, content_encoding=content_encoding, ttl=ttl,
+            return_none=return_none, content_length=content_length,
+            headers=headers)
+        cont.create.assert_called_once_with(
+            file_or_path=file_or_path, obj_name=obj_name,
+            content_type=content_type, etag=etag,
+            content_encoding=content_encoding, headers=headers,
+            content_length=content_length, ttl=ttl, return_none=return_none)
 
     def test_cont_fetch(self):
         cont = self.container
@@ -488,9 +481,9 @@ class ObjectStorageTest(unittest.TestCase):
         size = utils.random_unicode()
         extra_info = utils.random_unicode()
         cont.fetch(obj, include_meta=include_meta, chunk_size=chunk_size,
-                size=size, extra_info=extra_info)
-        cont.object_manager.fetch.assert_called_once_with(obj,
-                include_meta=include_meta, chunk_size=chunk_size, size=size)
+                   size=size, extra_info=extra_info)
+        cont.object_manager.fetch.assert_called_once_with(
+            obj, include_meta=include_meta, chunk_size=chunk_size, size=size)
 
     def test_cont_fetch_object(self):
         cont = self.container
@@ -499,9 +492,9 @@ class ObjectStorageTest(unittest.TestCase):
         include_meta = utils.random_unicode()
         chunk_size = utils.random_unicode()
         cont.fetch_object(obj_name, include_meta=include_meta,
-                chunk_size=chunk_size)
-        cont.fetch.assert_called_once_with(obj=obj_name,
-                include_meta=include_meta, chunk_size=chunk_size)
+                          chunk_size=chunk_size)
+        cont.fetch.assert_called_once_with(
+            obj=obj_name, include_meta=include_meta, chunk_size=chunk_size)
 
     def test_cont_fetch_partial(self):
         cont = self.container
@@ -518,8 +511,8 @@ class ObjectStorageTest(unittest.TestCase):
         directory = utils.random_unicode()
         structure = utils.random_unicode()
         cont.download(obj, directory, structure=structure)
-        cont.object_manager.download.assert_called_once_with(obj, directory,
-                structure=structure)
+        cont.object_manager.download.assert_called_once_with(
+            obj, directory, structure=structure)
 
     def test_cont_download_object(self):
         cont = self.container
@@ -528,16 +521,16 @@ class ObjectStorageTest(unittest.TestCase):
         directory = utils.random_unicode()
         structure = utils.random_unicode()
         cont.download_object(obj_name, directory, structure=structure)
-        cont.download.assert_called_once_with(obj=obj_name,
-                directory=directory, structure=structure)
+        cont.download.assert_called_once_with(
+            obj=obj_name, directory=directory, structure=structure)
 
     def test_cont_delete(self):
         cont = self.container
         cont.manager.delete = Mock()
         del_objects = utils.random_unicode()
         cont.delete(del_objects=del_objects)
-        cont.manager.delete.assert_called_once_with(cont,
-                del_objects=del_objects)
+        cont.manager.delete.assert_called_once_with(
+            cont, del_objects=del_objects)
 
     def test_cont_delete_object(self):
         cont = self.container
@@ -553,19 +546,19 @@ class ObjectStorageTest(unittest.TestCase):
         seconds = utils.random_unicode()
         extra_info = utils.random_unicode()
         cont.delete_object_in_seconds(obj, seconds, extra_info=extra_info)
-        cont.manager.delete_object_in_seconds.assert_called_once_with(cont,
-                obj, seconds)
+        cont.manager.delete_object_in_seconds.assert_called_once_with(
+            cont, obj, seconds)
 
     def test_cont_delete_all_objects(self):
         cont = self.container
         cont.object_manager.delete_all_objects = Mock()
         name1 = utils.random_unicode()
         name2 = utils.random_unicode()
-        async = utils.random_unicode()
+        asynchronous = utils.random_unicode()
         cont.list_object_names = Mock(return_value=[name1, name2])
-        cont.delete_all_objects(async=async)
+        cont.delete_all_objects(asynchronous=asynchronous)
         cont.object_manager.delete_all_objects.assert_called_once_with(
-                [name1, name2], async=async)
+                [name1, name2], asynchronous=asynchronous)
 
     def test_cont_copy_object(self):
         cont = self.container
@@ -575,10 +568,10 @@ class ObjectStorageTest(unittest.TestCase):
         new_obj_name = utils.random_unicode()
         content_type = utils.random_unicode()
         cont.copy_object(obj, new_container, new_obj_name=new_obj_name,
-                content_type=content_type)
-        cont.manager.copy_object.assert_called_once_with(cont, obj,
-                new_container, new_obj_name=new_obj_name,
-                content_type=content_type)
+                         content_type=content_type)
+        cont.manager.copy_object.assert_called_once_with(
+            cont, obj, new_container, new_obj_name=new_obj_name,
+            content_type=content_type)
 
     def test_cont_move_object(self):
         cont = self.container
@@ -589,12 +582,13 @@ class ObjectStorageTest(unittest.TestCase):
         new_reference = utils.random_unicode()
         content_type = utils.random_unicode()
         extra_info = utils.random_unicode()
-        cont.move_object(obj, new_container, new_obj_name=new_obj_name,
-                new_reference=new_reference, content_type=content_type,
-                extra_info=extra_info)
-        cont.manager.move_object.assert_called_once_with(cont, obj,
-                new_container, new_obj_name=new_obj_name,
-                new_reference=new_reference, content_type=content_type)
+        cont.move_object(
+            obj, new_container, new_obj_name=new_obj_name,
+            new_reference=new_reference, content_type=content_type,
+            extra_info=extra_info)
+        cont.manager.move_object.assert_called_once_with(
+            cont, obj, new_container, new_obj_name=new_obj_name,
+            new_reference=new_reference, content_type=content_type)
 
     def test_cont_change_object_content_type(self):
         cont = self.container
@@ -603,8 +597,8 @@ class ObjectStorageTest(unittest.TestCase):
         new_ctype = utils.random_unicode()
         guess = utils.random_unicode()
         cont.change_object_content_type(obj, new_ctype, guess=guess)
-        cont.manager.change_object_content_type.assert_called_once_with(cont,
-                obj, new_ctype, guess=guess)
+        cont.manager.change_object_content_type.assert_called_once_with(
+            cont, obj, new_ctype, guess=guess)
 
     def test_cont_get_temp_url(self):
         cont = self.container
@@ -615,8 +609,8 @@ class ObjectStorageTest(unittest.TestCase):
         cached = utils.random_unicode()
         key = utils.random_unicode()
         cont.get_temp_url(obj, seconds, method=method, key=key, cached=cached)
-        cont.manager.get_temp_url.assert_called_once_with(cont, obj, seconds,
-                method=method, key=key, cached=cached)
+        cont.manager.get_temp_url.assert_called_once_with(
+            cont, obj, seconds, method=method, key=key, cached=cached)
 
     def test_cont_get_object_metadata(self):
         cont = self.container
@@ -635,10 +629,10 @@ class ObjectStorageTest(unittest.TestCase):
         clear = utils.random_unicode()
         extra_info = utils.random_unicode()
         prefix = utils.random_unicode()
-        cont.set_object_metadata(obj, metadata, clear=clear,
-                extra_info=extra_info, prefix=prefix)
-        cont.object_manager.set_metadata.assert_called_once_with(obj, metadata,
-                clear=clear, prefix=prefix)
+        cont.set_object_metadata(
+            obj, metadata, clear=clear, extra_info=extra_info, prefix=prefix)
+        cont.object_manager.set_metadata.assert_called_once_with(
+            obj, metadata, clear=clear, prefix=prefix)
 
     def test_cont_list_subdirs(self):
         cont = self.container
@@ -649,10 +643,10 @@ class ObjectStorageTest(unittest.TestCase):
         full_listing = False
         cont.manager.list_subdirs = Mock()
         cont.list_subdirs(marker=marker, limit=limit, prefix=prefix,
-                delimiter=delimiter, full_listing=full_listing)
-        cont.manager.list_subdirs.assert_called_once_with(cont, marker=marker,
-                limit=limit, prefix=prefix, delimiter=delimiter,
-                full_listing=full_listing)
+                          delimiter=delimiter, full_listing=full_listing)
+        cont.manager.list_subdirs.assert_called_once_with(
+            cont, marker=marker, limit=limit, prefix=prefix,
+            delimiter=delimiter, full_listing=full_listing)
 
     def test_cont_remove_from_cache(self):
         obj = utils.random_unicode()
@@ -660,7 +654,7 @@ class ObjectStorageTest(unittest.TestCase):
 
     def test_cont_cdn_props(self):
         for prop in ("cdn_enabled", "cdn_log_retention", "cdn_uri", "cdn_ttl",
-                "cdn_ssl_uri", "cdn_streaming_uri", "cdn_ios_uri"):
+                     "cdn_ssl_uri", "cdn_streaming_uri", "cdn_ios_uri"):
             # Need a fresh container for each
             cont = self.client.create("fake")
             cont.manager.set_cdn_log_retention = Mock()
@@ -678,14 +672,14 @@ class ObjectStorageTest(unittest.TestCase):
         end_marker = utils.random_unicode()
         prefix = utils.random_unicode()
         qs = utils.dict_to_qs({"marker": marker, "limit": limit,
-                "prefix": prefix, "end_marker": end_marker})
+                               "prefix": prefix, "end_marker": end_marker})
         exp_uri = "/%s?%s" % (mgr.uri_base, qs)
         name1 = utils.random_unicode()
         name2 = utils.random_unicode()
         resp_body = [{"name": name1}, {"name": name2}]
         mgr.api.method_get = Mock(return_value=(None, resp_body))
         ret = mgr.list(limit=limit, marker=marker, end_marker=end_marker,
-                prefix=prefix)
+                       prefix=prefix)
         mgr.api.method_get.assert_called_once_with(exp_uri)
         self.assertEqual(len(ret), 2)
         self.assertTrue(isinstance(ret[0], Container))
@@ -697,7 +691,7 @@ class ObjectStorageTest(unittest.TestCase):
         cbytes = random.randint(1, 1000)
         ccount = random.randint(1, 1000)
         resp.headers = {"x-container-bytes-used": cbytes,
-                "x-container-object-count": ccount}
+                        "x-container-object-count": ccount}
         mgr.api.method_head = Mock(return_value=(resp, None))
         name = utils.random_unicode()
         ret = mgr.get(name)
@@ -723,17 +717,18 @@ class ObjectStorageTest(unittest.TestCase):
         cbytes = random.randint(1, 1000)
         ccount = random.randint(1, 1000)
         head_resp.headers = {"x-container-bytes-used": cbytes,
-                "x-container-object-count": ccount}
+                             "x-container-object-count": ccount}
         mgr.api.method_head = Mock(return_value=(head_resp, None))
         name = utils.random_unicode()
         key = utils.random_unicode()
         val = utils.random_unicode()
         metadata = {key: val}
         prefix = utils.random_unicode()
-        ret = mgr.create(name, metadata=metadata, prefix=prefix)
+        mgr.create(name, metadata=metadata, prefix=prefix)
         exp_uri = "/%s" % name
         exp_headers = _massage_metakeys(metadata, prefix)
-        mgr.api.method_put.assert_called_once_with(exp_uri, headers=exp_headers)
+        mgr.api.method_put.assert_called_once_with(
+            exp_uri, headers=exp_headers)
         mgr.api.method_head.assert_called_once_with(exp_uri)
 
     def test_cmgr_create_no_prefix(self):
@@ -746,17 +741,18 @@ class ObjectStorageTest(unittest.TestCase):
         cbytes = random.randint(1, 1000)
         ccount = random.randint(1, 1000)
         head_resp.headers = {"x-container-bytes-used": cbytes,
-                "x-container-object-count": ccount}
+                             "x-container-object-count": ccount}
         mgr.api.method_head = Mock(return_value=(head_resp, None))
         name = utils.random_unicode()
         key = utils.random_unicode()
         val = utils.random_unicode()
         metadata = {key: val}
         prefix = None
-        ret = mgr.create(name, metadata=metadata, prefix=prefix)
+        mgr.create(name, metadata=metadata, prefix=prefix)
         exp_uri = "/%s" % name
         exp_headers = _massage_metakeys(metadata, CONTAINER_META_PREFIX)
-        mgr.api.method_put.assert_called_once_with(exp_uri, headers=exp_headers)
+        mgr.api.method_put.assert_called_once_with(
+            exp_uri, headers=exp_headers)
         mgr.api.method_head.assert_called_once_with(exp_uri)
 
     def test_cmgr_create_fail(self):
@@ -778,7 +774,8 @@ class ObjectStorageTest(unittest.TestCase):
         mgr.api.method_delete = Mock(return_value=(None, None))
         mgr.delete(cont, del_objects=True)
         mgr.list_object_names.assert_called_once_with(cont, full_listing=True)
-        mgr.api.bulk_delete.assert_called_once_with(cont, names, async=False)
+        mgr.api.bulk_delete.assert_called_once_with(
+            cont, names, asynchronous=False)
         mgr.api.method_delete.assert_called_once_with(exp_uri)
 
     def test_cmgr_create_body(self):
@@ -1023,19 +1020,18 @@ class ObjectStorageTest(unittest.TestCase):
         exp_meta = {key: str(val)}
         exp_uri = "/%s" % cont.name
         mgr.api.cdn_request = Mock(return_value=(resp, None))
-        ret = mgr.set_cdn_metadata(cont, metadata)
+        mgr.set_cdn_metadata(cont, metadata)
         mgr.api.cdn_request.assert_called_once_with(exp_uri, "POST",
-                headers=exp_meta)
+                                                    headers=exp_meta)
 
     def test_cmgr_set_cdn_metadata_invalid(self):
         cont = self.container
         mgr = cont.manager
-        resp = fakes.FakeResponse()
         key = "INVALID"
         val = 666
         metadata = {key: val}
         self.assertRaises(exc.InvalidCDNMetadata, mgr.set_cdn_metadata, cont,
-                metadata)
+                          metadata)
 
     def test_cmgr_get_temp_url_no_key(self):
         cont = self.container
@@ -1045,7 +1041,7 @@ class ObjectStorageTest(unittest.TestCase):
         key = None
         mgr.api.get_temp_url_key = Mock(return_value=None)
         self.assertRaises(exc.MissingTemporaryURLKey, mgr.get_temp_url, cont,
-                obj, seconds, key=key)
+                          obj, seconds, key=key)
 
     def test_cmgr_get_temp_url_bad_method(self):
         cont = self.container
@@ -1054,19 +1050,8 @@ class ObjectStorageTest(unittest.TestCase):
         seconds = utils.random_unicode()
         key = utils.random_unicode()
         method = "INVALID"
-        self.assertRaises(exc.InvalidTemporaryURLMethod, mgr.get_temp_url, cont,
-                obj, seconds, method=method, key=key)
-
-    def test_cmgr_get_temp_url_unicode_error(self):
-        cont = self.container
-        mgr = cont.manager
-        obj = utils.random_unicode()
-        seconds = random.randint(1, 1000)
-        key = utils.random_unicode()
-        method = "GET"
-        mgr.api.management_url = "%s/v2/" % fakes.example_uri
-        self.assertRaises(exc.UnicodePathError, mgr.get_temp_url, cont,
-                obj, seconds, method=method, key=key)
+        self.assertRaises(exc.InvalidTemporaryURLMethod, mgr.get_temp_url,
+                          cont, obj, seconds, method=method, key=key)
 
     def test_cmgr_get_temp_url(self):
         cont = self.container
@@ -1132,8 +1117,8 @@ class ObjectStorageTest(unittest.TestCase):
             exp_uri = "/%s" % cont.name
             mgr.api.cdn_request = Mock()
             mgr._set_cdn_access(cont, pub, ttl=ttl)
-            mgr.api.cdn_request.assert_called_once_with(exp_uri, method="PUT",
-                    headers=exp_headers)
+            mgr.api.cdn_request.assert_called_once_with(
+                exp_uri, method="PUT", headers=exp_headers)
 
     def test_cmgr_get_cdn_log_retention(self):
         cont = self.container
@@ -1158,7 +1143,7 @@ class ObjectStorageTest(unittest.TestCase):
         exp_uri = "/%s" % cont.name
         mgr.set_cdn_log_retention(cont, retain)
         mgr.api.cdn_request.assert_called_once_with(exp_uri, method="PUT",
-                headers=exp_headers)
+                                                    headers=exp_headers)
 
     def test_cmgr_get_container_streaming_uri(self):
         cont = self.container
@@ -1195,7 +1180,7 @@ class ObjectStorageTest(unittest.TestCase):
         mgr.api.cdn_request = Mock()
         mgr.set_web_index_page(cont, page)
         mgr.api.cdn_request.assert_called_once_with(exp_uri, method="POST",
-                headers=exp_headers)
+                                                    headers=exp_headers)
 
     def test_cmgr_set_web_error_page(self):
         cont = self.container
@@ -1206,7 +1191,7 @@ class ObjectStorageTest(unittest.TestCase):
         mgr.api.cdn_request = Mock()
         mgr.set_web_error_page(cont, page)
         mgr.api.cdn_request.assert_called_once_with(exp_uri, method="POST",
-                headers=exp_headers)
+                                                    headers=exp_headers)
 
     @patch("pyrax.object_storage.assure_container")
     def test_cmgr_purge_cdn_object(self, mock_ac):
@@ -1217,8 +1202,8 @@ class ObjectStorageTest(unittest.TestCase):
         obj = utils.random_unicode()
         email_addresses = utils.random_unicode()
         mgr.purge_cdn_object(cont, obj, email_addresses=email_addresses)
-        cont.purge_cdn_object.assert_called_once_with(obj,
-                email_addresses=email_addresses)
+        cont.purge_cdn_object.assert_called_once_with(
+            obj, email_addresses=email_addresses)
 
     def test_cmgr_list_objects(self):
         cont = self.container
@@ -1231,11 +1216,13 @@ class ObjectStorageTest(unittest.TestCase):
         delimiter = utils.random_unicode()
         end_marker = utils.random_unicode()
         full_listing = False
-        mgr.list_objects(cont, marker=marker, limit=limit, prefix=prefix,
-                delimiter=delimiter, end_marker=end_marker,
-                full_listing=full_listing)
-        cont.list.assert_called_once_with(marker=marker, limit=limit,
-                prefix=prefix, delimiter=delimiter, end_marker=end_marker)
+        mgr.list_objects(
+            cont, marker=marker, limit=limit, prefix=prefix,
+            delimiter=delimiter, end_marker=end_marker,
+            full_listing=full_listing)
+        cont.list.assert_called_once_with(
+            marker=marker, limit=limit, prefix=prefix, delimiter=delimiter,
+            end_marker=end_marker)
 
     def test_cmgr_list_objects_full(self):
         cont = self.container
@@ -1248,9 +1235,10 @@ class ObjectStorageTest(unittest.TestCase):
         delimiter = utils.random_unicode()
         end_marker = utils.random_unicode()
         full_listing = True
-        mgr.list_objects(cont, marker=marker, limit=limit, prefix=prefix,
-                delimiter=delimiter, end_marker=end_marker,
-                full_listing=full_listing)
+        mgr.list_objects(
+            cont, marker=marker, limit=limit, prefix=prefix,
+            delimiter=delimiter, end_marker=end_marker,
+            full_listing=full_listing)
         cont.list_all.assert_called_once_with(prefix=prefix)
 
     def test_cmgr_list_object_names(self):
@@ -1264,14 +1252,16 @@ class ObjectStorageTest(unittest.TestCase):
         delimiter = utils.random_unicode()
         end_marker = utils.random_unicode()
         full_listing = True
-        mgr.list_object_names(cont, marker=marker, limit=limit, prefix=prefix,
-                delimiter=delimiter, end_marker=end_marker,
-                full_listing=full_listing)
-        cont.list_object_names.assert_called_once_with(marker=marker,
-                limit=limit, prefix=prefix, delimiter=delimiter,
-                end_marker=end_marker, full_listing=full_listing)
+        mgr.list_object_names(
+            cont, marker=marker, limit=limit, prefix=prefix,
+            delimiter=delimiter, end_marker=end_marker,
+            full_listing=full_listing)
+        cont.list_object_names.assert_called_once_with(
+            marker=marker, limit=limit, prefix=prefix, delimiter=delimiter,
+            end_marker=end_marker, full_listing=full_listing)
 
-    @patch("pyrax.object_storage.StorageObjectIterator", new=fakes.FakeIterator)
+    @patch("pyrax.object_storage.StorageObjectIterator",
+           new=fakes.FakeIterator)
     def test_cmgr_object_listing_iterator(self):
         cont = self.container
         mgr = cont.manager
@@ -1284,7 +1274,6 @@ class ObjectStorageTest(unittest.TestCase):
         mgr = cont.manager
         mgr.get = Mock(return_value=cont)
         name1 = utils.random_ascii()
-        name2 = utils.random_ascii()
         sdir = utils.random_ascii()
         objs = [{"name": name1, "content_type": "fake"},
                 {"subdir": sdir}]
@@ -1293,12 +1282,13 @@ class ObjectStorageTest(unittest.TestCase):
         limit = utils.random_unicode()
         prefix = utils.random_unicode()
         delimiter = utils.random_unicode()
-        end_marker = utils.random_unicode()
         full_listing = False
-        ret = mgr.list_subdirs(cont, marker=marker, limit=limit, prefix=prefix,
-                delimiter=delimiter, full_listing=full_listing)
-        cont.list.assert_called_once_with(marker=marker, limit=limit,
-                prefix=prefix, delimiter="/", return_raw=True)
+        ret = mgr.list_subdirs(
+            cont, marker=marker, limit=limit, prefix=prefix,
+            delimiter=delimiter, full_listing=full_listing)
+        cont.list.assert_called_once_with(
+            marker=marker, limit=limit, prefix=prefix, delimiter="/",
+            return_raw=True)
         self.assertEqual(ret[0].name, sdir)
 
     def test_cmgr_get_object(self):
@@ -1329,18 +1319,20 @@ class ObjectStorageTest(unittest.TestCase):
         chunk_size = utils.random_unicode()
         headers = utils.random_unicode()
         return_none = utils.random_unicode()
-        mgr.create_object(cont, file_or_path=file_or_path, data=data,
-                obj_name=obj_name, content_type=content_type, etag=etag,
-                content_encoding=content_encoding,
-                content_length=content_length, ttl=ttl, chunked=chunked,
-                metadata=metadata, chunk_size=chunk_size, headers=headers,
-                return_none=return_none)
-        cont.create.assert_called_once_with(file_or_path=file_or_path,
-                data=data, obj_name=obj_name, content_type=content_type,
-                etag=etag, content_encoding=content_encoding,
-                content_length=content_length, ttl=ttl, chunked=chunked,
-                metadata=metadata, chunk_size=chunk_size, headers=headers,
-                return_none=return_none)
+        mgr.create_object(
+            cont, file_or_path=file_or_path, data=data,
+            obj_name=obj_name, content_type=content_type, etag=etag,
+            content_encoding=content_encoding,
+            content_length=content_length, ttl=ttl, chunked=chunked,
+            metadata=metadata, chunk_size=chunk_size, headers=headers,
+            return_none=return_none)
+        cont.create.assert_called_once_with(
+            file_or_path=file_or_path,
+            data=data, obj_name=obj_name, content_type=content_type,
+            etag=etag, content_encoding=content_encoding,
+            content_length=content_length, ttl=ttl, chunked=chunked,
+            metadata=metadata, chunk_size=chunk_size, headers=headers,
+            return_none=return_none)
 
     def test_cmgr_fetch_object(self):
         cont = self.container
@@ -1351,10 +1343,11 @@ class ObjectStorageTest(unittest.TestCase):
         size = utils.random_unicode()
         extra_info = utils.random_unicode()
         cont.fetch = Mock()
-        mgr.fetch_object(cont, obj, include_meta=include_meta,
-                chunk_size=chunk_size, size=size, extra_info=extra_info)
-        cont.fetch.assert_called_once_with(obj, include_meta=include_meta,
-                chunk_size=chunk_size, size=size)
+        mgr.fetch_object(
+            cont, obj, include_meta=include_meta, chunk_size=chunk_size,
+            size=size, extra_info=extra_info)
+        cont.fetch.assert_called_once_with(
+            obj, include_meta=include_meta, chunk_size=chunk_size, size=size)
 
     def test_cmgr_fetch_partial(self):
         cont = self.container
@@ -1373,8 +1366,8 @@ class ObjectStorageTest(unittest.TestCase):
         structure = utils.random_unicode()
         cont.download = Mock()
         mgr.download_object(cont, obj, directory, structure=structure)
-        cont.download.assert_called_once_with(obj, directory,
-                structure=structure)
+        cont.download.assert_called_once_with(
+            obj, directory, structure=structure)
 
     def test_cmgr_delete_object(self):
         cont = self.container
@@ -1398,11 +1391,13 @@ class ObjectStorageTest(unittest.TestCase):
         exp_uri = "/%s/%s" % (new_container, new_obj_name)
         exp_from = "/%s/%s" % (cont.name, obj)
         exp_headers = {"X-Copy-From": exp_from,
-                "Content-Length": "0",
-                "Content-Type": content_type}
-        ret = mgr.copy_object(cont, obj, new_container,
-                new_obj_name=new_obj_name, content_type=content_type)
-        mgr.api.method_put.assert_called_once_with(exp_uri, headers=exp_headers)
+                       "Content-Length": "0",
+                       "Content-Type": content_type}
+        ret = mgr.copy_object(
+            cont, obj, new_container, new_obj_name=new_obj_name,
+            content_type=content_type)
+        mgr.api.method_put.assert_called_once_with(
+            exp_uri, headers=exp_headers)
         self.assertEqual(ret, etag)
 
     def test_cmgr_move_object(self):
@@ -1418,9 +1413,9 @@ class ObjectStorageTest(unittest.TestCase):
         mgr.delete_object = Mock()
         mgr.get_object = Mock(return_value=new_obj)
         for new_reference in (True, False):
-            ret = mgr.move_object(cont, obj, new_container,
-                    new_obj_name=new_obj_name, new_reference=new_reference,
-                    content_type=content_type)
+            ret = mgr.move_object(
+                cont, obj, new_container, new_obj_name=new_obj_name,
+                new_reference=new_reference, content_type=content_type)
             if new_reference:
                 self.assertEqual(ret, new_obj)
             else:
@@ -1433,15 +1428,13 @@ class ObjectStorageTest(unittest.TestCase):
         new_container = utils.random_unicode()
         new_obj_name = utils.random_unicode()
         content_type = utils.random_unicode()
-        etag = utils.random_unicode()
-        new_obj = utils.random_unicode()
         mgr.copy_object = Mock(return_value=None)
         mgr.delete_object = Mock()
         mgr.get_object = Mock()
         new_reference = False
-        ret = mgr.move_object(cont, obj, new_container,
-                new_obj_name=new_obj_name, new_reference=new_reference,
-                content_type=content_type)
+        ret = mgr.move_object(
+            cont, obj, new_container, new_obj_name=new_obj_name,
+            new_reference=new_reference, content_type=content_type)
         self.assertIsNone(ret)
 
     @patch("mimetypes.guess_type")
@@ -1458,8 +1451,8 @@ class ObjectStorageTest(unittest.TestCase):
                 mock_guess.return_value = (new_ctype, None)
             mgr.copy_object = Mock()
             mgr.change_object_content_type(cont, obj, new_ctype, guess=guess)
-            mgr.copy_object.assert_called_once_with(cont, obj, cont,
-                    content_type=new_ctype)
+            mgr.copy_object.assert_called_once_with(
+                cont, obj, cont, content_type=new_ctype)
 
     def test_cmgr_delete_object_in_seconds(self):
         cont = self.container
@@ -1470,8 +1463,8 @@ class ObjectStorageTest(unittest.TestCase):
         mgr.set_object_metadata = Mock()
         exp_meta = {"X-Delete-After": seconds}
         mgr.delete_object_in_seconds(cont, obj, seconds, extra_info=extra_info)
-        mgr.set_object_metadata.assert_called_once_with(cont, obj, exp_meta,
-                clear=True, prefix="")
+        mgr.set_object_metadata.assert_called_once_with(
+            cont, obj, exp_meta, clear=True, prefix="")
 
     def test_cmgr_get_object_metadata(self):
         cont = self.container
@@ -1491,10 +1484,10 @@ class ObjectStorageTest(unittest.TestCase):
         clear = random.choice((True, False))
         prefix = utils.random_unicode()
         cont.set_object_metadata = Mock()
-        mgr.set_object_metadata(cont, obj, metadata, clear=clear,
-                prefix=prefix)
-        cont.set_object_metadata.assert_called_once_with(obj, metadata,
-                clear=clear, prefix=prefix)
+        mgr.set_object_metadata(
+            cont, obj, metadata, clear=clear, prefix=prefix)
+        cont.set_object_metadata.assert_called_once_with(
+            obj, metadata, clear=clear, prefix=prefix)
 
     def test_sobj_repr(self):
         obj = self.obj
@@ -1535,8 +1528,8 @@ class ObjectStorageTest(unittest.TestCase):
         include_meta = utils.random_unicode()
         chunk_size = utils.random_unicode()
         obj.get(include_meta=include_meta, chunk_size=chunk_size)
-        mgr.fetch.assert_called_once_with(obj=obj, include_meta=include_meta,
-                chunk_size=chunk_size)
+        mgr.fetch.assert_called_once_with(
+            obj=obj, include_meta=include_meta, chunk_size=chunk_size)
 
     def test_sobj_fetch(self):
         obj = self.obj
@@ -1545,8 +1538,8 @@ class ObjectStorageTest(unittest.TestCase):
         include_meta = utils.random_unicode()
         chunk_size = utils.random_unicode()
         obj.fetch(include_meta=include_meta, chunk_size=chunk_size)
-        mgr.fetch.assert_called_once_with(obj=obj, include_meta=include_meta,
-                chunk_size=chunk_size)
+        mgr.fetch.assert_called_once_with(
+            obj=obj, include_meta=include_meta, chunk_size=chunk_size)
 
     def test_sobj_download(self):
         obj = self.obj
@@ -1555,45 +1548,42 @@ class ObjectStorageTest(unittest.TestCase):
         directory = utils.random_unicode()
         structure = utils.random_unicode()
         obj.download(directory, structure=structure)
-        mgr.download.assert_called_once_with(obj, directory,
-                structure=structure)
+        mgr.download.assert_called_once_with(
+            obj, directory, structure=structure)
 
     def test_sobj_copy(self):
         obj = self.obj
-        mgr = obj.manager
         cont = obj.container
         cont.copy_object = Mock()
         new_container = utils.random_unicode()
         new_obj_name = utils.random_unicode()
         extra_info = utils.random_unicode()
         obj.copy(new_container, new_obj_name=new_obj_name,
-                extra_info=extra_info)
-        cont.copy_object.assert_called_once_with(obj, new_container,
-                new_obj_name=new_obj_name)
+                 extra_info=extra_info)
+        cont.copy_object.assert_called_once_with(
+            obj, new_container, new_obj_name=new_obj_name)
 
     def test_sobj_move(self):
         obj = self.obj
-        mgr = obj.manager
         cont = obj.container
         cont.move_object = Mock()
         new_container = utils.random_unicode()
         new_obj_name = utils.random_unicode()
         extra_info = utils.random_unicode()
         obj.move(new_container, new_obj_name=new_obj_name,
-                extra_info=extra_info)
-        cont.move_object.assert_called_once_with(obj, new_container,
-                new_obj_name=new_obj_name)
+                 extra_info=extra_info)
+        cont.move_object.assert_called_once_with(
+            obj, new_container, new_obj_name=new_obj_name)
 
     def test_sobj_change_content_type(self):
         obj = self.obj
-        mgr = obj.manager
         cont = obj.container
         cont.change_object_content_type = Mock()
         new_ctype = utils.random_unicode()
         guess = utils.random_unicode()
         obj.change_content_type(new_ctype, guess=guess)
-        cont.change_object_content_type.assert_called_once_with(obj,
-                new_ctype=new_ctype, guess=guess)
+        cont.change_object_content_type.assert_called_once_with(
+            obj, new_ctype=new_ctype, guess=guess)
 
     def test_sobj_purge(self):
         obj = self.obj
@@ -1618,8 +1608,8 @@ class ObjectStorageTest(unittest.TestCase):
         clear = utils.random_unicode()
         prefix = utils.random_unicode()
         obj.set_metadata(metadata, clear=clear, prefix=prefix)
-        mgr.set_metadata.assert_called_once_with(obj, metadata, clear=clear,
-                prefix=prefix)
+        mgr.set_metadata.assert_called_once_with(
+            obj, metadata, clear=clear, prefix=prefix)
 
     def test_sobj_remove_metadata_key(self):
         obj = self.obj
@@ -1628,7 +1618,8 @@ class ObjectStorageTest(unittest.TestCase):
         key = utils.random_unicode()
         prefix = utils.random_unicode()
         obj.remove_metadata_key(key, prefix=prefix)
-        mgr.remove_metadata_key.assert_called_once_with(obj, key, prefix=prefix)
+        mgr.remove_metadata_key.assert_called_once_with(
+            obj, key, prefix=prefix)
 
     def test_sobj_get_temp_url(self):
         obj = self.obj
@@ -1637,8 +1628,8 @@ class ObjectStorageTest(unittest.TestCase):
         seconds = utils.random_unicode()
         method = utils.random_unicode()
         obj.get_temp_url(seconds, method=method)
-        cont.get_temp_url.assert_called_once_with(obj, seconds=seconds,
-                method=method)
+        cont.get_temp_url.assert_called_once_with(
+            obj, seconds=seconds, method=method)
 
     def test_sobj_delete_in_seconds(self):
         obj = self.obj
@@ -1686,9 +1677,9 @@ class ObjectStorageTest(unittest.TestCase):
         fake_resp = utils.random_unicode()
         fake_resp_body = utils.random_unicode()
         mgr.api.method_get = Mock(return_value=(fake_resp, fake_resp_body))
-        ret = mgr.list(marker=marker, limit=limit, prefix=prefix,
-                delimiter=delimiter, end_marker=end_marker,
-                return_raw=return_raw)
+        ret = mgr.list(
+            marker=marker, limit=limit, prefix=prefix, delimiter=delimiter,
+            end_marker=end_marker, return_raw=return_raw)
         self.assertEqual(ret, fake_resp_body)
 
     def test_sobj_mgr_list_obj(self):
@@ -1704,9 +1695,9 @@ class ObjectStorageTest(unittest.TestCase):
         nm = utils.random_unicode()
         fake_resp_body = [{"name": nm}]
         mgr.api.method_get = Mock(return_value=(fake_resp, fake_resp_body))
-        ret = mgr.list(marker=marker, limit=limit, prefix=prefix,
-                delimiter=delimiter, end_marker=end_marker,
-                return_raw=return_raw)
+        ret = mgr.list(
+            marker=marker, limit=limit, prefix=prefix, delimiter=delimiter,
+            end_marker=end_marker, return_raw=return_raw)
         self.assertTrue(isinstance(ret, list))
         self.assertEqual(len(ret), 1)
         obj = ret[0]
@@ -1723,11 +1714,11 @@ class ObjectStorageTest(unittest.TestCase):
         timestamp = utils.random_unicode()
         fake_resp = fakes.FakeResponse()
         fake_resp.headers = {"content-length": contlen,
-                "content-type": conttype,
-                "etag": etag,
-                "last-modified": lastmod,
-                "x-timestamp": timestamp,
-                }
+                             "content-type": conttype,
+                             "etag": etag,
+                             "last-modified": lastmod,
+                             "x-timestamp": timestamp,
+                             }
         mgr.api.method_head = Mock(return_value=(fake_resp, None))
         ret = mgr.get(obj)
         self.assertEqual(ret.name, obj)
@@ -1747,10 +1738,10 @@ class ObjectStorageTest(unittest.TestCase):
         lastmod = utils.random_unicode()
         fake_resp = fakes.FakeResponse()
         fake_resp.headers = {"content-length": contlen,
-                "content-type": conttype,
-                "etag": etag,
-                "last-modified": lastmod,
-                }
+                             "content-type": conttype,
+                             "etag": etag,
+                             "last-modified": lastmod,
+                             }
         mgr.api.method_head = Mock(return_value=(fake_resp, None))
         ret = mgr.get(obj)
         self.assertEqual(ret.bytes, contlen)
@@ -1787,15 +1778,15 @@ class ObjectStorageTest(unittest.TestCase):
             mgr._upload = Mock()
             get_resp = utils.random_unicode()
             mgr.get = Mock(return_value=get_resp)
-            ret = mgr.create(data=data, obj_name=obj_name,
-                    content_type=content_type, etag=etag,
-                    content_encoding=content_encoding,
-                    content_length=content_length, ttl=ttl, chunked=chunked,
-                    metadata=metadata, chunk_size=chunk_size, headers=headers,
-                    return_none=return_none)
-            mgr._upload.assert_called_once_with(obj_name, data, content_type,
-                    content_encoding, content_length, etag, bool(chunk_size),
-                    chunk_size, headers)
+            ret = mgr.create(
+                data=data, obj_name=obj_name, content_type=content_type,
+                etag=etag, content_encoding=content_encoding,
+                content_length=content_length, ttl=ttl, chunked=chunked,
+                metadata=metadata, chunk_size=chunk_size, headers=headers,
+                return_none=return_none)
+            mgr._upload.assert_called_once_with(
+                obj_name, data, content_type, content_encoding, content_length,
+                etag, bool(chunk_size), chunk_size, headers)
             if return_none:
                 self.assertIsNone(ret)
             else:
@@ -1823,17 +1814,16 @@ class ObjectStorageTest(unittest.TestCase):
             get_resp = utils.random_unicode()
             mgr.get = Mock(return_value=get_resp)
             with utils.SelfDeletingTempfile() as tmp:
-                ret = mgr.create(tmp, obj_name=obj_name,
-                        content_type=content_type, etag=etag,
-                        content_encoding=content_encoding,
-                        content_length=content_length, ttl=ttl,
-                        chunked=chunked, metadata=metadata,
-                        chunk_size=chunk_size, headers=headers,
-                        return_none=return_none)
+                ret = mgr.create(
+                    tmp, obj_name=obj_name, content_type=content_type,
+                    etag=etag, content_encoding=content_encoding,
+                    content_length=content_length, ttl=ttl,
+                    chunked=chunked, metadata=metadata, chunk_size=chunk_size,
+                    headers=headers, return_none=return_none)
                 self.assertEqual(mgr._upload.call_count, 1)
                 call_args = list(mgr._upload.call_args)[0]
                 for param in (obj_name, content_type, content_encoding,
-                        content_length, etag, False, headers):
+                              content_length, etag, False, headers):
                     self.assertTrue(param in call_args)
             if return_none:
                 self.assertIsNone(ret)
@@ -1863,17 +1853,17 @@ class ObjectStorageTest(unittest.TestCase):
             mgr.get = Mock(return_value=get_resp)
             with utils.SelfDeletingTempfile() as tmp:
                 with open(tmp) as tmpfile:
-                    ret = mgr.create(tmpfile, obj_name=obj_name,
-                            content_type=content_type, etag=etag,
-                            content_encoding=content_encoding,
-                            content_length=content_length, ttl=ttl,
-                            chunked=chunked, metadata=metadata,
-                            chunk_size=chunk_size, headers=headers,
-                            return_none=return_none)
+                    ret = mgr.create(
+                        tmpfile, obj_name=obj_name, content_type=content_type,
+                        etag=etag, content_encoding=content_encoding,
+                        content_length=content_length, ttl=ttl,
+                        chunked=chunked, metadata=metadata,
+                        chunk_size=chunk_size, headers=headers,
+                        return_none=return_none)
                 self.assertEqual(mgr._upload.call_count, 1)
                 call_args = list(mgr._upload.call_args)[0]
                 for param in (obj_name, content_type, content_encoding,
-                        content_length, etag, False, headers):
+                              content_length, etag, False, headers):
                     self.assertTrue(param in call_args)
             if return_none:
                 self.assertIsNone(ret)
@@ -1909,19 +1899,18 @@ class ObjectStorageTest(unittest.TestCase):
             get_resp = utils.random_unicode()
             mgr.get = Mock(return_value=get_resp)
 
-            ret = mgr.create(file_like_object, obj_name=obj_name,
-                    content_type=content_type, etag=etag,
-                    content_encoding=content_encoding,
-                    content_length=content_length, ttl=ttl,
-                    chunked=chunked, metadata=metadata,
-                    chunk_size=chunk_size, headers=headers,
-                    return_none=return_none)
+            ret = mgr.create(
+                file_like_object, obj_name=obj_name, content_type=content_type,
+                etag=etag, content_encoding=content_encoding,
+                content_length=content_length, ttl=ttl, chunked=chunked,
+                metadata=metadata, chunk_size=chunk_size, headers=headers,
+                return_none=return_none)
 
             self.assertEqual(mgr._upload.call_count, 1)
             call_args = list(mgr._upload.call_args)[0]
 
             for param in (obj_name, content_type, content_encoding,
-                    content_length, etag, False, headers):
+                          content_length, etag, False, headers):
                 self.assertTrue(param in call_args)
 
             if return_none:
@@ -1944,11 +1933,11 @@ class ObjectStorageTest(unittest.TestCase):
         val = utils.random_unicode()
         headers = {key: val}
         mgr._store_object = Mock()
-        ret = mgr._upload(obj_name, content, content_type, content_encoding,
-                content_length, etag, chunked, chunk_size, headers)
-        mgr._store_object.assert_called_once_with(obj_name, content=content,
-                etag=etag, chunked=chunked, chunk_size=chunk_size,
-                headers=headers)
+        mgr._upload(obj_name, content, content_type, content_encoding,
+                    content_length, etag, chunked, chunk_size, headers)
+        mgr._store_object.assert_called_once_with(
+            obj_name, content=content, etag=etag, chunked=chunked,
+            chunk_size=chunk_size, headers=headers)
 
     def test_sobj_mgr_upload_file(self):
         obj = self.obj
@@ -1966,12 +1955,12 @@ class ObjectStorageTest(unittest.TestCase):
         mgr._store_object = Mock()
         with utils.SelfDeletingTempfile() as tmp:
             with open(tmp) as content:
-                ret = mgr._upload(obj_name, content, content_type,
-                        content_encoding, content_length, etag, chunked,
-                        chunk_size, headers)
-        mgr._store_object.assert_called_once_with(obj_name, content=content,
-                etag=etag, chunked=chunked, chunk_size=chunk_size,
-                headers=headers)
+                mgr._upload(obj_name, content, content_type,
+                            content_encoding, content_length, etag, chunked,
+                            chunk_size, headers)
+        mgr._store_object.assert_called_once_with(
+            obj_name, content=content, etag=etag, chunked=chunked,
+            chunk_size=chunk_size, headers=headers)
 
     def test_sobj_mgr_upload_file_unchunked(self):
         obj = self.obj
@@ -1989,12 +1978,12 @@ class ObjectStorageTest(unittest.TestCase):
         mgr._store_object = Mock()
         with utils.SelfDeletingTempfile() as tmp:
             with open(tmp) as content:
-                ret = mgr._upload(obj_name, content, content_type,
-                        content_encoding, content_length, etag, chunked,
-                        chunk_size, headers)
-        mgr._store_object.assert_called_once_with(obj_name, content=content,
-                etag=etag, chunked=chunked, chunk_size=chunk_size,
-                headers=headers)
+                mgr._upload(obj_name, content, content_type,
+                            content_encoding, content_length, etag, chunked,
+                            chunk_size, headers)
+        mgr._store_object.assert_called_once_with(
+            obj_name, content=content, etag=etag, chunked=chunked,
+            chunk_size=chunk_size, headers=headers)
 
     def test_sobj_mgr_upload_file_unchunked_no_length(self):
         obj = self.obj
@@ -2012,12 +2001,12 @@ class ObjectStorageTest(unittest.TestCase):
         mgr._store_object = Mock()
         with utils.SelfDeletingTempfile() as tmp:
             with open(tmp) as content:
-                ret = mgr._upload(obj_name, content, content_type,
-                        content_encoding, content_length, etag, chunked,
-                        chunk_size, headers)
-        mgr._store_object.assert_called_once_with(obj_name, content=content,
-                etag=etag, chunked=chunked, chunk_size=chunk_size,
-                headers=headers)
+                mgr._upload(obj_name, content, content_type,
+                            content_encoding, content_length, etag, chunked,
+                            chunk_size, headers)
+        mgr._store_object.assert_called_once_with(
+            obj_name, content=content, etag=etag, chunked=chunked,
+            chunk_size=chunk_size, headers=headers)
 
     def test_sobj_mgr_upload_multiple(self):
         obj = self.obj
@@ -2039,9 +2028,9 @@ class ObjectStorageTest(unittest.TestCase):
             with open(tmp, "w") as content:
                 content.write("x" * 66)
             with open(tmp, "rb") as content:
-                ret = mgr._upload(obj_name, content, content_type,
-                        content_encoding, content_length, etag, chunked,
-                        chunk_size, headers)
+                mgr._upload(obj_name, content, content_type,
+                            content_encoding, content_length, etag, chunked,
+                            chunk_size, headers)
                 self.assertEqual(mgr._store_object.call_count, 3)
         pyrax.object_storage.MAX_FILE_SIZE = sav
 
@@ -2064,9 +2053,9 @@ class ObjectStorageTest(unittest.TestCase):
             else:
                 exp_hdrs["ETag"] = utils.get_checksum(content)
             mgr._store_object(obj_name, content, etag=etag, chunked=chunked,
-                    chunk_size=chunk_size, headers=headers)
-            mgr.api.method_put.assert_called_once_with(exp_uri, data=content,
-                    headers=headers)
+                              chunk_size=chunk_size, headers=headers)
+            mgr.api.method_put.assert_called_once_with(
+                exp_uri, data=content, headers=headers)
 
     def test_sobj_mgr_fetch_no_chunk(self):
         obj = self.obj
@@ -2085,10 +2074,11 @@ class ObjectStorageTest(unittest.TestCase):
         for include_meta in (True, False):
             mgr.api.method_get = Mock(return_value=(resp, resp_body))
             mgr.api.method_head = Mock(return_value=(resp, resp_body))
-            ret = mgr.fetch(obj, include_meta=include_meta,
-                    chunk_size=chunk_size, size=size, extra_info=extra_info)
-            mgr.api.method_get.assert_called_once_with(exp_uri,
-                    headers=exp_headers, raw_content=True)
+            ret = mgr.fetch(
+                obj, include_meta=include_meta, chunk_size=chunk_size,
+                size=size, extra_info=extra_info)
+            mgr.api.method_get.assert_called_once_with(
+                exp_uri, headers=exp_headers, raw_content=True)
             if include_meta:
                 self.assertEqual(ret, (hdrs, resp_body))
             else:
@@ -2104,10 +2094,11 @@ class ObjectStorageTest(unittest.TestCase):
         for include_meta in (True, False):
             mgr.get = Mock(return_value=obj)
             mgr._fetch_chunker = Mock()
-            mgr.fetch(obj.name, include_meta=include_meta,
-                    chunk_size=chunk_size, size=size, extra_info=extra_info)
-            mgr._fetch_chunker.assert_called_once_with(exp_uri, chunk_size,
-                    size, obj.bytes)
+            mgr.fetch(
+                obj.name, include_meta=include_meta, chunk_size=chunk_size,
+                size=size, extra_info=extra_info)
+            mgr._fetch_chunker.assert_called_once_with(
+                exp_uri, chunk_size, size, obj.bytes)
 
     def test_sobj_mgr_fetch_chunker(self):
         obj = self.obj
@@ -2121,7 +2112,7 @@ class ObjectStorageTest(unittest.TestCase):
         resp_body = "x" * chunk_size
         mgr.api.method_get = Mock(return_value=(resp, resp_body))
         ret = mgr._fetch_chunker(uri, chunk_size, None, obj.total_bytes)
-        txt = "".join([part for part in ret])
+        "".join([part for part in ret])
         self.assertEqual(mgr.api.method_get.call_count, num_chunks)
 
     def test_sobj_mgr_fetch_chunker_eof(self):
@@ -2129,7 +2120,6 @@ class ObjectStorageTest(unittest.TestCase):
         mgr = obj.manager
         uri = utils.random_unicode()
         chunk_size = random.randint(10, 50)
-        num_chunks = int(obj.total_bytes / chunk_size) + 1
         resp = fakes.FakeResponse()
         resp_body = ""
         mgr.api.method_get = Mock(return_value=(resp, resp_body))
@@ -2164,22 +2154,24 @@ class ObjectStorageTest(unittest.TestCase):
         obj = self.obj
         mgr = obj.manager
         nms = utils.random_unicode()
-        async = utils.random_unicode()
+        asynchronous = utils.random_unicode()
         mgr.api.bulk_delete = Mock()
-        mgr.delete_all_objects(nms, async=async)
-        mgr.api.bulk_delete.assert_called_once_with(mgr.name, nms, async=async)
+        mgr.delete_all_objects(nms, asynchronous=asynchronous)
+        mgr.api.bulk_delete.assert_called_once_with(
+            mgr.name, nms, asynchronous=asynchronous)
 
     def test_sobj_mgr_delete_all_objects_no_names(self):
         obj = self.obj
         mgr = obj.manager
         nms = utils.random_unicode()
-        async = utils.random_unicode()
+        asynchronous = utils.random_unicode()
         mgr.api.list_object_names = Mock(return_value=nms)
         mgr.api.bulk_delete = Mock()
-        mgr.delete_all_objects(None, async=async)
+        mgr.delete_all_objects(None, asynchronous=asynchronous)
         mgr.api.list_object_names.assert_called_once_with(mgr.name,
                                                           full_listing=True)
-        mgr.api.bulk_delete.assert_called_once_with(mgr.name, nms, async=async)
+        mgr.api.bulk_delete.assert_called_once_with(
+            mgr.name, nms, asynchronous=asynchronous)
 
     def test_sobj_mgr_download_no_directory(self):
         obj = self.obj
@@ -2219,8 +2211,8 @@ class ObjectStorageTest(unittest.TestCase):
         exp_headers = {"X-Purge-Email": ", ".join(email_addresses)}
         mgr.api.cdn_request = Mock(return_value=(None, None))
         mgr.purge(obj, email_addresses=email_addresses)
-        mgr.api.cdn_request.assert_called_once_with(exp_uri, method="DELETE",
-                headers=exp_headers)
+        mgr.api.cdn_request.assert_called_once_with(
+            exp_uri, method="DELETE", headers=exp_headers)
 
     def test_sobj_mgr_get_metadata(self):
         obj = self.obj
@@ -2335,7 +2327,6 @@ class ObjectStorageTest(unittest.TestCase):
         obj = self.obj
         mgr = obj.manager
         key = utils.random_unicode()
-        exp_uri = "/%s/%s" % (utils.get_name(obj.container), obj.name)
         mgr.set_metadata = Mock()
         mgr.remove_metadata_key(obj, key)
         mgr.set_metadata.assert_called_once_with(obj, {key: ""})
@@ -2382,16 +2373,18 @@ class ObjectStorageTest(unittest.TestCase):
         clt = self.client
         mgr = clt._manager
         good_prefix = "x-account-"
-        key_include = utils.random_unicode()
-        val_include = utils.random_unicode()
-        key_exclude = utils.random_unicode()
-        val_exclude = utils.random_unicode()
+        key_include = "key-include_include_key"
+        val_include = "val-include_include_val"
+        key_exclude = "key-exclude_exclude_key"
+        val_exclude = "val-exclude_exclude_val"
         headers = {"%s%s" % (good_prefix, key_include): val_include,
-                "%s%s" % (ACCOUNT_META_PREFIX, key_exclude): val_exclude}
+                   "%s%s" % (ACCOUNT_META_PREFIX, key_exclude): val_exclude}
         mgr.get_account_headers = Mock(return_value=headers)
         ret = clt.get_account_details()
-        self.assertTrue(key_include in ret)
-        self.assertFalse(key_exclude in ret)
+        self.assertTrue("key_include_include_key" in ret,
+                        "key_include: %s, ret: %s" % (key_include, ret))
+        self.assertFalse(key_exclude in ret,
+                         "key_exclude: %s, ret: %s" % (key_exclude, ret))
 
     def test_clt_get_account_info(self):
         clt = self.client
@@ -2403,7 +2396,7 @@ class ObjectStorageTest(unittest.TestCase):
         key_not_used = "x-account-useless"
         val_not_used = random.randint(1, 100)
         headers = {key_count: val_count, key_bytes: val_bytes,
-                key_not_used: val_not_used}
+                   key_not_used: val_not_used}
         mgr.get_account_headers = Mock(return_value=headers)
         ret = clt.get_account_info()
         self.assertEqual(ret[0], val_count)
@@ -2426,9 +2419,9 @@ class ObjectStorageTest(unittest.TestCase):
         prefix = utils.random_unicode()
         extra_info = utils.random_unicode()
         clt.set_account_metadata(metadata, clear=clear, prefix=prefix,
-                extra_info=extra_info)
-        mgr.set_account_metadata.assert_called_once_with(metadata, clear=clear,
-                prefix=prefix)
+                                 extra_info=extra_info)
+        mgr.set_account_metadata.assert_called_once_with(
+            metadata, clear=clear, prefix=prefix)
 
     def test_clt_delete_account_metadata(self):
         clt = self.client
@@ -2461,7 +2454,6 @@ class ObjectStorageTest(unittest.TestCase):
 
     def test_clt_set_temp_url_key(self):
         clt = self.client
-        mgr = clt._manager
         clt.set_account_metadata = Mock()
         key = utils.random_unicode()
         meta = {"Temp-Url-Key": key}
@@ -2471,7 +2463,6 @@ class ObjectStorageTest(unittest.TestCase):
 
     def test_clt_set_temp_url_key_not_supplied(self):
         clt = self.client
-        mgr = clt._manager
         clt.set_account_metadata = Mock()
         key = None
         clt.set_temp_url_key(key)
@@ -2489,9 +2480,9 @@ class ObjectStorageTest(unittest.TestCase):
         cached = utils.random_unicode()
         mgr.get_temp_url = Mock()
         clt.get_temp_url(cont, obj, seconds, method=method, key=key,
-                cached=cached)
-        mgr.get_temp_url.assert_called_once_with(cont, obj, seconds,
-                method=method, key=key, cached=cached)
+                         cached=cached)
+        mgr.get_temp_url.assert_called_once_with(
+            cont, obj, seconds, method=method, key=key, cached=cached)
 
     def test_clt_list(self):
         clt = self.client
@@ -2502,9 +2493,9 @@ class ObjectStorageTest(unittest.TestCase):
         prefix = utils.random_unicode()
         mgr.list = Mock()
         clt.list(limit=limit, marker=marker, end_marker=end_marker,
-                prefix=prefix)
-        mgr.list.assert_called_once_with(limit=limit, marker=marker,
-                end_marker=end_marker, prefix=prefix)
+                 prefix=prefix)
+        mgr.list.assert_called_once_with(
+            limit=limit, marker=marker, end_marker=end_marker, prefix=prefix)
 
     def test_clt_list_public_containers(self):
         clt = self.client
@@ -2589,12 +2580,11 @@ class ObjectStorageTest(unittest.TestCase):
         email_addresses = utils.random_unicode()
         mgr.purge_cdn_object = Mock()
         clt.purge_cdn_object(cont, obj, email_addresses=email_addresses)
-        mgr.purge_cdn_object.assert_called_once_with(cont, obj,
-                email_addresses=email_addresses)
+        mgr.purge_cdn_object.assert_called_once_with(
+            cont, obj, email_addresses=email_addresses)
 
     def test_clt_list_container_names(self):
         clt = self.client
-        mgr = clt._manager
         nm1 = utils.random_unicode()
         nm2 = utils.random_unicode()
         nm3 = utils.random_unicode()
@@ -2612,8 +2602,8 @@ class ObjectStorageTest(unittest.TestCase):
         marker = utils.random_unicode()
         mgr.list_containers_info = Mock()
         clt.list_containers_info(limit=limit, marker=marker)
-        mgr.list_containers_info.assert_called_once_with(limit=limit,
-                marker=marker)
+        mgr.list_containers_info.assert_called_once_with(
+            limit=limit, marker=marker)
 
     def test_clt_list_container_subdirs(self):
         clt = self.client
@@ -2625,11 +2615,12 @@ class ObjectStorageTest(unittest.TestCase):
         delimiter = utils.random_unicode()
         full_listing = utils.random_unicode()
         mgr.list_subdirs = Mock()
-        clt.list_container_subdirs(cont, limit=limit, marker=marker,
-                prefix=prefix, delimiter=delimiter, full_listing=full_listing)
-        mgr.list_subdirs.assert_called_once_with(cont, limit=limit,
-                marker=marker, prefix=prefix, delimiter=delimiter,
-                full_listing=full_listing)
+        clt.list_container_subdirs(
+            cont, limit=limit, marker=marker, prefix=prefix,
+            delimiter=delimiter, full_listing=full_listing)
+        mgr.list_subdirs.assert_called_once_with(
+            cont, limit=limit, marker=marker, prefix=prefix,
+            delimiter=delimiter, full_listing=full_listing)
 
     def test_clt_list_container_object_names(self):
         clt = self.client
@@ -2641,11 +2632,12 @@ class ObjectStorageTest(unittest.TestCase):
         delimiter = utils.random_unicode()
         full_listing = utils.random_unicode()
         mgr.list_object_names = Mock()
-        clt.list_container_object_names(cont, limit=limit, marker=marker,
-                prefix=prefix, delimiter=delimiter, full_listing=full_listing)
-        mgr.list_object_names.assert_called_once_with(cont, limit=limit,
-                marker=marker, prefix=prefix, delimiter=delimiter,
-                full_listing=full_listing)
+        clt.list_container_object_names(
+            cont, limit=limit, marker=marker, prefix=prefix,
+            delimiter=delimiter, full_listing=full_listing)
+        mgr.list_object_names.assert_called_once_with(
+            cont, limit=limit, marker=marker, prefix=prefix,
+            delimiter=delimiter, full_listing=full_listing)
 
     def test_clt_get_container_metadata(self):
         clt = self.client
@@ -2665,8 +2657,8 @@ class ObjectStorageTest(unittest.TestCase):
         prefix = utils.random_unicode()
         mgr.set_metadata = Mock()
         clt.set_container_metadata(cont, metadata, clear=clear, prefix=prefix)
-        mgr.set_metadata.assert_called_once_with(cont, metadata, clear=clear,
-                prefix=prefix)
+        mgr.set_metadata.assert_called_once_with(
+            cont, metadata, clear=clear, prefix=prefix)
 
     def test_clt_remove_container_metadata_key(self):
         clt = self.client
@@ -2722,10 +2714,11 @@ class ObjectStorageTest(unittest.TestCase):
         extra_info = utils.random_unicode()
         prefix = utils.random_unicode()
         mgr.set_object_metadata = Mock()
-        clt.set_object_metadata(cont, obj, metadata, clear=clear,
-                extra_info=extra_info, prefix=prefix)
-        mgr.set_object_metadata.assert_called_once_with(cont, obj, metadata,
-                clear=clear, prefix=prefix)
+        clt.set_object_metadata(
+            cont, obj, metadata, clear=clear, extra_info=extra_info,
+            prefix=prefix)
+        mgr.set_object_metadata.assert_called_once_with(
+            cont, obj, metadata, clear=clear, prefix=prefix)
 
     def test_clt_remove_object_metadata_key(self):
         clt = self.client
@@ -2735,8 +2728,8 @@ class ObjectStorageTest(unittest.TestCase):
         prefix = utils.random_unicode()
         clt.set_object_metadata = Mock()
         clt.remove_object_metadata_key(cont, obj, key, prefix=prefix)
-        clt.set_object_metadata.assert_called_once_with(cont, obj, {key: ""},
-                prefix=prefix)
+        clt.set_object_metadata.assert_called_once_with(
+            cont, obj, {key: ""}, prefix=prefix)
 
     def test_clt_list_container_objects(self):
         clt = self.client
@@ -2749,12 +2742,13 @@ class ObjectStorageTest(unittest.TestCase):
         delimiter = utils.random_unicode()
         full_listing = False
         mgr.list_objects = Mock()
-        clt.list_container_objects(cont, limit=limit, marker=marker,
-                prefix=prefix, delimiter=delimiter, end_marker=end_marker,
-                full_listing=full_listing)
-        mgr.list_objects.assert_called_once_with(cont, limit=limit,
-                marker=marker, prefix=prefix, delimiter=delimiter,
-                end_marker=end_marker)
+        clt.list_container_objects(
+            cont, limit=limit, marker=marker, prefix=prefix,
+            delimiter=delimiter, end_marker=end_marker,
+            full_listing=full_listing)
+        mgr.list_objects.assert_called_once_with(
+            cont, limit=limit, marker=marker, prefix=prefix,
+            delimiter=delimiter, end_marker=end_marker)
 
     def test_clt_list_container_objects_full(self):
         clt = self.client
@@ -2767,10 +2761,12 @@ class ObjectStorageTest(unittest.TestCase):
         delimiter = utils.random_unicode()
         full_listing = True
         mgr.object_listing_iterator = Mock()
-        clt.list_container_objects(cont, limit=limit, marker=marker,
-                prefix=prefix, delimiter=delimiter, end_marker=end_marker,
-                full_listing=full_listing)
-        mgr.object_listing_iterator.assert_called_once_with(cont, prefix=prefix)
+        clt.list_container_objects(
+            cont, limit=limit, marker=marker, prefix=prefix,
+            delimiter=delimiter, end_marker=end_marker,
+            full_listing=full_listing)
+        mgr.object_listing_iterator.assert_called_once_with(
+            cont, prefix=prefix)
 
     def test_clt_object_listing_iterator(self):
         clt = self.client
@@ -2779,16 +2775,8 @@ class ObjectStorageTest(unittest.TestCase):
         prefix = utils.random_unicode()
         mgr.object_listing_iterator = Mock()
         clt.object_listing_iterator(cont, prefix=prefix)
-        mgr.object_listing_iterator.assert_called_once_with(cont, prefix=prefix)
-
-    def test_clt_object_listing_iterator(self):
-        clt = self.client
-        mgr = clt._manager
-        cont = self.container
-        prefix = utils.random_unicode()
-        mgr.object_listing_iterator = Mock()
-        clt.object_listing_iterator(cont, prefix=prefix)
-        mgr.object_listing_iterator.assert_called_once_with(cont, prefix=prefix)
+        mgr.object_listing_iterator.assert_called_once_with(
+            cont, prefix=prefix)
 
     def test_clt_delete_object_in_seconds(self):
         clt = self.client
@@ -2799,7 +2787,8 @@ class ObjectStorageTest(unittest.TestCase):
         extra_info = utils.random_unicode()
         mgr.delete_object_in_seconds = Mock()
         clt.delete_object_in_seconds(cont, obj, seconds, extra_info=extra_info)
-        mgr.delete_object_in_seconds.assert_called_once_with(cont, obj, seconds)
+        mgr.delete_object_in_seconds.assert_called_once_with(
+            cont, obj, seconds)
 
     def test_clt_get_object(self):
         clt = self.client
@@ -2812,7 +2801,6 @@ class ObjectStorageTest(unittest.TestCase):
 
     def test_clt_store_object(self):
         clt = self.client
-        mgr = clt._manager
         cont = self.container
         obj_name = utils.random_unicode()
         data = utils.random_unicode()
@@ -2826,19 +2814,19 @@ class ObjectStorageTest(unittest.TestCase):
         metadata = utils.random_unicode()
         extra_info = utils.random_unicode()
         clt.create_object = Mock()
-        clt.store_object(cont, obj_name, data, content_type=content_type,
-                etag=etag, content_encoding=content_encoding, ttl=ttl,
-                return_none=return_none, chunk_size=chunk_size,
-                headers=headers, metadata=metadata, extra_info=extra_info)
-        clt.create_object.assert_called_once_with(cont, obj_name=obj_name,
-                data=data, content_type=content_type, etag=etag,
-                content_encoding=content_encoding, ttl=ttl,
-                return_none=return_none, chunk_size=chunk_size,
-                headers=headers, metadata=metadata)
+        clt.store_object(
+            cont, obj_name, data, content_type=content_type, etag=etag,
+            content_encoding=content_encoding, ttl=ttl,
+            return_none=return_none, chunk_size=chunk_size, headers=headers,
+            metadata=metadata, extra_info=extra_info)
+        clt.create_object.assert_called_once_with(
+            cont, obj_name=obj_name, data=data, content_type=content_type,
+            etag=etag, content_encoding=content_encoding, ttl=ttl,
+            return_none=return_none, chunk_size=chunk_size,
+            headers=headers, metadata=metadata)
 
     def test_clt_upload_file(self):
         clt = self.client
-        mgr = clt._manager
         cont = self.container
         file_or_path = utils.random_unicode()
         obj_name = utils.random_unicode()
@@ -2852,16 +2840,16 @@ class ObjectStorageTest(unittest.TestCase):
         metadata = utils.random_unicode()
         extra_info = utils.random_unicode()
         clt.create_object = Mock()
-        clt.upload_file(cont, file_or_path, obj_name=obj_name,
-                content_type=content_type,
-                etag=etag, content_encoding=content_encoding, ttl=ttl,
-                content_length=content_length, return_none=return_none,
-                headers=headers, metadata=metadata, extra_info=extra_info)
-        clt.create_object.assert_called_once_with(cont,
-                file_or_path=file_or_path, obj_name=obj_name,
-                content_type=content_type, etag=etag,
-                content_encoding=content_encoding, ttl=ttl, headers=headers,
-                metadata=metadata, return_none=return_none)
+        clt.upload_file(
+            cont, file_or_path, obj_name=obj_name, content_type=content_type,
+            etag=etag, content_encoding=content_encoding, ttl=ttl,
+            content_length=content_length, return_none=return_none,
+            headers=headers, metadata=metadata, extra_info=extra_info)
+        clt.create_object.assert_called_once_with(
+            cont, file_or_path=file_or_path, obj_name=obj_name,
+            content_type=content_type, etag=etag,
+            content_encoding=content_encoding, ttl=ttl, headers=headers,
+            metadata=metadata, return_none=return_none)
 
     def test_clt_create_object(self):
         clt = self.client
@@ -2880,17 +2868,18 @@ class ObjectStorageTest(unittest.TestCase):
         headers = utils.random_unicode()
         metadata = utils.random_unicode()
         mgr.create_object = Mock()
-        clt.create_object(cont, file_or_path=file_or_path, data=data,
-                obj_name=obj_name, content_type=content_type, etag=etag,
-                content_encoding=content_encoding, ttl=ttl,
-                chunk_size=chunk_size, content_length=content_length,
-                return_none=return_none, headers=headers, metadata=metadata)
-        mgr.create_object.assert_called_once_with(cont,
-                file_or_path=file_or_path, data=data, obj_name=obj_name,
-                content_type=content_type, etag=etag,
-                content_encoding=content_encoding,
-                content_length=content_length, ttl=ttl, chunk_size=chunk_size,
-                metadata=metadata, headers=headers, return_none=return_none)
+        clt.create_object(
+            cont, file_or_path=file_or_path, data=data, obj_name=obj_name,
+            content_type=content_type, etag=etag,
+            content_encoding=content_encoding, ttl=ttl,
+            chunk_size=chunk_size, content_length=content_length,
+            return_none=return_none, headers=headers, metadata=metadata)
+        mgr.create_object.assert_called_once_with(
+            cont, file_or_path=file_or_path, data=data, obj_name=obj_name,
+            content_type=content_type, etag=etag,
+            content_encoding=content_encoding, content_length=content_length,
+            ttl=ttl, chunk_size=chunk_size, metadata=metadata, headers=headers,
+            return_none=return_none)
 
     def test_clt_fetch_object(self):
         clt = self.client
@@ -2902,10 +2891,12 @@ class ObjectStorageTest(unittest.TestCase):
         size = utils.random_unicode()
         extra_info = utils.random_unicode()
         mgr.fetch_object = Mock()
-        clt.fetch_object(cont, obj, include_meta=include_meta,
-                chunk_size=chunk_size, size=size, extra_info=extra_info)
-        mgr.fetch_object.assert_called_once_with(cont, obj,
-                include_meta=include_meta, chunk_size=chunk_size, size=size)
+        clt.fetch_object(
+            cont, obj, include_meta=include_meta,
+            chunk_size=chunk_size, size=size, extra_info=extra_info)
+        mgr.fetch_object.assert_called_once_with(
+            cont, obj, include_meta=include_meta, chunk_size=chunk_size,
+            size=size)
 
     def test_clt_fetch_partial(self):
         clt = self.client
@@ -2920,7 +2911,6 @@ class ObjectStorageTest(unittest.TestCase):
     @patch("sys.stdout")
     def test_clt_fetch_dlo(self, mock_stdout):
         clt = self.client
-        mgr = clt._manager
         cont = self.container
         ctype = "text/fake"
         num_objs = random.randint(1, 3)
@@ -2929,8 +2919,9 @@ class ObjectStorageTest(unittest.TestCase):
                 for num in range(num_objs)]
         clt.get_container_objects = Mock(return_value=objs)
         name = utils.random_unicode()
-        clt.method_get = Mock(side_effect=[(None, "aaa"), (None, "bbb"),
-                (None, "ccc"), (None, "")] * num_objs)
+        clt.method_get = Mock(
+            side_effect=[(None, "aaa"), (None, "bbb"), (None, "ccc"),
+                         (None, "")] * num_objs)
 
         def fake_get(obj_name):
             return [obj for obj in objs
@@ -2960,8 +2951,8 @@ class ObjectStorageTest(unittest.TestCase):
         structure = utils.random_unicode()
         mgr.download_object = Mock()
         clt.download_object(cont, obj, directory, structure=structure)
-        mgr.download_object.assert_called_once_with(cont, obj, directory,
-                structure=structure)
+        mgr.download_object.assert_called_once_with(
+            cont, obj, directory, structure=structure)
 
     def test_clt_delete(self):
         clt = self.client
@@ -2991,10 +2982,12 @@ class ObjectStorageTest(unittest.TestCase):
         content_type = utils.random_unicode()
         extra_info = utils.random_unicode()
         mgr.copy_object = Mock()
-        clt.copy_object(cont, obj, new_container, new_obj_name=new_obj_name,
-                content_type=content_type, extra_info=extra_info)
-        mgr.copy_object.assert_called_once_with(cont, obj, new_container,
-                new_obj_name=new_obj_name, content_type=content_type)
+        clt.copy_object(
+            cont, obj, new_container, new_obj_name=new_obj_name,
+            content_type=content_type, extra_info=extra_info)
+        mgr.copy_object.assert_called_once_with(
+            cont, obj, new_container, new_obj_name=new_obj_name,
+            content_type=content_type)
 
     def test_clt_move_object(self):
         clt = self.client
@@ -3007,12 +3000,13 @@ class ObjectStorageTest(unittest.TestCase):
         content_type = utils.random_unicode()
         extra_info = utils.random_unicode()
         mgr.move_object = Mock()
-        clt.move_object(cont, obj, new_container, new_obj_name=new_obj_name,
-                new_reference=new_reference, content_type=content_type,
-                extra_info=extra_info)
-        mgr.move_object.assert_called_once_with(cont, obj, new_container,
-                new_obj_name=new_obj_name, new_reference=new_reference,
-                content_type=content_type)
+        clt.move_object(
+            cont, obj, new_container, new_obj_name=new_obj_name,
+            new_reference=new_reference, content_type=content_type,
+            extra_info=extra_info)
+        mgr.move_object.assert_called_once_with(
+            cont, obj, new_container, new_obj_name=new_obj_name,
+            new_reference=new_reference, content_type=content_type)
 
     def test_clt_change_object_content_type(self):
         clt = self.client
@@ -3023,27 +3017,25 @@ class ObjectStorageTest(unittest.TestCase):
         guess = utils.random_unicode()
         extra_info = utils.random_unicode()
         mgr.change_object_content_type = Mock()
-        clt.change_object_content_type(cont, obj, new_ctype, guess=guess,
-                extra_info=extra_info)
-        mgr.change_object_content_type.assert_called_once_with(cont, obj,
-                new_ctype, guess=guess)
+        clt.change_object_content_type(
+            cont, obj, new_ctype, guess=guess, extra_info=extra_info)
+        mgr.change_object_content_type.assert_called_once_with(
+            cont, obj, new_ctype, guess=guess)
 
     def test_clt_upload_folder_bad_path(self):
         clt = self.client
-        mgr = clt._manager
         folder_path = utils.random_unicode()
         self.assertRaises(exc.FolderNotFound, clt.upload_folder, folder_path)
 
     def test_clt_upload_folder(self):
         clt = self.client
-        mgr = clt._manager
         cont = self.container
         ignore = utils.random_unicode()
         ttl = utils.random_unicode()
         clt._upload_folder_in_background = Mock()
         with utils.SelfDeletingTempDirectory() as folder_path:
             key, total = clt.upload_folder(folder_path, container=cont,
-                    ignore=ignore, ttl=ttl)
+                                           ignore=ignore, ttl=ttl)
             clt._upload_folder_in_background.assert_called_once_with(
                     folder_path, cont, [ignore], key, ttl)
 
@@ -3056,7 +3048,7 @@ class ObjectStorageTest(unittest.TestCase):
         upload_key = utils.random_unicode()
         ttl = utils.random_unicode()
         clt._upload_folder_in_background(folder_path, cont, ignore, upload_key,
-                ttl)
+                                         ttl)
         mock_start.assert_called_once_with()
 
     @patch("logging.Logger.info")
@@ -3077,14 +3069,15 @@ class ObjectStorageTest(unittest.TestCase):
                 for num in range(num_objs)]
         cont.get_objects = Mock(return_value=objs)
         clt._sync_folder_to_container = Mock()
-        clt.sync_folder_to_container(folder_path, cont, delete=delete,
-                include_hidden=include_hidden, ignore=ignore,
-                ignore_timestamps=ignore_timestamps,
-                object_prefix=object_prefix, verbose=verbose)
-        clt._sync_folder_to_container.assert_called_once_with(folder_path, cont,
-                prefix="", delete=delete, include_hidden=include_hidden,
-                ignore=ignore, ignore_timestamps=ignore_timestamps,
-                object_prefix=object_prefix, verbose=verbose)
+        clt.sync_folder_to_container(
+            folder_path, cont, delete=delete, include_hidden=include_hidden,
+            ignore=ignore, ignore_timestamps=ignore_timestamps,
+            object_prefix=object_prefix, verbose=verbose)
+        clt._sync_folder_to_container.assert_called_once_with(
+            folder_path, cont, prefix="", delete=delete,
+            include_hidden=include_hidden, ignore=ignore,
+            ignore_timestamps=ignore_timestamps, object_prefix=object_prefix,
+            verbose=verbose)
 
     @patch("logging.Logger.info")
     def test_clt_sync_folder_to_container_failures(self, mock_log):
@@ -3110,14 +3103,15 @@ class ObjectStorageTest(unittest.TestCase):
             clt._sync_summary["failure_reasons"].append(reason)
 
         clt._sync_folder_to_container = Mock(side_effect=mock_fail)
-        clt.sync_folder_to_container(folder_path, cont, delete=delete,
-                include_hidden=include_hidden, ignore=ignore,
-                ignore_timestamps=ignore_timestamps,
-                object_prefix=object_prefix, verbose=verbose)
-        clt._sync_folder_to_container.assert_called_once_with(folder_path, cont,
-                prefix="", delete=delete, include_hidden=include_hidden,
-                ignore=ignore, ignore_timestamps=ignore_timestamps,
-                object_prefix=object_prefix, verbose=verbose)
+        clt.sync_folder_to_container(
+            folder_path, cont, delete=delete, include_hidden=include_hidden,
+            ignore=ignore, ignore_timestamps=ignore_timestamps,
+            object_prefix=object_prefix, verbose=verbose)
+        clt._sync_folder_to_container.assert_called_once_with(
+            folder_path, cont, prefix="", delete=delete,
+            include_hidden=include_hidden, ignore=ignore,
+            ignore_timestamps=ignore_timestamps, object_prefix=object_prefix,
+            verbose=verbose)
 
     @patch("logging.Logger.info")
     @patch("os.listdir")
@@ -3126,9 +3120,13 @@ class ObjectStorageTest(unittest.TestCase):
         cont = self.container
         cont.upload_file = Mock()
         clt._local_files = []
-        rem_obj = StorageObject(cont.object_manager, {"name": "test2",
-                "last_modified": "2014-01-01T00:00:00.000001", "bytes": 42,
-                "content_type": "text/fake", "hash": "FAKE"})
+        rem_obj = StorageObject(
+            cont.object_manager, {
+                "name": "test2",
+                "last_modified": "2014-01-01T00:00:00.000001",
+                "bytes": 42,
+                "content_type": "text/fake",
+                "hash": "FAKE"})
         clt._remote_files = {"test2": rem_obj}
         clt._delete_objects_not_in_list = Mock()
         prefix = ""
@@ -3145,23 +3143,27 @@ class ObjectStorageTest(unittest.TestCase):
                 pth = os.path.join(folder_path, fname)
                 open(pth, "w").write("faketext")
             mock_listdir.return_value = fnames
-            clt._sync_folder_to_container(folder_path, cont, prefix, delete,
-                    include_hidden, ignore, ignore_timestamps, object_prefix,
-                    verbose)
+            clt._sync_folder_to_container(
+                folder_path, cont, prefix, delete, include_hidden, ignore,
+                ignore_timestamps, object_prefix, verbose)
         self.assertEqual(cont.upload_file.call_count, 3)
 
     @patch("logging.Logger.info")
     @patch("logging.Logger.error")
     @patch("os.listdir")
-    def test_clt_under_sync_folder_to_container_upload_fail(self, mock_listdir,
-            mock_log_error, mock_log_info):
+    def test_clt_under_sync_folder_to_container_upload_fail(
+            self, mock_listdir, mock_log_error, mock_log_info):
         clt = self.client
         cont = self.container
         cont.upload_file = Mock(side_effect=Exception(""))
         clt._local_files = []
-        rem_obj = StorageObject(cont.object_manager, {"name": "test2",
-                "last_modified": "2014-01-01T00:00:00.000001", "bytes": 42,
-                "content_type": "text/fake", "hash": "FAKE"})
+        rem_obj = StorageObject(
+            cont.object_manager, {
+                "name": "test2",
+                "last_modified": "2014-01-01T00:00:00.000001",
+                "bytes": 42,
+                "content_type": "text/fake",
+                "hash": "FAKE"})
         clt._remote_files = {"test2": rem_obj}
         clt._delete_objects_not_in_list = Mock()
         prefix = ""
@@ -3178,22 +3180,26 @@ class ObjectStorageTest(unittest.TestCase):
                 pth = os.path.join(folder_path, fname)
                 open(pth, "w").write("faketext")
             mock_listdir.return_value = fnames
-            clt._sync_folder_to_container(folder_path, cont, prefix, delete,
-                    include_hidden, ignore, ignore_timestamps, object_prefix,
-                    verbose)
+            clt._sync_folder_to_container(
+                folder_path, cont, prefix, delete, include_hidden, ignore,
+                ignore_timestamps, object_prefix, verbose)
         self.assertEqual(cont.upload_file.call_count, 3)
 
     @patch("logging.Logger.info")
     @patch("os.listdir")
-    def test_clt_under_sync_folder_to_container_newer(self, mock_listdir,
-            mock_log):
+    def test_clt_under_sync_folder_to_container_newer(
+            self, mock_listdir, mock_log):
         clt = self.client
         cont = self.container
         cont.upload_file = Mock()
         clt._local_files = []
-        rem_obj = StorageObject(cont.object_manager, {"name": "test2",
-                "last_modified": "3000-01-01T00:00:00.000001", "bytes": 42,
-                "content_type": "text/fake", "hash": "FAKE"})
+        rem_obj = StorageObject(
+            cont.object_manager, {
+                "name": "test2",
+                "last_modified": "3000-01-01T00:00:00.000001",
+                "bytes": 42,
+                "content_type": "text/fake",
+                "hash": "FAKE"})
         clt._remote_files = {"test2": rem_obj}
         clt._delete_objects_not_in_list = Mock()
         prefix = ""
@@ -3210,23 +3216,27 @@ class ObjectStorageTest(unittest.TestCase):
                 pth = os.path.join(folder_path, fname)
                 open(pth, "w").write("faketext")
             mock_listdir.return_value = fnames
-            clt._sync_folder_to_container(folder_path, cont, prefix, delete,
-                    include_hidden, ignore, ignore_timestamps, object_prefix,
-                    verbose)
+            clt._sync_folder_to_container(
+                folder_path, cont, prefix, delete, include_hidden, ignore,
+                ignore_timestamps, object_prefix, verbose)
         self.assertEqual(cont.upload_file.call_count, 2)
 
     @patch("logging.Logger.info")
     @patch("os.listdir")
-    def test_clt_under_sync_folder_to_container_same(self, mock_listdir,
-            mock_log):
+    def test_clt_under_sync_folder_to_container_same(
+            self, mock_listdir, mock_log):
         clt = self.client
         cont = self.container
         cont.upload_file = Mock()
         clt._local_files = []
         txt = utils.random_ascii()
-        rem_obj = StorageObject(cont.object_manager, {"name": "test2",
-                "last_modified": "3000-01-01T00:00:00.000001", "bytes": 42,
-                "content_type": "text/fake", "hash": utils.get_checksum(txt)})
+        rem_obj = StorageObject(
+            cont.object_manager, {
+                "name": "test2",
+                "last_modified": "3000-01-01T00:00:00.000001",
+                "bytes": 42,
+                "content_type": "text/fake",
+                "hash": utils.get_checksum(txt)})
         clt._remote_files = {"test2": rem_obj}
         clt._delete_objects_not_in_list = Mock()
         prefix = ""
@@ -3244,12 +3254,13 @@ class ObjectStorageTest(unittest.TestCase):
                 with open(pth, "w") as f:
                     f.write(txt)
             mock_listdir.return_value = fnames
-            clt._sync_folder_to_container(folder_path, cont, prefix, delete,
-                    include_hidden, ignore, ignore_timestamps, object_prefix,
-                    verbose)
+            clt._sync_folder_to_container(
+                folder_path, cont, prefix, delete, include_hidden, ignore,
+                ignore_timestamps, object_prefix, verbose)
         self.assertEqual(cont.upload_file.call_count, 2)
         args_list = mock_log.call_args_list
-        exist_call = any(["already exists" in call[0][0] for call in args_list])
+        exist_call = any(["already exists" in call[0][0]
+                         for call in args_list])
         self.assertTrue(exist_call)
 
     @patch("logging.Logger.info")
@@ -3281,9 +3292,9 @@ class ObjectStorageTest(unittest.TestCase):
             os.mkdir(dirpth)
             fnames.append(dirname)
             os.listdir.side_effect = [fnames, []]
-            clt._sync_folder_to_container(folder_path, cont, prefix, delete,
-                    include_hidden, ignore, ignore_timestamps, object_prefix,
-                    verbose)
+            clt._sync_folder_to_container(
+                folder_path, cont, prefix, delete, include_hidden, ignore,
+                ignore_timestamps, object_prefix, verbose)
             os.listdir = sav
         self.assertEqual(cont.upload_file.call_count, 3)
 
@@ -3298,16 +3309,17 @@ class ObjectStorageTest(unittest.TestCase):
         clt.bulk_delete = Mock()
         exp_del = ["test1"]
         clt._delete_objects_not_in_list(cont, object_prefix=object_prefix)
-        cont.get_object_names.assert_called_once_with(prefix=object_prefix,
-                full_listing=True)
-        clt.bulk_delete.assert_called_once_with(cont, exp_del, async=True)
+        cont.get_object_names.assert_called_once_with(
+            prefix=object_prefix, full_listing=True)
+        clt.bulk_delete.assert_called_once_with(
+            cont, exp_del, asynchronous=True)
 
     @patch("pyrax.object_storage.BulkDeleter.start")
     def test_clt_bulk_delete_async(self, mock_del):
         clt = self.client
         cont = self.container
         obj_names = ["test1", "test2"]
-        ret = clt.bulk_delete(cont, obj_names, async=True)
+        ret = clt.bulk_delete(cont, obj_names, asynchronous=True)
         self.assertTrue(isinstance(ret, BulkDeleter))
 
     def test_clt_bulk_delete_sync(self):
@@ -3315,7 +3327,6 @@ class ObjectStorageTest(unittest.TestCase):
         cont = self.container
         obj_names = ["test1", "test2"]
         resp = fakes.FakeResponse()
-        fake_res = utils.random_unicode()
         body = {
             "Number Not Found": 1,
             "Response Status": "200 OK",
@@ -3336,7 +3347,7 @@ class ObjectStorageTest(unittest.TestCase):
             return (resp, body)
 
         clt.method_delete = Mock(side_effect=fake_bulk_resp)
-        ret = clt.bulk_delete(cont, obj_names, async=False)
+        ret = clt.bulk_delete(cont, obj_names, asynchronous=False)
         self.assertEqual(ret, expected)
 
     def test_clt_bulk_delete_sync_413(self):
@@ -3344,7 +3355,6 @@ class ObjectStorageTest(unittest.TestCase):
         cont = self.container
         obj_names = ["test1", "test2"]
         resp = fakes.FakeResponse()
-        fake_res = utils.random_unicode()
         body = {
             "Number Not Found": 0,
             "Response Status": "413 Request Entity Too Large",
@@ -3370,7 +3380,7 @@ class ObjectStorageTest(unittest.TestCase):
             return (resp, body)
 
         clt.method_delete = Mock(side_effect=fake_bulk_resp)
-        ret = clt.bulk_delete(cont, obj_names, async=False)
+        ret = clt.bulk_delete(cont, obj_names, asynchronous=False)
         self.assertEqual(ret, expected)
 
     def test_clt_cdn_request_not_enabled(self):
@@ -3407,8 +3417,6 @@ class ObjectStorageTest(unittest.TestCase):
         clt = self.client
         uri = utils.random_unicode()
         method = random.choice(list(clt.method_dict.keys()))
-        resp = utils.random_unicode()
-        body = utils.random_unicode()
         clt.cdn_management_url = utils.random_unicode()
         clt.method_dict[method] = Mock(side_effect=exc.NotFound(""))
         clt.method_head = Mock(side_effect=exc.NotFound(""))
@@ -3444,7 +3452,7 @@ class ObjectStorageTest(unittest.TestCase):
         client = self.client
         ttl = utils.random_unicode()
         ret = FolderUploader(root_folder, container, ignore, upload_key,
-                client, ttl=ttl)
+                             client, ttl=ttl)
         self.assertEqual(ret.container.name, pth4)
         self.assertEqual(ret.root_folder, root_folder)
         self.assertEqual(ret.ignore, [ignore])
@@ -3460,8 +3468,8 @@ class ObjectStorageTest(unittest.TestCase):
         client = self.client
         ttl = utils.random_unicode()
         client.create = Mock()
-        ret = FolderUploader(root_folder, container, ignore, upload_key,
-                client, ttl=ttl)
+        FolderUploader(root_folder, container, ignore, upload_key,
+                       client, ttl=ttl)
         client.create.assert_called_once_with(container)
 
     def test_folder_uploader_folder_name_from_path(self):
@@ -3499,7 +3507,7 @@ class ObjectStorageTest(unittest.TestCase):
         fnames = [fname1, fname2]
         clt._should_abort_folder_upload = Mock(return_value=True)
         clt.upload_file = Mock()
-        ret = folder_up.upload_files_in_folder(dirname, fnames)
+        folder_up.upload_files_in_folder(dirname, fnames)
         self.assertEqual(clt.upload_file.call_count, 0)
 
     def test_folder_uploader_upload_files_in_folder(self):
@@ -3519,7 +3527,7 @@ class ObjectStorageTest(unittest.TestCase):
             clt.upload_file = Mock()
             clt._update_progress = Mock()
             folder_up = FolderUploader(tmpdir, cont, ignore, upload_key, clt)
-            ret = folder_up.upload_files_in_folder(tmpdir, fnames)
+            folder_up.upload_files_in_folder(tmpdir, fnames)
             self.assertEqual(clt.upload_file.call_count, len(fnames))
 
     def test_folder_uploader_run(self):
@@ -3527,7 +3535,6 @@ class ObjectStorageTest(unittest.TestCase):
         cont = self.container
         ignore = "*FAKE*"
         upload_key = utils.random_unicode()
-        arg = utils.random_unicode()
         fname1 = utils.random_ascii()
         fname2 = utils.random_ascii()
         fname3 = utils.random_ascii()

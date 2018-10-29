@@ -22,7 +22,6 @@ import datetime
 from functools import wraps
 import hashlib
 import hmac
-import json
 import logging
 import math
 import mimetypes
@@ -56,11 +55,16 @@ EARLY_DATE_STR = "1900-01-01T00:00:00"
 # Maximum number of objects that can be passed to bulk-delete
 MAX_BULK_DELETE = 10000
 
+
 # Used to indicate values that are lazy-loaded
 class Fault_cls(object):
+    def __bool__(self):
+        return False
+
     def __nonzero__(self):
         return False
     __bool__ = __nonzero__
+
 
 FAULT = Fault_cls()
 
@@ -98,7 +102,7 @@ def _validate_file_or_path(file_or_path, obj_name):
         # Make sure it exists
         if not os.path.exists(file_or_path):
             raise exc.FileNotFound("The file '%s' does not exist." %
-                    file_or_path)
+                                   file_or_path)
         fname = os.path.basename(file_or_path)
     else:
         try:
@@ -114,8 +118,8 @@ def _valid_upload_key(fnc):
         try:
             self.folder_upload_status[upload_key]
         except KeyError:
-            raise exc.InvalidUploadID("There is no folder upload with the "
-                    "key '%s'." % upload_key)
+            raise exc.InvalidUploadID(
+                "There is no folder upload with the key '%s'." % upload_key)
         return fnc(self, upload_key, *args, **kwargs)
     return wrapped
 
@@ -155,7 +159,6 @@ def get_file_size(fileobj):
     return total_size
 
 
-
 class Container(BaseResource):
     def __init__(self, *args, **kwargs):
         super(Container, self).__init__(*args, **kwargs)
@@ -166,23 +169,20 @@ class Container(BaseResource):
         self._cdn_streaming_uri = FAULT
         self._cdn_ios_uri = FAULT
         self._cdn_log_retention = FAULT
-        self.object_manager = StorageObjectManager(self.manager.api,
-                uri_base=self.name, resource_class=StorageObject)
+        self.object_manager = StorageObjectManager(
+            self.manager.api, uri_base=self.name, resource_class=StorageObject)
         self._non_display = ["object_manager"]
         self._backwards_aliases()
-
 
     def _backwards_aliases(self):
         self.get_objects = self.list
         self.get_object_names = self.list_object_names
         # Prevent these from displaying
         self._non_display.extend(["get_objects", "get_object",
-                "get_object_names"])
-
+                                  "get_object_names"])
 
     def __repr__(self):
         return "<Container '%s'>" % self.name
-
 
     @property
     def id(self):
@@ -191,7 +191,6 @@ class Container(BaseResource):
         used.
         """
         return self.name
-
 
     def _set_cdn_defaults(self):
         """Sets all the CDN-related attributes to default values."""
@@ -203,7 +202,6 @@ class Container(BaseResource):
         self._cdn_streaming_uri = None
         self._cdn_ios_uri = None
         self._cdn_log_retention = False
-
 
     def _fetch_cdn_data(self):
         """Fetches the container's CDN data from the CDN service"""
@@ -233,13 +231,11 @@ class Container(BaseResource):
             elif low_key == "x-log-retention":
                 self._cdn_log_retention = (value == "True")
 
-
     def get_metadata(self, prefix=None):
         """
         Returns a dictionary containing the metadata for this container.
         """
         return self.manager.get_metadata(self, prefix=prefix)
-
 
     def set_metadata(self, metadata, clear=False, prefix=None):
         """
@@ -260,8 +256,7 @@ class Container(BaseResource):
         such as an empty string.
         """
         return self.manager.set_metadata(self, metadata, clear=clear,
-                prefix=prefix)
-
+                                         prefix=prefix)
 
     def remove_metadata_key(self, key, prefix=None):
         """
@@ -269,7 +264,6 @@ class Container(BaseResource):
         does not exist in the metadata, nothing is done.
         """
         return self.manager.remove_metadata_key(self, key, prefix=prefix)
-
 
     def set_web_index_page(self, page):
         """
@@ -280,7 +274,6 @@ class Container(BaseResource):
         """
         return self.manager.set_web_index_page(self, page)
 
-
     def set_web_error_page(self, page):
         """
         Sets the header indicating the error page in this container when
@@ -290,13 +283,11 @@ class Container(BaseResource):
         """
         return self.manager.set_web_error_page(self, page)
 
-
     def make_public(self, ttl=None):
         """
         Enables CDN access for this container, and optionally sets the TTL.
         """
         return self.manager.make_public(self, ttl=ttl)
-
 
     def make_private(self):
         """
@@ -304,7 +295,6 @@ class Container(BaseResource):
         the TTL expires.
         """
         return self.manager.make_private(self)
-
 
     def purge_cdn_object(self, obj, email_addresses=None):
         """
@@ -317,7 +307,6 @@ class Container(BaseResource):
         """
         return self.object_manager.purge(obj, email_addresses=email_addresses)
 
-
     def get_object(self, item):
         """
         Returns a StorageObject matching the specified item. If no such object
@@ -328,9 +317,8 @@ class Container(BaseResource):
             item = self.object_manager.get(item)
         return item
 
-
     def list(self, marker=None, limit=None, prefix=None, delimiter=None,
-            end_marker=None, full_listing=False, return_raw=False):
+             end_marker=None, full_listing=False, return_raw=False):
         """
         List the objects in this container, using the parameters to control the
         number and content of objects. Note that this is limited by the
@@ -341,10 +329,9 @@ class Container(BaseResource):
         if full_listing:
             return self.list_all(prefix=prefix)
         else:
-            return self.object_manager.list(marker=marker, limit=limit,
-                    prefix=prefix, delimiter=delimiter, end_marker=end_marker,
-                    return_raw=return_raw)
-
+            return self.object_manager.list(
+                marker=marker, limit=limit, prefix=prefix, delimiter=delimiter,
+                end_marker=end_marker, return_raw=return_raw)
 
     def list_all(self, prefix=None):
         """
@@ -354,9 +341,8 @@ class Container(BaseResource):
         """
         return self.manager.object_listing_iterator(self, prefix=prefix)
 
-
     def list_object_names(self, marker=None, limit=None, prefix=None,
-            delimiter=None, end_marker=None, full_listing=False):
+                          delimiter=None, end_marker=None, full_listing=False):
         """
         Returns a list of the names of all the objects in this container. The
         same pagination parameters apply as in self.list().
@@ -365,9 +351,8 @@ class Container(BaseResource):
             objects = self.list_all(prefix=prefix)
         else:
             objects = self.list(marker=marker, limit=limit, prefix=prefix,
-                    delimiter=delimiter, end_marker=end_marker)
+                                delimiter=delimiter, end_marker=end_marker)
         return [obj.name for obj in objects]
-
 
     def find(self, **kwargs):
         """
@@ -378,7 +363,6 @@ class Container(BaseResource):
         """
         return self.object_manager.find(**kwargs)
 
-
     def findall(self, **kwargs):
         """
         Finds all objects with attributes matching ``**kwargs``.
@@ -388,11 +372,10 @@ class Container(BaseResource):
         """
         return self.object_manager.findall(**kwargs)
 
-
     def create(self, file_or_path=None, data=None, obj_name=None,
-            content_type=None, etag=None, content_encoding=None,
-            content_length=None, ttl=None, chunked=False, metadata=None,
-            chunk_size=None, headers=None, return_none=False):
+               content_type=None, etag=None, content_encoding=None,
+               content_length=None, ttl=None, chunked=False, metadata=None,
+               chunk_size=None, headers=None, return_none=False):
         """
         Creates or replaces a storage object in this container.
 
@@ -422,17 +405,16 @@ class Container(BaseResource):
         streamed to the object in the container without having to be written to
         disk first.
         """
-        return self.object_manager.create(file_or_path=file_or_path,
-                data=data, obj_name=obj_name, content_type=content_type,
-                etag=etag, content_encoding=content_encoding,
-                content_length=content_length, ttl=ttl, chunked=chunked,
-                metadata=metadata, chunk_size=chunk_size, headers=headers,
-                return_none=return_none)
-
+        return self.object_manager.create(
+            file_or_path=file_or_path, data=data, obj_name=obj_name,
+            content_type=content_type, etag=etag,
+            content_encoding=content_encoding, content_length=content_length,
+            ttl=ttl, chunked=chunked, metadata=metadata, chunk_size=chunk_size,
+            headers=headers, return_none=return_none)
 
     def store_object(self, obj_name, data, content_type=None, etag=None,
-            content_encoding=None, ttl=None, return_none=False,
-            headers=None, extra_info=None):
+                     content_encoding=None, ttl=None, return_none=False,
+                     headers=None, extra_info=None):
         """
         Creates a new object in this container, and populates it with the given
         data. A StorageObject reference to the uploaded file will be returned,
@@ -443,14 +425,13 @@ class Container(BaseResource):
         info, since swiftclient is not used any more.
         """
         return self.create(obj_name=obj_name, data=data,
-                content_type=content_type, etag=etag,
-                content_encoding=content_encoding, ttl=ttl,
-                return_none=return_none, headers=headers)
-
+                           content_type=content_type, etag=etag,
+                           content_encoding=content_encoding, ttl=ttl,
+                           return_none=return_none, headers=headers)
 
     def upload_file(self, file_or_path, obj_name=None, content_type=None,
-            etag=None, return_none=False, content_encoding=None, ttl=None,
-            content_length=None, headers=None):
+                    etag=None, return_none=False, content_encoding=None,
+                    ttl=None, content_length=None, headers=None):
         """
         Uploads the specified file to this container. If no name is supplied,
         the file's name will be used. Either a file path or an open file-like
@@ -471,15 +452,14 @@ class Container(BaseResource):
         is no longer used at all, and will not be modified with swiftclient
         info, since swiftclient is not used any more.
         """
-        return self.create(file_or_path=file_or_path, obj_name=obj_name,
-                content_type=content_type, etag=etag,
-                content_encoding=content_encoding, headers=headers,
-                content_length=content_length, ttl=ttl,
-                return_none=return_none)
-
+        return self.create(
+            file_or_path=file_or_path, obj_name=obj_name,
+            content_type=content_type, etag=etag,
+            content_encoding=content_encoding, headers=headers,
+            content_length=content_length, ttl=ttl, return_none=return_none)
 
     def fetch(self, obj, include_meta=False, chunk_size=None, size=None,
-            extra_info=None):
+              extra_info=None):
         """
         Fetches the object from storage.
 
@@ -503,16 +483,14 @@ class Container(BaseResource):
         info, since swiftclient is not used any more.
         """
         return self.object_manager.fetch(obj, include_meta=include_meta,
-                chunk_size=chunk_size, size=size)
-
+                                         chunk_size=chunk_size, size=size)
 
     def fetch_object(self, obj_name, include_meta=False, chunk_size=None):
         """
         Alias for self.fetch(); included for backwards compatibility
         """
         return self.fetch(obj=obj_name, include_meta=include_meta,
-                chunk_size=chunk_size)
-
+                          chunk_size=chunk_size)
 
     def fetch_partial(self, obj, size):
         """
@@ -520,7 +498,6 @@ class Container(BaseResource):
         than the specified 'size' value, the entire object is returned.
         """
         return self.object_manager.fetch_partial(obj, size)
-
 
     def download(self, obj, directory, structure=True):
         """
@@ -532,16 +509,15 @@ class Container(BaseResource):
         directory by default. If you do not want the nested folders to be
         created, pass `structure=False` in the parameters.
         """
-        return self.object_manager.download(obj, directory, structure=structure)
-
+        return self.object_manager.download(obj, directory,
+                                            structure=structure)
 
     def download_object(self, obj_name, directory, structure=True):
         """
         Alias for self.download(); included for backwards compatibility
         """
         return self.download(obj=obj_name, directory=directory,
-                structure=structure)
-
+                             structure=structure)
 
     def delete(self, del_objects=False):
         """
@@ -551,7 +527,6 @@ class Container(BaseResource):
         """
         return self.manager.delete(self, del_objects=del_objects)
 
-
     def delete_object(self, obj):
         """
         Deletes the object from this container.
@@ -560,7 +535,6 @@ class Container(BaseResource):
         StorageObject representing the object to be deleted.
         """
         return self.object_manager.delete(obj)
-
 
     def delete_object_in_seconds(self, obj, seconds, extra_info=None):
         """
@@ -573,8 +547,7 @@ class Container(BaseResource):
         """
         return self.manager.delete_object_in_seconds(self, obj, seconds)
 
-
-    def delete_all_objects(self, async=False):
+    def delete_all_objects(self, asynchronous=False):
         """
         Deletes all objects from this container.
 
@@ -593,21 +566,21 @@ class Container(BaseResource):
             errors - a list of any errors returned by the bulk delete call
         """
         nms = self.list_object_names(full_listing=True)
-        return self.object_manager.delete_all_objects(nms, async=async)
-
+        return self.object_manager.delete_all_objects(
+            nms, asynchronous=asynchronous)
 
     def copy_object(self, obj, new_container, new_obj_name=None,
-            content_type=None):
+                    content_type=None):
         """
-        Copies the object to the new container, optionally giving it a new name.
+        Copies the object to the new container, optionally giving it a new name
         If you copy to the same container, you must supply a different name.
         """
-        return self.manager.copy_object(self, obj, new_container,
-                new_obj_name=new_obj_name, content_type=content_type)
-
+        return self.manager.copy_object(
+            self, obj, new_container, new_obj_name=new_obj_name,
+            content_type=content_type)
 
     def move_object(self, obj, new_container, new_obj_name=None,
-            new_reference=False, content_type=None, extra_info=None):
+                    new_reference=False, content_type=None, extra_info=None):
         """
         Works just like copy_object, except that the source object is deleted
         after a successful copy.
@@ -625,10 +598,9 @@ class Container(BaseResource):
         is no longer used at all, and will not be modified with swiftclient
         info, since swiftclient is not used any more.
         """
-        return self.manager.move_object(self, obj, new_container,
-                new_obj_name=new_obj_name, new_reference=new_reference,
-                content_type=content_type)
-
+        return self.manager.move_object(
+            self, obj, new_container, new_obj_name=new_obj_name,
+            new_reference=new_reference, content_type=content_type)
 
     def change_object_content_type(self, obj, new_ctype, guess=False):
         """
@@ -639,8 +611,7 @@ class Container(BaseResource):
         result in an exception.
         """
         return self.manager.change_object_content_type(self, obj, new_ctype,
-                guess=guess)
-
+                                                       guess=guess)
 
     def get_temp_url(self, obj, seconds, method="GET", key=None, cached=True):
         """
@@ -656,8 +627,7 @@ class Container(BaseResource):
         key, and don't wish to use any cached value, pass `cached=False`.
         """
         return self.manager.get_temp_url(self, obj, seconds, method=method,
-                key=key, cached=cached)
-
+                                         key=key, cached=cached)
 
     def get_object_metadata(self, obj, prefix=None):
         """
@@ -665,9 +635,8 @@ class Container(BaseResource):
         """
         return self.object_manager.get_metadata(obj, prefix)
 
-
     def set_object_metadata(self, obj, metadata, clear=False, extra_info=None,
-            prefix=None):
+                            prefix=None):
         """
         Accepts a dictionary of metadata key/value pairs and updates the
         specified object metadata with them.
@@ -685,11 +654,10 @@ class Container(BaseResource):
         headers, you must include a non-None prefix, such as an empty string.
         """
         return self.object_manager.set_metadata(obj, metadata, clear=clear,
-                prefix=prefix)
+                                                prefix=prefix)
 
-
-    def list_subdirs(self, marker=None, limit=None, prefix=None, delimiter=None,
-            full_listing=False):
+    def list_subdirs(self, marker=None, limit=None, prefix=None,
+                     delimiter=None, full_listing=False):
         """
         Return a list of the namesrepresenting the pseudo-subdirectories in
         this container. You can use the marker and limit params to handle
@@ -697,16 +665,15 @@ class Container(BaseResource):
         delimiter param is there for backwards compatibility only, as the call
         requires the delimiter to be '/'.
         """
-        return self.manager.list_subdirs(self, marker=marker, limit=limit,
-                prefix=prefix, delimiter=delimiter, full_listing=full_listing)
-
+        return self.manager.list_subdirs(
+            self, marker=marker, limit=limit, prefix=prefix,
+            delimiter=delimiter, full_listing=full_listing)
 
     def remove_from_cache(self, obj):
         """
         Not used anymore. Included for backwards compatibility.
         """
         pass
-
 
     # BEGIN - CDN property definitions ##
     def _get_cdn_log_retention(self):
@@ -718,7 +685,6 @@ class Container(BaseResource):
         self.manager.set_cdn_log_retention(self, val)
         self._cdn_log_retention = val
 
-
     def _get_cdn_enabled(self):
         if self._cdn_enabled is FAULT:
             self._fetch_cdn_data()
@@ -726,7 +692,6 @@ class Container(BaseResource):
 
     def _set_cdn_enabled(self, val):
         self._cdn_enabled = val
-
 
     def _get_cdn_uri(self):
         if self._cdn_uri is FAULT:
@@ -736,7 +701,6 @@ class Container(BaseResource):
     def _set_cdn_uri(self, val):
         self._cdn_uri = val
 
-
     def _get_cdn_ttl(self):
         if self._cdn_ttl is FAULT:
             self._fetch_cdn_data()
@@ -744,7 +708,6 @@ class Container(BaseResource):
 
     def _set_cdn_ttl(self, val):
         self._cdn_ttl = val
-
 
     def _get_cdn_ssl_uri(self):
         if self._cdn_ssl_uri is FAULT:
@@ -754,7 +717,6 @@ class Container(BaseResource):
     def _set_cdn_ssl_uri(self, val):
         self._cdn_ssl_uri = val
 
-
     def _get_cdn_streaming_uri(self):
         if self._cdn_streaming_uri is FAULT:
             self._fetch_cdn_data()
@@ -762,7 +724,6 @@ class Container(BaseResource):
 
     def _set_cdn_streaming_uri(self, val):
         self._cdn_streaming_uri = val
-
 
     def _get_cdn_ios_uri(self):
         if self._cdn_ios_uri is FAULT:
@@ -772,16 +733,16 @@ class Container(BaseResource):
     def _set_cdn_ios_uri(self, val):
         self._cdn_ios_uri = val
 
-
     cdn_enabled = property(_get_cdn_enabled, _set_cdn_enabled)
-    cdn_log_retention = property(_get_cdn_log_retention, _set_cdn_log_retention)
+    cdn_log_retention = property(_get_cdn_log_retention,
+                                 _set_cdn_log_retention)
     cdn_uri = property(_get_cdn_uri, _set_cdn_uri)
     cdn_ttl = property(_get_cdn_ttl, _set_cdn_ttl)
     cdn_ssl_uri = property(_get_cdn_ssl_uri, _set_cdn_ssl_uri)
-    cdn_streaming_uri = property(_get_cdn_streaming_uri, _set_cdn_streaming_uri)
+    cdn_streaming_uri = property(_get_cdn_streaming_uri,
+                                 _set_cdn_streaming_uri)
     cdn_ios_uri = property(_get_cdn_ios_uri, _set_cdn_ios_uri)
     # END - CDN property definitions ##
-
 
 
 class ContainerManager(BaseManager):
@@ -792,13 +753,12 @@ class ContainerManager(BaseManager):
         """
         uri = "/%s" % self.uri_base
         qs = utils.dict_to_qs({"marker": marker, "limit": limit,
-                "prefix": prefix, "end_marker": end_marker})
+                               "prefix": prefix, "end_marker": end_marker})
         if qs:
             uri = "%s?%s" % (uri, qs)
         resp, resp_body = self.api.method_get(uri)
         return [Container(self, res, loaded=False)
                 for res in resp_body if res]
-
 
     @_handle_container_not_found
     def get(self, container):
@@ -814,7 +774,6 @@ class ContainerManager(BaseManager):
                 "object_count": int(hdrs.get("x-container-object-count", "0")),
                 "name": name}
         return Container(self, data, loaded=False)
-
 
     def create(self, name, metadata=None, prefix=None, *args, **kwargs):
         """
@@ -836,12 +795,11 @@ class ContainerManager(BaseManager):
             num_obj = int(hresp.headers.get("x-container-object-count", "0"))
             num_bytes = int(hresp.headers.get("x-container-bytes-used", "0"))
             cont_info = {"name": name, "object_count": num_obj,
-                    "total_bytes": num_bytes}
+                         "total_bytes": num_bytes}
             return Container(self, cont_info)
         elif resp.status_code == 400:
             raise exc.ClientException("Container creation failed: %s" %
-                    resp_body)
-
+                                      resp_body)
 
     @_handle_container_not_found
     def delete(self, container, del_objects=False):
@@ -852,17 +810,15 @@ class ContainerManager(BaseManager):
         """
         if del_objects:
             nms = self.list_object_names(container, full_listing=True)
-            self.api.bulk_delete(container, nms, async=False)
+            self.api.bulk_delete(container, nms, asynchronous=False)
         uri = "/%s" % utils.get_name(container)
         resp, resp_body = self.api.method_delete(uri)
-
 
     def _create_body(self, name, *args, **kwargs):
         """
         Container creation requires no body.
         """
         return None
-
 
     @_handle_container_not_found
     def fetch_cdn_data(self, container):
@@ -878,7 +834,6 @@ class ContainerManager(BaseManager):
             return {}
         return resp.headers
 
-
     def get_account_headers(self):
         """
         Return the headers for the account. This includes all the headers, not
@@ -888,7 +843,6 @@ class ContainerManager(BaseManager):
         resp, resp_body = self.api.method_head("/")
         return resp.headers
 
-
     @_handle_container_not_found
     def get_headers(self, container):
         """
@@ -897,7 +851,6 @@ class ContainerManager(BaseManager):
         uri = "/%s" % utils.get_name(container)
         resp, resp_body = self.api.method_head(uri)
         return resp.headers
-
 
     def get_account_metadata(self, prefix=None):
         """
@@ -914,7 +867,6 @@ class ContainerManager(BaseManager):
                 cleaned = hkey.replace(low_prefix, "").replace("-", "_")
                 ret[cleaned] = hval
         return ret
-
 
     def set_account_metadata(self, metadata, clear=False, prefix=None):
         """
@@ -944,7 +896,6 @@ class ContainerManager(BaseManager):
         resp, resp_body = self.api.method_post(uri, headers=new_meta)
         return 200 <= resp.status_code <= 299
 
-
     def delete_account_metadata(self, prefix=None):
         """
         Removes all metadata matching the specified prefix from the account.
@@ -964,7 +915,6 @@ class ContainerManager(BaseManager):
         resp, resp_body = self.api.method_post(uri, headers=new_meta)
         return 200 <= resp.status_code <= 299
 
-
     def get_metadata(self, container, prefix=None):
         """
         Returns a dictionary containing the metadata for the container.
@@ -979,7 +929,6 @@ class ContainerManager(BaseManager):
                 cleaned = hkey.replace(low_prefix, "").replace("-", "_")
                 ret[cleaned] = hval
         return ret
-
 
     @_handle_container_not_found
     def set_metadata(self, container, metadata, clear=False, prefix=None):
@@ -1003,7 +952,7 @@ class ContainerManager(BaseManager):
         new_meta = {}
         if clear:
             curr_meta = self.api.get_container_metadata(container,
-                    prefix=prefix)
+                                                        prefix=prefix)
             for ckey in curr_meta:
                 new_meta[ckey] = ""
         utils.case_insensitive_update(new_meta, massaged)
@@ -1012,7 +961,6 @@ class ContainerManager(BaseManager):
         resp, resp_body = self.api.method_post(uri, headers=new_meta)
         return 200 <= resp.status_code <= 299
 
-
     def remove_metadata_key(self, container, key):
         """
         Removes the specified key from the container's metadata. If the key
@@ -1020,7 +968,6 @@ class ContainerManager(BaseManager):
         """
         meta_dict = {key: ""}
         return self.set_metadata(container, meta_dict)
-
 
     @_handle_container_not_found
     def delete_metadata(self, container, prefix=None):
@@ -1043,7 +990,6 @@ class ContainerManager(BaseManager):
         resp, resp_body = self.api.method_post(uri, headers=new_meta)
         return 200 <= resp.status_code <= 299
 
-
     @_handle_container_not_found
     def get_cdn_metadata(self, container):
         """
@@ -1060,7 +1006,6 @@ class ContainerManager(BaseManager):
         ret.pop("content-type", None)
         ret.pop("date", None)
         return ret
-
 
     @_handle_container_not_found
     def set_cdn_metadata(self, container, metadata):
@@ -1080,17 +1025,16 @@ class ContainerManager(BaseManager):
                 continue
             hdrs[mkey] = str(mval)
         if bad:
-            raise exc.InvalidCDNMetadata("The only CDN metadata you can "
-                    "update are: X-Log-Retention, X-CDN-enabled, and X-TTL. "
-                    "Received the following illegal item(s): %s" %
-                    ", ".join(bad))
+            raise exc.InvalidCDNMetadata(
+                "The only CDN metadata you can update are: X-Log-Retention, "
+                "X-CDN-enabled, and X-TTL. Received the following illegal "
+                "item(s): %s" % ", ".join(bad))
         uri = "%s/%s" % (self.uri_base, utils.get_name(container))
         resp, resp_body = self.api.cdn_request(uri, "POST", headers=hdrs)
         return resp
 
-
     def get_temp_url(self, container, obj, seconds, method="GET", key=None,
-            cached=True):
+                     cached=True):
         """
         Given a storage object in a container, returns a URL that can be used
         to access that object. The URL will expire after `seconds` seconds.
@@ -1105,15 +1049,17 @@ class ContainerManager(BaseManager):
         if not key:
             key = self.api.get_temp_url_key(cached=cached)
         if not key:
-            raise exc.MissingTemporaryURLKey("You must set the key for "
-                    "Temporary URLs before you can generate them. This is "
-                    "done via the `set_temp_url_key()` method.")
+            raise exc.MissingTemporaryURLKey(
+                "You must set the key for Temporary URLs before you can "
+                "generate them. This is done via the `set_temp_url_key()` "
+                "method.")
         cname = utils.get_name(container)
         oname = utils.get_name(obj)
         mod_method = method.upper().strip()
         if mod_method not in ("GET", "PUT"):
-            raise exc.InvalidTemporaryURLMethod("Method must be either 'GET' "
-                    "or 'PUT'; received '%s'." % method)
+            raise exc.InvalidTemporaryURLMethod(
+                "Method must be either 'GET' or 'PUT'; received '%s'."
+                % method)
         mgt_url = self.api.management_url
         mtch = re.search(r"/v\d/", mgt_url)
         start = mtch.start()
@@ -1136,7 +1082,6 @@ class ContainerManager(BaseManager):
                 sig, expires)
         return temp_url
 
-
     def list_containers_info(self, limit=None, marker=None):
         """Returns a list of info on Containers.
 
@@ -1153,14 +1098,12 @@ class ContainerManager(BaseManager):
         resp, resp_body = self.api.method_get(uri)
         return resp_body
 
-
     def list_public_containers(self):
         """
         Returns a list of the names of all CDN-enabled containers.
         """
         resp, resp_body = self.api.cdn_request("", "GET")
         return [cont["name"] for cont in resp_body]
-
 
     def make_public(self, container, ttl=None):
         """
@@ -1169,14 +1112,12 @@ class ContainerManager(BaseManager):
         """
         return self._set_cdn_access(container, public=True, ttl=ttl)
 
-
     def make_private(self, container):
         """
         Disables CDN access to a container. It may still appear public until
         its TTL expires.
         """
         return self._set_cdn_access(container, public=False)
-
 
     @_handle_container_not_found
     def _set_cdn_access(self, container, public, ttl=None):
@@ -1188,8 +1129,7 @@ class ContainerManager(BaseManager):
         if public and ttl:
             headers["X-Ttl"] = ttl
         self.api.cdn_request("/%s" % utils.get_name(container), method="PUT",
-                headers=headers)
-
+                             headers=headers)
 
     @_handle_container_not_found
     def get_cdn_log_retention(self, container):
@@ -1197,10 +1137,9 @@ class ContainerManager(BaseManager):
         Returns the status of the setting for CDN log retention for the
         specified container.
         """
-        resp, resp_body = self.api.cdn_request("/%s" %
-                utils.get_name(container), method="HEAD")
+        resp, resp_body = self.api.cdn_request(
+            "/%s" % utils.get_name(container), method="HEAD")
         return resp.headers.get("x-log-retention").lower() == "true"
-
 
     @_handle_container_not_found
     def set_cdn_log_retention(self, container, enabled):
@@ -1210,28 +1149,25 @@ class ContainerManager(BaseManager):
         """
         headers = {"X-Log-Retention": "%s" % enabled}
         self.api.cdn_request("/%s" % utils.get_name(container), method="PUT",
-                headers=headers)
-
+                             headers=headers)
 
     @_handle_container_not_found
     def get_container_streaming_uri(self, container):
         """
         Returns the URI for streaming content, or None if CDN is not enabled.
         """
-        resp, resp_body = self.api.cdn_request("/%s" %
-                utils.get_name(container), method="HEAD")
+        resp, resp_body = self.api.cdn_request(
+            "/%s" % utils.get_name(container), method="HEAD")
         return resp.headers.get("x-cdn-streaming-uri")
-
 
     @_handle_container_not_found
     def get_container_ios_uri(self, container):
         """
         Returns the iOS URI, or None if CDN is not enabled.
         """
-        resp, resp_body = self.api.cdn_request("/%s" %
-                utils.get_name(container), method="HEAD")
+        resp, resp_body = self.api.cdn_request(
+            "/%s" % utils.get_name(container), method="HEAD")
         return resp.headers.get("x-cdn-ios-uri")
-
 
     @_handle_container_not_found
     def set_web_index_page(self, container, page):
@@ -1244,8 +1180,7 @@ class ContainerManager(BaseManager):
         """
         headers = {"X-Container-Meta-Web-Index": "%s" % page}
         self.api.cdn_request("/%s" % utils.get_name(container), method="POST",
-                headers=headers)
-
+                             headers=headers)
 
     @_handle_container_not_found
     def set_web_error_page(self, container, page):
@@ -1258,8 +1193,7 @@ class ContainerManager(BaseManager):
         """
         headers = {"X-Container-Meta-Web-Error": "%s" % page}
         self.api.cdn_request("/%s" % utils.get_name(container), method="POST",
-                headers=headers)
-
+                             headers=headers)
 
     @assure_container
     def purge_cdn_object(self, container, obj, email_addresses=None):
@@ -1273,10 +1207,9 @@ class ContainerManager(BaseManager):
         """
         return container.purge_cdn_object(obj, email_addresses=email_addresses)
 
-
     @assure_container
     def list_objects(self, container, limit=None, marker=None, prefix=None,
-            delimiter=None, end_marker=None, full_listing=False):
+                     delimiter=None, end_marker=None, full_listing=False):
         """
         Return a list of StorageObjects representing the objects in this
         container. You can use the marker, end_marker, and limit params to
@@ -1288,11 +1221,11 @@ class ContainerManager(BaseManager):
         if full_listing:
             return container.list_all(prefix=prefix)
         return container.list(limit=limit, marker=marker, prefix=prefix,
-                delimiter=delimiter, end_marker=end_marker)
-
+                              delimiter=delimiter, end_marker=end_marker)
 
     @assure_container
-    def list_object_names(self, container, marker=None, limit=None, prefix=None,
+    def list_object_names(
+            self, container, marker=None, limit=None, prefix=None,
             delimiter=None, end_marker=None, full_listing=False):
         """
         Return a list of then names of the objects in this container. You can
@@ -1301,10 +1234,9 @@ class ContainerManager(BaseManager):
         default only the first 10,000 objects are returned; if you need to
         access more than that, set the 'full_listing' parameter to True.
         """
-        return container.list_object_names(marker=marker, limit=limit,
-                prefix=prefix, delimiter=delimiter, end_marker=end_marker,
-                full_listing=full_listing)
-
+        return container.list_object_names(
+            marker=marker, limit=limit, prefix=prefix, delimiter=delimiter,
+            end_marker=end_marker, full_listing=full_listing)
 
     @assure_container
     def object_listing_iterator(self, container, prefix=None):
@@ -1314,10 +1246,9 @@ class ContainerManager(BaseManager):
         """
         return StorageObjectIterator(container.object_manager, prefix=prefix)
 
-
     @assure_container
     def list_subdirs(self, container, marker=None, limit=None, prefix=None,
-            delimiter=None, full_listing=False):
+                     delimiter=None, full_listing=False):
         """
         Returns a list of StorageObjects representing the pseudo-subdirectories
         in the specified container. You can use the marker and limit params to
@@ -1327,11 +1258,10 @@ class ContainerManager(BaseManager):
         """
         mthd = container.list_all if full_listing else container.list
         objs = mthd(marker=marker, limit=limit, prefix=prefix, delimiter="/",
-                return_raw=True)
+                    return_raw=True)
         sdirs = [obj for obj in objs if "subdir" in obj]
         mgr = container.object_manager
         return [StorageObject(mgr, sdir) for sdir in sdirs]
-
 
     @assure_container
     def get_object(self, container, obj):
@@ -1340,10 +1270,10 @@ class ContainerManager(BaseManager):
         """
         return container.get_object(obj)
 
-
     @assure_container
-    def create_object(self, container, file_or_path=None, data=None,
-            obj_name=None, content_type=None, etag=None, content_encoding=None,
+    def create_object(
+            self, container, file_or_path=None, data=None, obj_name=None,
+            content_type=None, etag=None, content_encoding=None,
             content_length=None, ttl=None, chunked=False, metadata=None,
             chunk_size=None, headers=None, return_none=False):
         """
@@ -1371,17 +1301,16 @@ class ContainerManager(BaseManager):
         be stored in seconds in the `ttl` parameter. If this is specified, the
         object will be deleted after that number of seconds.
         """
-        return container.create(file_or_path=file_or_path, data=data,
-                obj_name=obj_name, content_type=content_type, etag=etag,
-                content_encoding=content_encoding,
-                content_length=content_length, ttl=ttl, chunked=chunked,
-                metadata=metadata, chunk_size=chunk_size, headers=headers,
-                return_none=return_none)
-
+        return container.create(
+            file_or_path=file_or_path, data=data, obj_name=obj_name,
+            content_type=content_type, etag=etag,
+            content_encoding=content_encoding, content_length=content_length,
+            ttl=ttl, chunked=chunked, metadata=metadata, chunk_size=chunk_size,
+            headers=headers, return_none=return_none)
 
     @assure_container
     def fetch_object(self, container, obj, include_meta=False,
-            chunk_size=None, size=None, extra_info=None):
+                     chunk_size=None, size=None, extra_info=None):
         """
         Fetches the object from storage.
 
@@ -1405,8 +1334,7 @@ class ContainerManager(BaseManager):
         info, since swiftclient is not used any more.
         """
         return container.fetch(obj, include_meta=include_meta,
-                chunk_size=chunk_size, size=size)
-
+                               chunk_size=chunk_size, size=size)
 
     @assure_container
     def fetch_partial(self, container, obj, size):
@@ -1415,7 +1343,6 @@ class ContainerManager(BaseManager):
         than the specified 'size' value, the entire object is returned.
         """
         return container.fetch_partial(obj, size)
-
 
     @assure_container
     def download_object(self, container, obj, directory, structure=True):
@@ -1430,7 +1357,6 @@ class ContainerManager(BaseManager):
         """
         return container.download(obj, directory, structure=structure)
 
-
     @assure_container
     def delete_object(self, container, obj):
         """
@@ -1441,12 +1367,11 @@ class ContainerManager(BaseManager):
         """
         return container.delete_object(obj)
 
-
     @_handle_container_not_found
     def copy_object(self, container, obj, new_container, new_obj_name=None,
-            content_type=None):
+                    content_type=None):
         """
-        Copies the object to the new container, optionally giving it a new name.
+        Copies the object to the new container, optionally giving it a new name
         If you copy to the same container, you must supply a different name.
 
         Returns the etag of the newly-copied object.
@@ -1458,15 +1383,14 @@ class ContainerManager(BaseManager):
         uri = "/%s/%s" % (utils.get_name(new_container), nm)
         copy_from = "/%s/%s" % (utils.get_name(container), utils.get_name(obj))
         headers = {"X-Copy-From": copy_from,
-                "Content-Length": "0"}
+                   "Content-Length": "0"}
         if content_type:
             headers["Content-Type"] = content_type
         resp, resp_body = self.api.method_put(uri, headers=headers)
         return resp.headers.get("etag")
 
-
     def move_object(self, container, obj, new_container, new_obj_name=None,
-            new_reference=False, content_type=None):
+                    new_reference=False, content_type=None):
         """
         Works just like copy_object, except that the source object is deleted
         after a successful copy.
@@ -1480,8 +1404,9 @@ class ContainerManager(BaseManager):
         newly moved object is returned. Otherwise, the etag for the moved
         object is returned.
         """
-        new_obj_etag = self.copy_object(container, obj, new_container,
-                new_obj_name=new_obj_name, content_type=content_type)
+        new_obj_etag = self.copy_object(
+            container, obj, new_container, new_obj_name=new_obj_name,
+            content_type=content_type)
         if not new_obj_etag:
             return
         # Copy succeeded; delete the original.
@@ -1491,10 +1416,9 @@ class ContainerManager(BaseManager):
             return self.get_object(new_container, nm)
         return new_obj_etag
 
-
     @assure_container
     def change_object_content_type(self, container, obj, new_ctype,
-            guess=False):
+                                   guess=False):
         """
         Copies object to itself, but applies a new content-type. The guess
         feature requires the container to be CDN-enabled. If not, then the
@@ -1502,15 +1426,13 @@ class ContainerManager(BaseManager):
         container, new_ctype can be set to None. Failure during the put will
         result in an exception.
         """
-        cname = utils.get_name(container)
         oname = utils.get_name(obj)
         if guess and container.cdn_enabled:
             # Test against the CDN url to guess the content-type.
             obj_url = "%s/%s" % (container.cdn_uri, oname)
             new_ctype = mimetypes.guess_type(obj_url)[0]
         return self.copy_object(container, obj, container,
-                content_type=new_ctype)
-
+                                content_type=new_ctype)
 
     def delete_object_in_seconds(self, cont, obj, seconds, extra_info=None):
         """
@@ -1524,7 +1446,6 @@ class ContainerManager(BaseManager):
         meta = {"X-Delete-After": seconds}
         self.set_object_metadata(cont, obj, meta, clear=True, prefix="")
 
-
     @assure_container
     def get_object_metadata(self, container, obj, prefix=None):
         """
@@ -1532,10 +1453,9 @@ class ContainerManager(BaseManager):
         """
         return container.get_object_metadata(obj, prefix=prefix)
 
-
     @assure_container
     def set_object_metadata(self, container, obj, metadata, clear=False,
-            extra_info=None, prefix=None):
+                            extra_info=None, prefix=None):
         """
         Accepts a dictionary of metadata key/value pairs and updates the
         specified object metadata with them.
@@ -1553,8 +1473,7 @@ class ContainerManager(BaseManager):
         headers, you must include a non-None prefix, such as an empty string.
         """
         return container.set_object_metadata(obj, metadata, clear=clear,
-                prefix=prefix)
-
+                                             prefix=prefix)
 
 
 class StorageObject(BaseResource):
@@ -1568,12 +1487,10 @@ class StorageObject(BaseResource):
             info["name"] = info["subdir"]
             info["content_type"] = "pseudo/subdirectory"
         return super(StorageObject, self).__init__(manager, info, *args,
-                **kwargs)
-
+                                                   **kwargs)
 
     def __repr__(self):
         return "<Object '%s' (%s)>" % (self.name, self.content_type)
-
 
     @property
     def id(self):
@@ -1582,25 +1499,21 @@ class StorageObject(BaseResource):
         """
         return self.name
 
-
     @property
     def total_bytes(self):
         """ Alias for backwards compatibility."""
         return self.bytes
-
 
     @property
     def etag(self):
         """ Alias for backwards compatibility."""
         return self.hash
 
-
     @property
     def container(self):
         if not self._container:
             self._container = self.manager.container
         return self._container
-
 
     def get(self, include_meta=False, chunk_size=None):
         """
@@ -1618,10 +1531,9 @@ class StorageObject(BaseResource):
             Element 1: a stream of bytes representing the object's contents.
         """
         return self.manager.fetch(obj=self, include_meta=include_meta,
-                chunk_size=chunk_size)
+                                  chunk_size=chunk_size)
     # Changing the name of this method to 'fetch', as 'get' is overloaded.
     fetch = get
-
 
     def download(self, directory, structure=True):
         """
@@ -1635,7 +1547,6 @@ class StorageObject(BaseResource):
         """
         return self.manager.download(self, directory, structure=structure)
 
-
     def copy(self, new_container, new_obj_name=None, extra_info=None):
         """
         Copies this object to the new container, optionally giving it a new
@@ -1643,8 +1554,7 @@ class StorageObject(BaseResource):
         name.
         """
         return self.container.copy_object(self, new_container,
-                new_obj_name=new_obj_name)
-
+                                          new_obj_name=new_obj_name)
 
     def move(self, new_container, new_obj_name=None, extra_info=None):
         """
@@ -1653,8 +1563,7 @@ class StorageObject(BaseResource):
         longer be valid.
         """
         return self.container.move_object(self, new_container,
-                new_obj_name=new_obj_name)
-
+                                          new_obj_name=new_obj_name)
 
     def change_content_type(self, new_ctype, guess=False):
         """
@@ -1665,8 +1574,7 @@ class StorageObject(BaseResource):
         Failure during the put will result in a swift exception.
         """
         self.container.change_object_content_type(self, new_ctype=new_ctype,
-                guess=guess)
-
+                                                  guess=guess)
 
     def purge(self, email_addresses=None):
         """
@@ -1679,13 +1587,11 @@ class StorageObject(BaseResource):
         """
         return self.manager.purge(self, email_addresses=email_addresses)
 
-
     def get_metadata(self, prefix=None):
         """
         Returns the metadata for this object as a dict.
         """
         return self.manager.get_metadata(self, prefix)
-
 
     def set_metadata(self, metadata, clear=False, prefix=None):
         """
@@ -1701,8 +1607,7 @@ class StorageObject(BaseResource):
         headers, you must include a non-None prefix, such as an empty string.
         """
         return self.manager.set_metadata(self, metadata, clear=clear,
-                prefix=prefix)
-
+                                         prefix=prefix)
 
     def remove_metadata_key(self, key, prefix=None):
         """
@@ -1710,7 +1615,6 @@ class StorageObject(BaseResource):
         key does not exist in the metadata, nothing is done.
         """
         self.manager.remove_metadata_key(self, key, prefix=prefix)
-
 
     def get_temp_url(self, seconds, method="GET"):
         """
@@ -1721,15 +1625,13 @@ class StorageObject(BaseResource):
         an InvalidTemporaryURLMethod exception.
         """
         return self.container.get_temp_url(self, seconds=seconds,
-                method=method)
-
+                                           method=method)
 
     def delete_in_seconds(self, seconds):
         """
         Sets the object to be deleted after the specified number of seconds.
         """
         self.container.delete_object_in_seconds(self, seconds)
-
 
 
 class StorageObjectIterator(utils.ResultsIterator):
@@ -1743,7 +1645,6 @@ class StorageObjectIterator(utils.ResultsIterator):
         self.marker_att = "name"
 
 
-
 class StorageObjectManager(BaseManager):
     """
     Handles all the interactions with StorageObjects.
@@ -1752,7 +1653,6 @@ class StorageObjectManager(BaseManager):
     def name(self):
         """The URI base is the same as the container name."""
         return self.uri_base
-
 
     @property
     def container(self):
@@ -1763,13 +1663,12 @@ class StorageObjectManager(BaseManager):
             self._container = cont
             return cont
 
-
     def list(self, marker=None, limit=None, prefix=None, delimiter=None,
-            end_marker=None, return_raw=False):
+             end_marker=None, return_raw=False):
         uri = "/%s" % self.uri_base
         qs = utils.dict_to_qs({"marker": marker, "limit": limit,
-                "prefix": prefix, "delimiter": delimiter,
-                "end_marker": end_marker})
+                               "prefix": prefix, "delimiter": delimiter,
+                               "end_marker": end_marker})
         if qs:
             uri = "%s?%s" % (uri, qs)
         resp, resp_body = self.api.method_get(uri)
@@ -1777,7 +1676,6 @@ class StorageObjectManager(BaseManager):
             return resp_body
         objs = [StorageObject(self, elem) for elem in resp_body]
         return objs
-
 
     @_handle_object_not_found
     def get(self, obj):
@@ -1804,8 +1702,8 @@ class StorageObjectManager(BaseManager):
                 }
         return StorageObject(self, data, loaded=True)
 
-
-    def create(self, file_or_path=None, data=None, obj_name=None,
+    def create(
+            self, file_or_path=None, data=None, obj_name=None,
             content_type=None, etag=None, content_encoding=None,
             content_length=None, ttl=None, chunked=False, metadata=None,
             chunk_size=None, headers=None, return_none=False):
@@ -1840,15 +1738,16 @@ class StorageObjectManager(BaseManager):
         """
         # First make sure that there is a content source.
         if (data, file_or_path) == (None, None):
-            raise exc.NoContentSpecified("You must specify either a file path, "
-                    "an open file-like object, or a stream of bytes when "
-                    "creating an object.")
+            raise exc.NoContentSpecified(
+                "You must specify either a file path, an open file-like "
+                "object, or a stream of bytes when creating an object.")
         src = data if data else file_or_path
         if src is file_or_path:
             obj_name = _validate_file_or_path(file_or_path, obj_name)
         if not obj_name:
-            raise exc.MissingName("No name for the object to be created has "
-                    "been specified, and none can be inferred from context")
+            raise exc.MissingName(
+                "No name for the object to be created has been specified, and"
+                " none can be inferred from context")
         if chunk_size:
             chunked = True
         if chunked:
@@ -1861,25 +1760,24 @@ class StorageObjectManager(BaseManager):
             headers["X-Delete-After"] = ttl
         if src is data:
             self._upload(obj_name, data, content_type,
-                    content_encoding, content_length, etag, chunked,
-                    chunk_size, headers)
+                         content_encoding, content_length, etag, chunked,
+                         chunk_size, headers)
         elif hasattr(file_or_path, "read"):
             self._upload(obj_name, file_or_path, content_type,
-                    content_encoding, content_length, etag, False,
-                    chunk_size, headers)
+                         content_encoding, content_length, etag, False,
+                         chunk_size, headers)
         else:
             # Need to wrap the call in a context manager
             with open(file_or_path, "rb") as ff:
                 self._upload(obj_name, ff, content_type,
-                        content_encoding, content_length, etag, False,
-                        chunk_size, headers)
+                             content_encoding, content_length, etag, False,
+                             chunk_size, headers)
         if return_none:
             return
         return self.get(obj_name)
 
-
     def _upload(self, obj_name, content, content_type, content_encoding,
-            content_length, etag, chunked, chunk_size, headers):
+                content_length, etag, chunked, chunk_size, headers):
         """
         Handles the uploading of content, including working around the 5GB
         maximum file size.
@@ -1892,15 +1790,16 @@ class StorageObjectManager(BaseManager):
             fsize = len(content)
         else:
             if chunked:
-                fsize = None
+                fsize = 0
             elif content_length is None:
                 fsize = get_file_size(content)
             else:
                 fsize = content_length
         if fsize is None or fsize <= MAX_FILE_SIZE:
             # We can just upload it as-is.
-            return self._store_object(obj_name, content=content, etag=etag,
-                    chunked=chunked, chunk_size=chunk_size, headers=headers)
+            return self._store_object(
+                obj_name, content=content, etag=etag, chunked=chunked,
+                chunk_size=chunk_size, headers=headers)
         # Files larger than MAX_FILE_SIZE must be segmented
         # and uploaded separately.
         num_segments = int(math.ceil(float(fsize) / MAX_FILE_SIZE))
@@ -1911,26 +1810,25 @@ class StorageObjectManager(BaseManager):
             sequence = str(segment + 1).zfill(digits)
             seg_name = "%s.%s" % (obj_name, sequence)
             with utils.SelfDeletingTempfile() as tmpname:
-                with open(tmpname, "wb") as tmp:
+                with open(tmpname, "w") as tmp:
                     tmp.write(content.read(MAX_FILE_SIZE))
-                with open(tmpname, "rb") as tmp:
+                with open(tmpname, "r") as tmp:
                     # We have to calculate the etag for each segment
                     etag = utils.get_checksum(tmp)
                     self._store_object(seg_name, content=tmp, etag=etag,
-                            chunked=False, headers=headers)
+                                       chunked=False, headers=headers)
         # Upload the manifest
         headers.pop("ETag", "")
         headers["X-Object-Manifest"] = "%s/%s." % (self.name, obj_name)
         self._store_object(obj_name, content=None, headers=headers)
 
-
     def _store_object(self, obj_name, content, etag=None, chunked=False,
-            chunk_size=None, headers=None):
+                      chunk_size=None, headers=None):
         """
         Handles the low-level creation of a storage object and the uploading of
         the contents of that object.
         """
-        head_etag = headers.pop("ETag", "")
+        headers.pop("ETag", "")
         if chunked:
             headers.pop("Content-Length", "")
             headers["Transfer-Encoding"] = "chunked"
@@ -1942,12 +1840,11 @@ class StorageObjectManager(BaseManager):
             headers["Content-Type"] = None
         uri = "/%s/%s" % (self.uri_base, obj_name)
         resp, resp_body = self.api.method_put(uri, data=content,
-                headers=headers)
-
+                                              headers=headers)
 
     @_handle_object_not_found
     def fetch(self, obj, include_meta=False, chunk_size=None, size=None,
-            extra_info=None):
+              extra_info=None):
         """
         Fetches the object from storage.
 
@@ -1981,12 +1878,11 @@ class StorageObjectManager(BaseManager):
         if size:
             headers = {"Range": "bytes=0-%s" % size}
         resp, resp_body = self.api.method_get(uri, headers=headers,
-                raw_content=True)
+                                              raw_content=True)
         if include_meta:
             meta_resp, meta_body = self.api.method_head(uri)
             return (meta_resp.headers, resp_body)
         return resp_body
-
 
     def _fetch_chunker(self, uri, chunk_size, size, obj_size):
         """
@@ -2000,7 +1896,7 @@ class StorageObjectManager(BaseManager):
             endpos = min(obj_size, pos + chunk_size - 1)
             headers = {"Range": "bytes=%s-%s" % (pos, endpos)}
             resp, resp_body = self.api.method_get(uri, headers=headers,
-                    raw_content=True)
+                                                  raw_content=True)
             pos = endpos + 1
             if not resp_body:
                 # End of file
@@ -2010,14 +1906,12 @@ class StorageObjectManager(BaseManager):
             if total_bytes >= max_size:
                 raise StopIteration
 
-
     def fetch_partial(self, obj, size):
         """
         Returns the first 'size' bytes of an object. If the object is smaller
         than the specified 'size' value, the entire object is returned.
         """
         return self.fetch(obj, size=size)
-
 
     @_handle_object_not_found
     def delete(self, obj):
@@ -2027,8 +1921,7 @@ class StorageObjectManager(BaseManager):
         """
         return super(StorageObjectManager, self).delete(obj)
 
-
-    def delete_all_objects(self, nms, async=False):
+    def delete_all_objects(self, nms, asynchronous=False):
         """
         Deletes all objects from this container.
 
@@ -2048,8 +1941,7 @@ class StorageObjectManager(BaseManager):
         """
         if nms is None:
             nms = self.api.list_object_names(self.name, full_listing=True)
-        return self.api.bulk_delete(self.name, nms, async=async)
-
+        return self.api.bulk_delete(self.name, nms, asynchronous=asynchronous)
 
     @_handle_object_not_found
     def download(self, obj, directory, structure=True):
@@ -2064,7 +1956,7 @@ class StorageObjectManager(BaseManager):
         """
         if not os.path.isdir(directory):
             raise exc.FolderNotFound("The directory '%s' does not exist." %
-                    directory)
+                                     directory)
         obj_name = utils.get_name(obj)
         path, fname = os.path.split(obj_name)
         if structure:
@@ -2074,14 +1966,13 @@ class StorageObjectManager(BaseManager):
             target = os.path.join(fullpath, fname)
         else:
             target = os.path.join(directory, fname)
-        with open(target, "wb") as dl:
+        with open(target, "w") as dl:
             content = self.fetch(obj)
             try:
                 dl.write(content)
             except UnicodeEncodeError:
                 encoding = pyrax.get_encoding()
                 dl.write(content.encode(encoding))
-
 
     @_handle_object_not_found
     def purge(self, obj, email_addresses=None):
@@ -2101,8 +1992,7 @@ class StorageObjectManager(BaseManager):
             headers["X-Purge-Email"] = ", ".join(email_addresses)
         uri = "/%s/%s" % (cname, oname)
         resp, resp_body = self.api.cdn_request(uri, method="DELETE",
-                headers=headers)
-
+                                               headers=headers)
 
     @_handle_object_not_found
     def get_metadata(self, obj, prefix=None):
@@ -2122,7 +2012,6 @@ class StorageObjectManager(BaseManager):
                 cleaned = hkey.replace(low_prefix, "").replace("-", "_")
                 ret[cleaned] = hval
         return ret
-
 
     @_handle_object_not_found
     def set_metadata(self, obj, metadata, clear=False, prefix=None):
@@ -2164,7 +2053,6 @@ class StorageObjectManager(BaseManager):
         uri = "/%s/%s" % (cname, oname)
         resp, resp_body = self.api.method_post(uri, headers=new_meta)
 
-
     @_handle_object_not_found
     def remove_metadata_key(self, obj, key):
         """
@@ -2173,7 +2061,6 @@ class StorageObjectManager(BaseManager):
         """
         meta_dict = {key: ""}
         return self.set_metadata(obj, meta_dict)
-
 
 
 class StorageClient(BaseClient):
@@ -2192,14 +2079,14 @@ class StorageClient(BaseClient):
         # Constants used in metadata headers
         super(StorageClient, self).__init__(*args, **kwargs)
         self._sync_summary = {"total": 0,
-                "uploaded": 0,
-                "ignored": 0,
-                "older": 0,
-                "duplicate": 0,
-                "failed": 0,
-                "failure_reasons": [],
-                "deleted": 0,
-                }
+                              "uploaded": 0,
+                              "ignored": 0,
+                              "older": 0,
+                              "duplicate": 0,
+                              "failed": 0,
+                              "failure_reasons": [],
+                              "deleted": 0,
+                              }
         self._cached_temp_url_key = None
         self.cdn_management_url = ""
         self.method_dict = {
@@ -2215,7 +2102,6 @@ class StorageClient(BaseClient):
         # Alias old method names to new versions for backwards compatibility.
         self._backwards_aliases()
 
-
     def _configure_cdn(self):
         """
         Initialize CDN-related endpoints, if available.
@@ -2226,7 +2112,6 @@ class StorageClient(BaseClient):
             ep = cdn_svc.endpoints.get(self.region_name)
             if ep:
                 self.cdn_management_url = ep.public_url
-
 
     def _backwards_aliases(self):
         """
@@ -2242,7 +2127,6 @@ class StorageClient(BaseClient):
         self.get_container_object_names = self.list_container_object_names
         self.get_info = self.get_account_info
 
-
     def get(self, item):
         """
         Returns the container whose name is provided as 'item'. If 'item' is
@@ -2252,21 +2136,18 @@ class StorageClient(BaseClient):
             item = super(StorageClient, self).get(item)
         return item
 
-
     def _configure_manager(self):
         """
         Creates a manager to handle interacting with Containers.
         """
         self._manager = ContainerManager(self, resource_class=Container,
-                response_key="", uri_base="")
-
+                                         response_key="", uri_base="")
 
     def remove_container_from_cache(self, container):
         """
         Not used anymore. Included for backwards compatibility.
         """
         pass
-
 
     def get_account_details(self):
         """
@@ -2288,7 +2169,6 @@ class StorageClient(BaseClient):
                         ret[cleaned] = hval
         return ret
 
-
     def get_account_info(self):
         """
         Returns a tuple for the number of containers and total bytes in the
@@ -2298,16 +2178,14 @@ class StorageClient(BaseClient):
         return (headers.get("x-account-container-count"),
                 headers.get("x-account-bytes-used"))
 
-
     def get_account_metadata(self, prefix=None):
         """
         Returns a dictionary containing metadata about the account.
         """
         return self._manager.get_account_metadata(prefix=prefix)
 
-
     def set_account_metadata(self, metadata, clear=False, prefix=None,
-            extra_info=None):
+                             extra_info=None):
         """
         Accepts a dictionary of metadata key/value pairs and updates the
         account's metadata with them.
@@ -2325,8 +2203,7 @@ class StorageClient(BaseClient):
         info, since swiftclient is not used any more.
         """
         return self._manager.set_account_metadata(metadata, clear=clear,
-                prefix=prefix)
-
+                                                  prefix=prefix)
 
     def delete_account_metadata(self, prefix=None):
         """
@@ -2337,7 +2214,6 @@ class StorageClient(BaseClient):
         headers, you must include a non-None prefix, such as an empty string.
         """
         return self._manager.delete_account_metadata(prefix=prefix)
-
 
     def get_temp_url_key(self, cached=True):
         """
@@ -2353,7 +2229,6 @@ class StorageClient(BaseClient):
             self._cached_temp_url_key = meta
         return meta
 
-
     def set_temp_url_key(self, key=None):
         """
         Sets the key for the Temporary URL for the account. It should be a key
@@ -2368,9 +2243,8 @@ class StorageClient(BaseClient):
         self.set_account_metadata(meta)
         self._cached_temp_url_key = key
 
-
     def get_temp_url(self, container, obj, seconds, method="GET", key=None,
-            cached=True):
+                     cached=True):
         """
         Given a storage object in a container, returns a URL that can be used
         to access that object. The URL will expire after `seconds` seconds.
@@ -2382,9 +2256,8 @@ class StorageClient(BaseClient):
         potentially save an API call to retrieve it. If you don't pass in the
         key, and don't wish to use any cached value, pass `cached=False`.
         """
-        return self._manager.get_temp_url(container, obj, seconds,
-                method=method, key=key, cached=cached)
-
+        return self._manager.get_temp_url(
+            container, obj, seconds, method=method, key=key, cached=cached)
 
     def list(self, limit=None, marker=None, end_marker=None, prefix=None):
         """
@@ -2393,15 +2266,13 @@ class StorageClient(BaseClient):
         containers are returned.
         """
         return self._manager.list(limit=limit, marker=marker,
-                end_marker=end_marker, prefix=prefix)
-
+                                  end_marker=end_marker, prefix=prefix)
 
     def list_public_containers(self):
         """
         Returns a list of the names of all CDN-enabled containers.
         """
         return self._manager.list_public_containers()
-
 
     def make_container_public(self, container, ttl=None):
         """
@@ -2410,14 +2281,12 @@ class StorageClient(BaseClient):
         """
         return self._manager.make_public(container, ttl=ttl)
 
-
     def make_container_private(self, container):
         """
         Disables CDN access to a container. It may still appear public until
         its TTL expires.
         """
         return self._manager.make_private(container)
-
 
     def get_cdn_log_retention(self, container):
         """
@@ -2426,7 +2295,6 @@ class StorageClient(BaseClient):
         """
         return self._manager.get_cdn_log_retention(container)
 
-
     def set_cdn_log_retention(self, container, enabled):
         """
         Enables or disables whether CDN access logs for the specified container
@@ -2434,20 +2302,17 @@ class StorageClient(BaseClient):
         """
         return self._manager.set_cdn_log_retention(container, enabled)
 
-
     def get_container_streaming_uri(self, container):
         """
         Returns the URI for streaming content, or None if CDN is not enabled.
         """
         return self._manager.get_container_streaming_uri(container)
 
-
     def get_container_ios_uri(self, container):
         """
         Returns the iOS URI, or None if CDN is not enabled.
         """
         return self._manager.get_container_ios_uri(container)
-
 
     def set_container_web_index_page(self, container, page):
         """
@@ -2459,7 +2324,6 @@ class StorageClient(BaseClient):
         """
         return self._manager.set_web_index_page(container, page)
 
-
     def set_container_web_error_page(self, container, page):
         """
         Sets the header indicating the error page in a container
@@ -2470,7 +2334,6 @@ class StorageClient(BaseClient):
         """
         return self._manager.set_web_error_page(container, page)
 
-
     def purge_cdn_object(self, container, obj, email_addresses=None):
         """
         Removes a CDN-enabled object from public access before the TTL expires.
@@ -2480,16 +2343,14 @@ class StorageClient(BaseClient):
         If one or more email_addresses are included, an email confirming the
         purge is sent to each address.
         """
-        return self._manager.purge_cdn_object(container, obj,
-                email_addresses=email_addresses)
-
+        return self._manager.purge_cdn_object(
+            container, obj, email_addresses=email_addresses)
 
     def list_container_names(self):
         """
         Returns a list of the names of the containers in this account.
         """
         return [cont.name for cont in self.list()]
-
 
     def list_containers_info(self, limit=None, marker=None):
         """Returns a list of info on Containers.
@@ -2502,30 +2363,29 @@ class StorageClient(BaseClient):
         """
         return self._manager.list_containers_info(limit=limit, marker=marker)
 
-
-    def list_container_subdirs(self, container, limit=None, marker=None,
-            prefix=None, delimiter=None, full_listing=False):
+    def list_container_subdirs(
+            self, container, limit=None, marker=None, prefix=None,
+            delimiter=None, full_listing=False):
         """
         Although you cannot nest directories, you can simulate a hierarchical
         structure within a single container by adding forward slash characters
         (/) in the object name. This method returns a list of all of these
         pseudo-subdirectories in the specified container.
         """
-        return self._manager.list_subdirs(container, limit=limit,
-                marker=marker, prefix=prefix, delimiter=delimiter,
-                full_listing=full_listing)
+        return self._manager.list_subdirs(
+            container, limit=limit, marker=marker, prefix=prefix,
+            delimiter=delimiter, full_listing=full_listing)
 
-
-    def list_container_object_names(self, container, limit=None, marker=None,
+    def list_container_object_names(
+            self, container, limit=None, marker=None,
             prefix=None, delimiter=None, full_listing=False):
         """
         Returns the names of all the objects in the specified container,
         optionally limited by the pagination parameters.
         """
-        return self._manager.list_object_names(container, marker=marker,
-                limit=limit, prefix=prefix, delimiter=delimiter,
-                full_listing=full_listing)
-
+        return self._manager.list_object_names(
+            container, marker=marker, limit=limit, prefix=prefix,
+            delimiter=delimiter, full_listing=full_listing)
 
     def get_container_metadata(self, container, prefix=None):
         """
@@ -2533,9 +2393,8 @@ class StorageClient(BaseClient):
         """
         return self._manager.get_metadata(container, prefix=prefix)
 
-
     def set_container_metadata(self, container, metadata, clear=False,
-            prefix=None):
+                               prefix=None):
         """
         Accepts a dictionary of metadata key/value pairs and updates the
         specified container metadata with them.
@@ -2550,8 +2409,7 @@ class StorageClient(BaseClient):
         such as an empty string.
         """
         return self._manager.set_metadata(container, metadata, clear=clear,
-                prefix=prefix)
-
+                                          prefix=prefix)
 
     def remove_container_metadata_key(self, container, key):
         """
@@ -2559,7 +2417,6 @@ class StorageClient(BaseClient):
         does not exist in the metadata, nothing is done.
         """
         return self._manager.remove_metadata_key(container, key)
-
 
     def delete_container_metadata(self, container, prefix=None):
         """
@@ -2572,13 +2429,11 @@ class StorageClient(BaseClient):
         """
         return self._manager.delete_metadata(container, prefix=prefix)
 
-
     def get_container_cdn_metadata(self, container):
         """
         Returns a dictionary containing the CDN metadata for the container.
         """
         return self._manager.get_cdn_metadata(container)
-
 
     def set_container_cdn_metadata(self, container, metadata):
         """
@@ -2590,16 +2445,14 @@ class StorageClient(BaseClient):
         """
         return self._manager.set_cdn_metadata(container, metadata)
 
-
     def get_object_metadata(self, container, obj, prefix=None):
         """
         Returns the metadata for the specified object as a dict.
         """
         return self._manager.get_object_metadata(container, obj, prefix=prefix)
 
-
     def set_object_metadata(self, container, obj, metadata, clear=False,
-            extra_info=None, prefix=None):
+                            extra_info=None, prefix=None):
         """
         Accepts a dictionary of metadata key/value pairs and updates the
         specified object metadata with them.
@@ -2616,19 +2469,18 @@ class StorageClient(BaseClient):
         prepended to the header name if it isn't present. For non-standard
         headers, you must include a non-None prefix, such as an empty string.
         """
-        return self._manager.set_object_metadata(container, obj, metadata,
-                clear=clear, prefix=prefix)
-
+        return self._manager.set_object_metadata(
+            container, obj, metadata, clear=clear, prefix=prefix)
 
     def remove_object_metadata_key(self, container, obj, key, prefix=None):
         """
-        Removes the specified key from the storage object's metadata. If the key
-        does not exist in the metadata, nothing is done.
+        Removes the specified key from the storage object's metadata. If the
+        key does not exist in the metadata, nothing is done.
         """
         self.set_object_metadata(container, obj, {key: ""}, prefix=prefix)
 
-
-    def list_container_objects(self, container, limit=None, marker=None,
+    def list_container_objects(
+            self, container, limit=None, marker=None,
             prefix=None, delimiter=None, end_marker=None, full_listing=False):
         """
         Return a list of StorageObjects representing the objects in the
@@ -2642,15 +2494,13 @@ class StorageClient(BaseClient):
         """
         if full_listing:
             return self._manager.object_listing_iterator(container,
-                    prefix=prefix)
-        return self._manager.list_objects(container, limit=limit,
-                marker=marker, prefix=prefix, delimiter=delimiter,
-                end_marker=end_marker)
-
+                                                         prefix=prefix)
+        return self._manager.list_objects(
+            container, limit=limit, marker=marker, prefix=prefix,
+            delimiter=delimiter, end_marker=end_marker)
 
     def object_listing_iterator(self, container, prefix=None):
         return self._manager.object_listing_iterator(container, prefix=prefix)
-
 
     def delete_object_in_seconds(self, cont, obj, seconds, extra_info=None):
         """
@@ -2663,15 +2513,14 @@ class StorageClient(BaseClient):
         """
         return self._manager.delete_object_in_seconds(cont, obj, seconds)
 
-
     def get_object(self, container, obj):
         """
         Returns a StorageObject representing the requested object.
         """
         return self._manager.get_object(container, obj)
 
-
-    def store_object(self, container, obj_name, data, content_type=None,
+    def store_object(
+            self, container, obj_name, data, content_type=None,
             etag=None, content_encoding=None, ttl=None, return_none=False,
             chunk_size=None, headers=None, metadata=None, extra_info=None):
         """
@@ -2683,14 +2532,14 @@ class StorageClient(BaseClient):
         is no longer used at all, and will not be modified with swiftclient
         info, since swiftclient is not used any more.
         """
-        return self.create_object(container, obj_name=obj_name, data=data,
-                content_type=content_type, etag=etag,
-                content_encoding=content_encoding, ttl=ttl,
-                return_none=return_none, chunk_size=chunk_size,
-                headers=headers, metadata=metadata)
+        return self.create_object(
+            container, obj_name=obj_name, data=data, content_type=content_type,
+            etag=etag, content_encoding=content_encoding, ttl=ttl,
+            return_none=return_none, chunk_size=chunk_size, headers=headers,
+            metadata=metadata)
 
-
-    def upload_file(self, container, file_or_path, obj_name=None,
+    def upload_file(
+            self, container, file_or_path, obj_name=None,
             content_type=None, etag=None, content_encoding=None, ttl=None,
             content_length=None, return_none=False, headers=None,
             metadata=None, extra_info=None):
@@ -2714,13 +2563,14 @@ class StorageClient(BaseClient):
         is no longer used at all, and will not be modified with swiftclient
         info, since swiftclient is not used any more.
         """
-        return self.create_object(container, file_or_path=file_or_path,
-                obj_name=obj_name, content_type=content_type, etag=etag,
-                content_encoding=content_encoding, ttl=ttl, headers=headers,
-                metadata=metadata, return_none=return_none)
+        return self.create_object(
+            container, file_or_path=file_or_path, obj_name=obj_name,
+            content_type=content_type, etag=etag,
+            content_encoding=content_encoding, ttl=ttl, headers=headers,
+            metadata=metadata, return_none=return_none)
 
-
-    def create_object(self, container, file_or_path=None, data=None,
+    def create_object(
+            self, container, file_or_path=None, data=None,
             obj_name=None, content_type=None, etag=None, content_encoding=None,
             content_length=None, ttl=None, chunk_size=None, metadata=None,
             headers=None, return_none=False):
@@ -2753,15 +2603,15 @@ class StorageClient(BaseClient):
         the data to be streamed to the object in the container without having
         to be written to disk first.
         """
-        return self._manager.create_object(container, file_or_path=file_or_path,
-                data=data, obj_name=obj_name, content_type=content_type,
-                etag=etag, content_encoding=content_encoding,
-                content_length=content_length, ttl=ttl, chunk_size=chunk_size,
-                metadata=metadata, headers=headers, return_none=return_none)
-
+        return self._manager.create_object(
+            container, file_or_path=file_or_path, data=data, obj_name=obj_name,
+            content_type=content_type, etag=etag,
+            content_encoding=content_encoding, content_length=content_length,
+            ttl=ttl, chunk_size=chunk_size, metadata=metadata, headers=headers,
+            return_none=return_none)
 
     def fetch_object(self, container, obj, include_meta=False,
-            chunk_size=None, size=None, extra_info=None):
+                     chunk_size=None, size=None, extra_info=None):
         """
         Fetches the object from storage.
 
@@ -2784,9 +2634,9 @@ class StorageClient(BaseClient):
         is no longer used at all, and will not be modified with swiftclient
         info, since swiftclient is not used any more.
         """
-        return self._manager.fetch_object(container, obj,
-                include_meta=include_meta, chunk_size=chunk_size, size=size)
-
+        return self._manager.fetch_object(
+            container, obj, include_meta=include_meta, chunk_size=chunk_size,
+            size=size)
 
     def fetch_partial(self, container, obj, size):
         """
@@ -2794,7 +2644,6 @@ class StorageClient(BaseClient):
         than the specified 'size' value, the entire object is returned.
         """
         return self._manager.fetch_partial(container, obj, size)
-
 
     def fetch_dlo(self, container, name, chunk_size=None, verbose=False):
         """
@@ -2836,12 +2685,11 @@ class StorageClient(BaseClient):
         parts = self.get_container_objects(container, prefix=name)
         fetches = [(part.name, self.fetch_object(container, part.name,
                     chunk_size=chunk_size))
-                for part in parts
-                if part.name != name]
+                   for part in parts
+                   if part.name != name]
         job = [(fetch[0], FetchChunker(fetch[1], verbose=verbose))
-                for fetch in fetches]
+               for fetch in fetches]
         return job
-
 
     def download_object(self, container, obj, directory, structure=True):
         """
@@ -2853,9 +2701,8 @@ class StorageClient(BaseClient):
         directory by default. If you do not want the nested folders to be
         created, pass `structure=False` in the parameters.
         """
-        return self._manager.download_object(container, obj, directory,
-                structure=structure)
-
+        return self._manager.download_object(
+            container, obj, directory, structure=structure)
 
     def delete(self, container, del_objects=False):
         """
@@ -2864,7 +2711,6 @@ class StorageClient(BaseClient):
         each object will be deleted first, and then the container.
         """
         return self._manager.delete(container, del_objects=del_objects)
-
 
     def delete_object(self, container, obj):
         """
@@ -2875,11 +2721,11 @@ class StorageClient(BaseClient):
         """
         return self._manager.delete_object(container, obj)
 
-
     def copy_object(self, container, obj, new_container, new_obj_name=None,
-            content_type=None, extra_info=None):
+                    content_type=None, extra_info=None):
         """
-        Copies the object to the new container, optionally giving it a new name.
+        Copies the object to the new container, optionally giving it a new
+        name.
         If you copy to the same container, you must supply a different name.
 
         You can optionally change the content_type of the object by supplying
@@ -2889,12 +2735,12 @@ class StorageClient(BaseClient):
         is no longer used at all, and will not be modified with swiftclient
         info, since swiftclient is not used any more.
         """
-        return self._manager.copy_object(container, obj, new_container,
-                new_obj_name=new_obj_name, content_type=content_type)
-
+        return self._manager.copy_object(
+            container, obj, new_container, new_obj_name=new_obj_name,
+            content_type=content_type)
 
     def move_object(self, container, obj, new_container, new_obj_name=None,
-            new_reference=False, content_type=None, extra_info=None):
+                    new_reference=False, content_type=None, extra_info=None):
         """
         Works just like copy_object, except that the source object is deleted
         after a successful copy.
@@ -2912,13 +2758,12 @@ class StorageClient(BaseClient):
         is no longer used at all, and will not be modified with swiftclient
         info, since swiftclient is not used any more.
         """
-        return self._manager.move_object(container, obj, new_container,
-                new_obj_name=new_obj_name, new_reference=new_reference,
-                content_type=content_type)
-
+        return self._manager.move_object(
+            container, obj, new_container, new_obj_name=new_obj_name,
+            new_reference=new_reference, content_type=content_type)
 
     def change_object_content_type(self, container, obj, new_ctype,
-            guess=False, extra_info=None):
+                                   guess=False, extra_info=None):
         """
         Copies object to itself, but applies a new content-type. The guess
         feature requires the container to be CDN-enabled. If not then the
@@ -2930,11 +2775,11 @@ class StorageClient(BaseClient):
         is no longer used at all, and will not be modified with swiftclient
         info, since swiftclient is not used any more.
         """
-        return self._manager.change_object_content_type(container, obj,
-                new_ctype, guess=guess)
+        return self._manager.change_object_content_type(
+            container, obj, new_ctype, guess=guess)
 
-
-    def upload_folder(self, folder_path, container=None, ignore=None, ttl=None):
+    def upload_folder(self, folder_path, container=None, ignore=None,
+                      ttl=None):
         """
         Convenience method for uploading an entire folder, including any
         sub-folders, to Cloud Files.
@@ -2979,23 +2824,22 @@ class StorageClient(BaseClient):
         total_bytes = utils.folder_size(folder_path, ignore)
         upload_key = str(uuid.uuid4())
         self.folder_upload_status[upload_key] = {"continue": True,
-                "total_bytes": total_bytes,
-                "uploaded": 0,
-                }
+                                                 "total_bytes": total_bytes,
+                                                 "uploaded": 0,
+                                                 }
         self._upload_folder_in_background(folder_path, container, ignore,
-                upload_key, ttl)
+                                          upload_key, ttl)
         return (upload_key, total_bytes)
 
-
     def _upload_folder_in_background(self, folder_path, container, ignore,
-            upload_key, ttl=None):
+                                     upload_key, ttl=None):
         """Runs the folder upload in the background."""
         uploader = FolderUploader(folder_path, container, ignore, upload_key,
-                self, ttl=ttl)
+                                  self, ttl=ttl)
         uploader.start()
 
-
-    def sync_folder_to_container(self, folder_path, container, delete=False,
+    def sync_folder_to_container(
+            self, folder_path, container, delete=False,
             include_hidden=False, ignore=None, ignore_timestamps=False,
             object_prefix="", verbose=False):
         """
@@ -3041,18 +2885,19 @@ class StorageClient(BaseClient):
         data = cont.get_objects(prefix=object_prefix, full_listing=True)
         self._remote_files = dict((d.name, d) for d in data)
         self._sync_summary = {"total": 0,
-                "uploaded": 0,
-                "ignored": 0,
-                "older": 0,
-                "duplicate": 0,
-                "failed": 0,
-                "failure_reasons": [],
-                "deleted": 0,
-                }
-        self._sync_folder_to_container(folder_path, cont, prefix="",
-                delete=delete, include_hidden=include_hidden, ignore=ignore,
-                ignore_timestamps=ignore_timestamps,
-                object_prefix=object_prefix, verbose=verbose)
+                              "uploaded": 0,
+                              "ignored": 0,
+                              "older": 0,
+                              "duplicate": 0,
+                              "failed": 0,
+                              "failure_reasons": [],
+                              "deleted": 0,
+                              }
+        self._sync_folder_to_container(
+            folder_path, cont, prefix="", delete=delete,
+            include_hidden=include_hidden, ignore=ignore,
+            ignore_timestamps=ignore_timestamps, object_prefix=object_prefix,
+            verbose=verbose)
         # Unset the _remote_files
         self._remote_files = None
         if verbose:
@@ -3070,8 +2915,8 @@ class StorageClient(BaseClient):
                 for reason in summary["failure_reasons"]:
                     log.info("  Reason: %s" % reason)
 
-
-    def _sync_folder_to_container(self, folder_path, container, prefix, delete,
+    def _sync_folder_to_container(
+            self, folder_path, container, prefix, delete,
             include_hidden, ignore, ignore_timestamps, object_prefix, verbose):
         """
         This is the internal method that is called recursively to handle
@@ -3091,13 +2936,14 @@ class StorageClient(BaseClient):
                 subprefix = fname
                 if prefix:
                     subprefix = os.path.join(prefix, subprefix)
-                self._sync_folder_to_container(pth, container, prefix=subprefix,
-                        delete=delete, include_hidden=include_hidden,
-                        ignore=ignore, ignore_timestamps=ignore_timestamps,
-                        object_prefix=object_prefix, verbose=verbose)
+                self._sync_folder_to_container(
+                    pth, container, prefix=subprefix, delete=delete,
+                    include_hidden=include_hidden, ignore=ignore,
+                    ignore_timestamps=ignore_timestamps,
+                    object_prefix=object_prefix, verbose=verbose)
                 continue
             self._local_files.append(os.path.join(object_prefix, prefix,
-                    fname))
+                                                  fname))
             local_etag = utils.get_checksum(pth)
             if object_prefix:
                 prefix = os.path.join(object_prefix, prefix)
@@ -3122,14 +2968,15 @@ class StorageClient(BaseClient):
                         # Remote object is newer
                         self._sync_summary["older"] += 1
                         if verbose:
-                            log.info("%s NOT UPLOADED because remote object is "
-                                    "newer", fullname_with_prefix)
+                            log.info(
+                                "%s NOT UPLOADED because remote object is "
+                                "newer", fullname_with_prefix)
                             log.info("  Local: %s   Remote: %s" % (
                                     local_mod_str, obj_time_str))
                         continue
                 try:
                     container.upload_file(pth, obj_name=fullname_with_prefix,
-                        etag=local_etag, return_none=True)
+                                          etag=local_etag, return_none=True)
                     self._sync_summary["uploaded"] += 1
                     if verbose:
                         log.info("%s UPLOADED", fullname_with_prefix)
@@ -3139,15 +2986,14 @@ class StorageClient(BaseClient):
                     self._sync_summary["failure_reasons"].append("%s" % e)
                     if verbose:
                         log.error("%s UPLOAD FAILED. Exception: %s" %
-                                (fullname_with_prefix, e))
+                                  (fullname_with_prefix, e))
             else:
                 self._sync_summary["duplicate"] += 1
                 if verbose:
                     log.info("%s NOT UPLOADED because it already exists",
-                            fullname_with_prefix)
+                             fullname_with_prefix)
         if delete and not prefix:
             self._delete_objects_not_in_list(container, object_prefix)
-
 
     def _delete_objects_not_in_list(self, cont, object_prefix=""):
         """
@@ -3155,16 +3001,15 @@ class StorageClient(BaseClient):
         in the self._local_files list, and deletes them.
         """
         objnames = set(cont.get_object_names(prefix=object_prefix,
-                full_listing=True))
+                                             full_listing=True))
         localnames = set(self._local_files)
         to_delete = list(objnames.difference(localnames))
         self._sync_summary["deleted"] += len(to_delete)
         # We don't need to wait around for this to complete. Store the thread
         # reference in case it is needed at some point.
-        self._thread = self.bulk_delete(cont, to_delete, async=True)
+        self._thread = self.bulk_delete(cont, to_delete, asynchronous=True)
 
-
-    def bulk_delete(self, container, object_names, async=False):
+    def bulk_delete(self, container, object_names, asynchronous=False):
         """
         Deletes multiple objects from a container in a single call.
 
@@ -3192,12 +3037,11 @@ class StorageClient(BaseClient):
         """
         deleter = BulkDeleter(self, container, object_names)
         deleter.start()
-        if async:
+        if asynchronous:
             return deleter
         while not deleter.completed:
             time.sleep(self.bulk_delete_interval)
         return deleter.results
-
 
     def cdn_request(self, uri, method, *args, **kwargs):
         """
@@ -3210,7 +3054,7 @@ class StorageClient(BaseClient):
         mthd = self.method_dict.get(method.upper())
         try:
             resp, resp_body = mthd(cdn_uri, *args, **kwargs)
-        except exc.NotFound as e:
+        except exc.NotFound:
             # This could be due to either the container does not exist, or that
             # the container exists but is not CDN-enabled.
             try:
@@ -3221,17 +3065,14 @@ class StorageClient(BaseClient):
             raise exc.NotCDNEnabled("This container is not CDN-enabled.")
         return resp, resp_body
 
-
     @_valid_upload_key
     def _update_progress(self, upload_key, size):
         self.folder_upload_status[upload_key]["uploaded"] += size
-
 
     @_valid_upload_key
     def get_uploaded(self, upload_key):
         """Returns the number of bytes uploaded for the specified process."""
         return self.folder_upload_status[upload_key]["uploaded"]
-
 
     @_valid_upload_key
     def cancel_folder_upload(self, upload_key):
@@ -3241,7 +3082,6 @@ class StorageClient(BaseClient):
         """
         self.folder_upload_status[upload_key]["continue"] = False
 
-
     @_valid_upload_key
     def _should_abort_folder_upload(self, upload_key):
         """
@@ -3250,13 +3090,12 @@ class StorageClient(BaseClient):
         return not self.folder_upload_status[upload_key]["continue"]
 
 
-
 class FolderUploader(threading.Thread):
     """
     Threading class to allow for uploading multiple files in the background.
     """
     def __init__(self, root_folder, container, ignore, upload_key, client,
-            ttl=None):
+                 ttl=None):
         self.root_folder = root_folder.rstrip("/")
         self.ignore = utils.coerce_to_list(ignore)
         self.upload_key = upload_key
@@ -3272,29 +3111,27 @@ class FolderUploader(threading.Thread):
                     self.folder_name_from_path(root_folder))
         threading.Thread.__init__(self)
 
-
     @staticmethod
     def folder_name_from_path(pth):
         """Convenience method that first strips trailing path separators."""
         return os.path.basename(pth.rstrip(os.sep))
-
 
     def upload_files_in_folder(self, dirname, fnames):
         """Handles the iteration across files within a folder."""
         if utils.match_pattern(dirname, self.ignore):
             return False
         good_names = (nm for nm in fnames
-                if not utils.match_pattern(nm, self.ignore))
+                      if not utils.match_pattern(nm, self.ignore))
         for fname in good_names:
             if self.client._should_abort_folder_upload(self.upload_key):
                 return
             full_path = os.path.join(dirname, fname)
             obj_name = os.path.relpath(full_path, self.root_folder)
             obj_size = os.stat(full_path).st_size
-            self.client.upload_file(self.container, full_path,
-                    obj_name=obj_name, return_none=True, ttl=self.ttl)
+            self.client.upload_file(
+                self.container, full_path, obj_name=obj_name, return_none=True,
+                ttl=self.ttl)
             self.client._update_progress(self.upload_key, obj_size)
-
 
     def run(self):
         """Starts the uploading thread."""
@@ -3321,9 +3158,7 @@ class BulkDeleter(threading.Thread):
         }
         threading.Thread.__init__(self)
 
-
     def run(self):
-        client = self.client
         container = self.container
         object_names = self.object_names
         cname = utils.get_name(container)
@@ -3347,11 +3182,12 @@ class BulkDeleter(threading.Thread):
 
             obj_paths = ("%s/%s" % (cname, nm) for nm in batch)
             body = "\n".join(obj_paths)
-            resp, resp_body = self.client.method_delete(uri, data=body,
-                    headers=headers)
+            resp, resp_body = self.client.method_delete(
+                uri, data=body, headers=headers)
             for k, v in six.iteritems(resp_body):
                 if key_map[k] == "errors":
-                    status_code = int(resp_body.get("Response Status", "200")[:3])
+                    status_code =\
+                        int(resp_body.get("Response Status", "200")[:3])
                     if status_code != 200 and not v:
                         self.results["errors"].extend([[
                             resp_body.get("Response Body"),
