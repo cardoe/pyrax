@@ -2,12 +2,10 @@
 from __future__ import absolute_import, unicode_literals
 
 import json
-import os
 import random
 import time
 import uuid
 
-import pyrax
 from pyrax.autoscale import AutoScaleClient
 from pyrax.autoscale import AutoScalePolicy
 from pyrax.autoscale import AutoScaleWebhook
@@ -56,7 +54,6 @@ from pyrax.object_storage import StorageObject
 from pyrax.object_storage import StorageObjectManager
 from pyrax.queueing import Queue
 from pyrax.queueing import QueueClaim
-from pyrax.queueing import QueueMessage
 from pyrax.queueing import QueueClient
 from pyrax.queueing import QueueManager
 
@@ -65,7 +62,6 @@ from pyrax.base_identity import BaseIdentity
 from pyrax.base_identity import Endpoint
 from pyrax.base_identity import Service
 from pyrax.identity.rax_identity import RaxIdentity
-from pyrax.identity.keystone_identity import KeystoneIdentity
 import pyrax.utils as utils
 
 
@@ -135,8 +131,8 @@ class FakeContainerManager(ContainerManager):
 class FakeContainer(Container):
     def __init__(self, *args, **kwargs):
         super(FakeContainer, self).__init__(*args, **kwargs)
-        self.object_manager = FakeStorageObjectManager(self.manager.api,
-                uri_base=self.name)
+        self.object_manager = FakeStorageObjectManager(
+            self.manager.api, uri_base=self.name)
         self.object_manager._container = self
 
 
@@ -151,7 +147,7 @@ class FakeStorageObjectManager(StorageObjectManager):
 
 class FakeStorageObject(StorageObject):
     def __init__(self, manager, name=None, total_bytes=None, content_type=None,
-            last_modified=None, etag=None, attdict=None):
+                 last_modified=None, etag=None, attdict=None):
         """
         The object can either be initialized with individual params, or by
         passing the dict that is returned by swiftclient.
@@ -167,11 +163,11 @@ class FakeStorageObject(StorageObject):
 
 
 fake_attdict = {"name": "fake",
-        "content-length": 42,
-        "content-type": "text/html",
-        "etag": "ABC",
-        "last-modified": "Tue, 01 Jan 2013 01:02:03 GMT",
-        }
+                "content-length": 42,
+                "content-type": "text/html",
+                "etag": "ABC",
+                "last-modified": "Tue, 01 Jan 2013 01:02:03 GMT",
+                }
 
 
 class FakeServer(object):
@@ -326,8 +322,8 @@ class FakeDatabaseClient(CloudDatabaseClient):
         self._manager = FakeDatabaseManager(self)
         self._flavor_manager = FakeManager()
         ident = FakeIdentity()
-        super(FakeDatabaseClient, self).__init__(ident, "fakeuser",
-                "fakepassword", *args, **kwargs)
+        super(FakeDatabaseClient, self).__init__(
+            ident, "fakeuser", "fakepassword", *args, **kwargs)
 
 
 class FakeNovaVolumeClient(BaseClient):
@@ -345,7 +341,6 @@ class FakeBlockStorageManager(CloudBlockStorageManager):
 
 class FakeBlockStorageVolume(CloudBlockStorageVolume):
     def __init__(self, *args, **kwargs):
-        volname = utils.random_unicode(8)
         self.id = utils.random_unicode()
         self.manager = FakeBlockStorageManager()
         self._nova_volumes = FakeNovaVolumeClient()
@@ -363,8 +358,8 @@ class FakeBlockStorageClient(CloudBlockStorageClient):
         self._types_manager = FakeManager()
         self._snapshot_manager = FakeManager()
         ident = FakeIdentity()
-        super(FakeBlockStorageClient, self).__init__(ident, "fakeuser",
-                "fakepassword", *args, **kwargs)
+        super(FakeBlockStorageClient, self).__init__(
+            ident, "fakeuser", "fakepassword", *args, **kwargs)
 
 
 class FakeSnapshotManager(CloudBlockStorageSnapshotManager):
@@ -378,8 +373,8 @@ class FakeSnapshotManager(CloudBlockStorageSnapshotManager):
 class FakeLoadBalancerClient(CloudLoadBalancerClient):
     def __init__(self, *args, **kwargs):
         ident = FakeIdentity()
-        super(FakeLoadBalancerClient, self).__init__(ident, "fakeuser",
-                "fakepassword", *args, **kwargs)
+        super(FakeLoadBalancerClient, self).__init__(
+            ident, "fakeuser", "fakepassword", *args, **kwargs)
 
 
 class FakeLoadBalancerManager(CloudLoadBalancerManager):
@@ -401,16 +396,16 @@ class FakeLoadBalancer(CloudLoadBalancer):
 
 class FakeNode(Node):
     def __init__(self, address=None, port=None, condition=None, weight=None,
-            status=None, parent=None, type=None, id=None):
+                 status=None, parent=None, type=None, id=None):
         if address is None:
             address = "0.0.0.0"
         if port is None:
             port = 80
         if id is None:
             id = utils.random_unicode()
-        super(FakeNode, self).__init__(address=address, port=port,
-                condition=condition, weight=weight, status=status,
-                parent=parent, type=type, id=id)
+        super(FakeNode, self).__init__(
+            address=address, port=port, condition=condition, weight=weight,
+            status=status, parent=parent, type=type, id=id)
 
 
 class FakeVirtualIP(VirtualIP):
@@ -432,8 +427,8 @@ class FakeStatusChanger(object):
 class FakeDNSClient(CloudDNSClient):
     def __init__(self, *args, **kwargs):
         ident = FakeIdentity()
-        super(FakeDNSClient, self).__init__(ident, "fakeuser",
-                "fakepassword", *args, **kwargs)
+        super(FakeDNSClient, self).__init__(
+            ident, "fakeuser", "fakepassword", *args, **kwargs)
 
 
 class FakeDNSManager(CloudDNSManager):
@@ -471,8 +466,8 @@ class FakeDNSDevice(FakeLoadBalancer):
 class FakeCloudNetworkClient(CloudNetworkClient):
     def __init__(self, *args, **kwargs):
         ident = FakeIdentity()
-        super(FakeCloudNetworkClient, self).__init__(ident, "fakeuser",
-                "fakepassword", *args, **kwargs)
+        super(FakeCloudNetworkClient, self).__init__(
+            ident, "fakeuser", "fakepassword", *args, **kwargs)
 
 
 class FakeCloudNetwork(CloudNetwork):
@@ -480,8 +475,8 @@ class FakeCloudNetwork(CloudNetwork):
         info = kwargs.pop("info", {"fake": "fake"})
         label = kwargs.pop("label", kwargs.pop("name", utils.random_unicode()))
         info["label"] = label
-        super(FakeCloudNetwork, self).__init__(manager=None, info=info, *args,
-                **kwargs)
+        super(FakeCloudNetwork, self).__init__(
+            manager=None, info=info, *args, **kwargs)
         self.id = uuid.uuid4().hex
 
 
@@ -526,16 +521,16 @@ class FakeScalingGroup(ScalingGroup):
 class FakeCloudMonitorClient(CloudMonitorClient):
     def __init__(self, *args, **kwargs):
         ident = FakeIdentity()
-        super(FakeCloudMonitorClient, self).__init__(ident, "fakeuser",
-                "fakepassword", *args, **kwargs)
+        super(FakeCloudMonitorClient, self).__init__(
+            ident, "fakeuser", "fakepassword", *args, **kwargs)
 
 
 class FakeCloudMonitorEntity(CloudMonitorEntity):
     def __init__(self, *args, **kwargs):
         info = kwargs.pop("info", {"fake": "fake"})
         info["id"] = utils.random_ascii()
-        super(FakeCloudMonitorEntity, self).__init__(FakeManager(), info=info,
-                *args, **kwargs)
+        super(FakeCloudMonitorEntity, self).__init__(
+            FakeManager(), info=info, *args, **kwargs)
         self.manager.api = FakeCloudMonitorClient()
 
 
@@ -544,8 +539,8 @@ class FakeCloudMonitorCheck(CloudMonitorCheck):
         info = kwargs.pop("info", {"fake": "fake"})
         entity = kwargs.pop("entity", None)
         info["id"] = utils.random_ascii()
-        super(FakeCloudMonitorCheck, self).__init__(FakeManager(), info, *args,
-                **kwargs)
+        super(FakeCloudMonitorCheck, self).__init__(
+            FakeManager(), info, *args, **kwargs)
         self.set_entity(entity)
         self.id = uuid.uuid4()
 
@@ -553,8 +548,8 @@ class FakeCloudMonitorCheck(CloudMonitorCheck):
 class FakeCloudMonitorNotification(CloudMonitorNotification):
     def __init__(self, *args, **kwargs):
         info = kwargs.pop("info", {"fake": "fake"})
-        super(FakeCloudMonitorNotification, self).__init__(manager=None,
-                info=info, *args, **kwargs)
+        super(FakeCloudMonitorNotification, self).__init__(
+            manager=None, info=info, *args, **kwargs)
         self.id = uuid.uuid4()
 
 
@@ -563,7 +558,8 @@ class FakeQueue(Queue):
         info = kwargs.pop("info", {"fake": "fake"})
         info["name"] = utils.random_unicode()
         mgr = kwargs.pop("manager", FakeQueueManager())
-        super(FakeQueue, self).__init__(manager=mgr, info=info, *args, **kwargs)
+        super(FakeQueue, self).__init__(
+            manager=mgr, info=info, *args, **kwargs)
 
 
 class FakeQueueClaim(QueueClaim):
@@ -571,15 +567,15 @@ class FakeQueueClaim(QueueClaim):
         info = kwargs.pop("info", {"fake": "fake"})
         info["name"] = utils.random_unicode()
         mgr = kwargs.pop("manager", FakeQueueManager())
-        super(FakeQueueClaim, self).__init__(manager=mgr, info=info, *args,
-                **kwargs)
+        super(FakeQueueClaim, self).__init__(
+            manager=mgr, info=info, *args, **kwargs)
 
 
 class FakeQueueClient(QueueClient):
     def __init__(self, *args, **kwargs):
         ident = FakeIdentity()
-        super(FakeQueueClient, self).__init__(ident, "fakeuser",
-                "fakepassword", *args, **kwargs)
+        super(FakeQueueClient, self).__init__(
+            ident, "fakeuser", "fakepassword", *args, **kwargs)
 
 
 class FakeQueueManager(QueueManager):
@@ -605,8 +601,8 @@ class FakeImageClient(ImageClient):
     def __init__(self, identity=None, *args, **kwargs):
         if identity is None:
             identity = FakeIdentity()
-        super(FakeImageClient, self).__init__(identity, "fakeuser",
-                "fakepassword", *args, **kwargs)
+        super(FakeImageClient, self).__init__(
+            identity, "fakeuser", "fakepassword", *args, **kwargs)
 
 
 class FakeImageMemberManager(ImageMemberManager):
@@ -678,8 +674,9 @@ class FakeIdentity(BaseIdentity):
             self.authenticated = True
         else:
             self.authenticated = False
-            raise exc.AuthenticationFailed("No match for '%s'/'%s' "
-                    "username/password" % (self.username, self.password))
+            raise exc.AuthenticationFailed(
+                "No match for '%s'/'%s' username/password"
+                % (self.username, self.password))
 
     def auth_with_token(self, token, tenant_id=None, tenant_name=None):
         self.token = token
@@ -705,189 +702,227 @@ http_debug =
 # This will handle both singular and plural responses.
 fake_identity_user_response = {
         "users": [{"name": "fake", "id": "fake"},
-            {"name": "faker", "id": "faker"}],
+                  {"name": "faker", "id": "faker"}],
         "user": {"name": "fake", "id": "fake"},
         "roles": [{u'description': 'User Admin Role.',
-                'id': '3',
-                'name': 'identity:user-admin'}],
+                   'id': '3',
+                   'name': 'identity:user-admin'}],
         }
 
 fake_identity_tenant_response = {"name": "fake", "id": "fake",
-        "description": "fake", "enabled": True}
+                                 "description": "fake", "enabled": True}
 
 fake_identity_tenants_response = {
     "tenants": [
         {"name": "fake", "id": "fake", "description": "fake",
-        "enabled": True},
+         "enabled": True},
         {"name": "faker", "id": "faker", "description": "faker",
-        "enabled": True},
+         "enabled": True},
         ]}
 
-fake_identity_tokens_response = {"access":
-        {'metadata': {u'is_admin': 0,
-            'roles': [u'asdfgh',
-                'sdfghj',
-                'dfghjk']},
-        'serviceCatalog': [{u'endpoints': [
-            {u'adminURL': 'http://10.0.0.0:8774/v2/qweqweqwe',
-            'id': 'dddddddddd',
-            'publicURL': 'http://10.0.0.0:8774/v2/qweqweqwe',
-            'internalURL': 'http://10.0.0.0:8774/v2/qweqweqwe',
-            'region': 'some_region'}],
-            'endpoints_links': [],
-            'name': 'nova',
-            'type': 'compute'},
-            {u'endpoints': [{u'adminURL': 'http://10.0.0.0:35357/v2.0',
-            'id': 'qweqweqwe',
-            'internalURL': 'http://10.0.0.0:5000/v2.0',
-            'publicURL': 'http://10.0.0.0:5000/v2.0',
-            'region': 'some_region'}],
-            'endpoints_links': [],
-            'name': 'keystone',
-            'type': 'identity'}],
-        'token': {u'expires': '1999-05-04T16:45:05Z',
-            'id': 'qweqweqwe',
-            'tenant': {u'description': 'admin Tenant',
-                'enabled': True,
-                'id': 'qweqweqwe',
-                'name': 'admin'}},
-        'user': {u'id': 'qweqweqwe',
-            'name': 'admin',
-            'roles': [{u'id': 'qweqweqwe', 'name': 'admin'},
-                {u'id': 'qweqweqwe', 'name': 'KeystoneAdmin'},
-                {u'id': 'qweqweqwe',
-                'name': 'KeystoneServiceAdmin'}],
-            'roles_links': [],
-            'username': 'admin'}}}
+fake_identity_tokens_response = {
+        "access": {
+            'metadata': {u'is_admin': 0,
+                         'roles': [u'asdfgh',
+                                   'sdfghj',
+                                   'dfghjk']},
+            'serviceCatalog': [{u'endpoints': [
+                {u'adminURL': 'http://10.0.0.0:8774/v2/qweqweqwe',
+                 'id': 'dddddddddd',
+                 'publicURL': 'http://10.0.0.0:8774/v2/qweqweqwe',
+                 'internalURL': 'http://10.0.0.0:8774/v2/qweqweqwe',
+                 'region': 'some_region'}],
+                 'endpoints_links': [],
+                 'name': 'nova',
+                 'type': 'compute'},
+                {u'endpoints': [{u'adminURL': 'http://10.0.0.0:35357/v2.0',
+                                 'id': 'qweqweqwe',
+                                 'internalURL': 'http://10.0.0.0:5000/v2.0',
+                                 'publicURL': 'http://10.0.0.0:5000/v2.0',
+                                 'region': 'some_region'}],
+                 'endpoints_links': [],
+                 'name': 'keystone',
+                 'type': 'identity'}],
+            'token': {u'expires': '1999-05-04T16:45:05Z',
+                      'id': 'qweqweqwe',
+                      'tenant': {u'description': 'admin Tenant',
+                                 'enabled': True,
+                                 'id': 'qweqweqwe',
+                                 'name': 'admin'}},
+            'user': {u'id': 'qweqweqwe',
+                     'name': 'admin',
+                     'roles': [{u'id': 'qweqweqwe', 'name': 'admin'},
+                               {u'id': 'qweqweqwe', 'name': 'KeystoneAdmin'},
+                               {u'id': 'qweqweqwe',
+                               'name': 'KeystoneServiceAdmin'}],
+                     'roles_links': [],
+                     'username': 'admin'}}}
 
 fake_identity_endpoints_response = {"access": {
         "endpoints": ["fake", "faker", "fakest"]}}
 
-fake_identity_response = {u'access':
-    {u'serviceCatalog': [
-        {u'endpoints': [{u'publicURL':
-            'https://ord.loadbalancers.api.rackspacecloud.com/v1.0/000000',
-            'region': 'ORD',
-            'tenantId': '000000'},
-            {u'publicURL':
-            'https://dfw.loadbalancers.api.rackspacecloud.com/v1.0/000000',
-            'region': 'DFW',
-            'tenantId': '000000'},
-            {u'publicURL':
-            'https://syd.loadbalancers.api.rackspacecloud.com/v1.0/000000',
-            'region': 'SYD',
-            'tenantId': '000000'}],
-        'name': 'cloudLoadBalancers',
-        'type': 'rax:load-balancer'},
-        {u'endpoints': [{u'internalURL':
-            'https://snet-aa.fake1.clouddrive.com/v1/MossoCloudFS_abc',
-            'publicURL': 'https://aa.fake1.clouddrive.com/v1/MossoCloudFS_abc',
-            'region': 'FAKE',
-            'tenantId': 'MossoCloudFS_abc'},
-            {u'internalURL':
-            'https://snet-aa.dfw1.clouddrive.com/v1/MossoCloudFS_abc',
-            'publicURL': 'https://aa.dfw1.clouddrive.com/v1/MossoCloudFS_abc',
-            'region': 'DFW',
-            'tenantId': 'MossoCloudFS_abc'},
-            {u'internalURL':
-            'https://snet-aa.ord1.clouddrive.com/v1/MossoCloudFS_abc',
-            'publicURL': 'https://aa.ord1.clouddrive.com/v1/MossoCloudFS_abc',
-            'region': 'ORD',
-            'tenantId': 'MossoCloudFS_abc'},
-            {u'internalURL':
-            'https://snet-aa.syd1.clouddrive.com/v1/MossoCloudFS_abc',
-            'publicURL': 'https://aa.ord1.clouddrive.com/v1/MossoCloudFS_abc',
-            'region': 'SYD',
-            'tenantId': 'MossoCloudFS_abc'}],
-        'name': 'cloudFiles',
-        'type': 'object-store'},
-        {u'endpoints': [{u'publicURL':
-            'https://dfw.servers.api.rackspacecloud.com/v2/000000',
-            'region': 'DFW',
-            'tenantId': '000000',
-            'versionId': '2',
-            'versionInfo': 'https://dfw.servers.api.rackspacecloud.com/v2',
-            'versionList': 'https://dfw.servers.api.rackspacecloud.com/'},
-            {u'publicURL':
-            'https://ord.servers.api.rackspacecloud.com/v2/000000',
-            'region': 'ORD',
-            'tenantId': '000000',
-            'versionId': '2',
-            'versionInfo': 'https://ord.servers.api.rackspacecloud.com/v2',
-            'versionList': 'https://ord.servers.api.rackspacecloud.com/'},
-            {u'publicURL':
-            'https://syd.servers.api.rackspacecloud.com/v2/000000',
-            'region': 'SYD',
-            'tenantId': '000000',
-            'versionId': '2',
-            'versionInfo': 'https://syd.servers.api.rackspacecloud.com/v2',
-            'versionList': 'https://syd.servers.api.rackspacecloud.com/'}],
-        'name': 'cloudServersOpenStack',
-        'type': 'compute'},
-        {u'endpoints': [{u'publicURL':
-        'https://dns.api.rackspacecloud.com/v1.0/000000',
-        'tenantId': '000000'}],
-        'name': 'cloudDNS',
-        'type': 'rax:dns'},
-        {u'endpoints': [{u'publicURL':
-            'https://dfw.databases.api.rackspacecloud.com/v1.0/000000',
-            'region': 'DFW',
-            'tenantId': '000000'},
-            {u'publicURL':
-            'https://syd.databases.api.rackspacecloud.com/v1.0/000000',
-            'region': 'SYD',
-            'tenantId': '000000'},
-            {u'publicURL':
-            'https://ord.databases.api.rackspacecloud.com/v1.0/000000',
-            'region': 'ORD',
-            'tenantId': '000000'}],
-        'name': 'cloudDatabases',
-        'type': 'rax:database'},
-        {u'endpoints': [{u'publicURL':
-        'https://servers.api.rackspacecloud.com/v1.0/000000',
-        'tenantId': '000000',
-        'versionId': '1.0',
-        'versionInfo': 'https://servers.api.rackspacecloud.com/v1.0',
-        'versionList': 'https://servers.api.rackspacecloud.com/'}],
-        'name': 'cloudServers',
-        'type': 'compute'},
-        {u'endpoints': [{u'publicURL':
-            'https://cdn1.clouddrive.com/v1/MossoCloudFS_abc',
-            'region': 'DFW',
-            'tenantId': 'MossoCloudFS_abc'},
-            {u'publicURL': 'https://cdn1.clouddrive.com/v1/MossoCloudFS_abc',
-            'region': 'FAKE',
-            'tenantId': 'MossoCloudFS_abc'},
-            {u'publicURL': 'https://cdn1.clouddrive.com/v1/MossoCloudFS_abc',
-            'region': 'SYD',
-            'tenantId': 'MossoCloudFS_abc'},
-            {u'publicURL': 'https://cdn2.clouddrive.com/v1/MossoCloudFS_abc',
-            'region': 'ORD',
-            'tenantId': 'MossoCloudFS_abc'}],
-        'name': 'cloudFilesCDN',
-        'type': 'rax:object-cdn'},
-        {u'endpoints': [{u'publicURL':
-            'https://monitoring.api.rackspacecloud.com/v1.0/000000',
-            'tenantId': '000000'}],
-        'name': 'cloudMonitoring',
-        'type': 'rax:monitor'}],
-    u'token': {u'expires': '2222-02-22T22:22:22.000-02:00',
-    'id': 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
-    'tenant': {u'id': '000000', 'name': '000000'}},
-    u'user': {u'id': '123456',
-    'name': 'fakeuser',
-    'RAX-AUTH:defaultRegion': 'DFW',
-    'roles': [{u'description': 'User Admin Role.',
-    'id': '3',
-    'name': 'identity:user-admin'}],
-    }}}
-
+fake_identity_response = {
+    u'access': {
+        u'serviceCatalog': [{
+            u'endpoints': [{
+                u'publicURL':
+                'https://ord.loadbalancers.api.rackspacecloud.com/v1.0/000000',
+                'region': 'ORD',
+                'tenantId': '000000'
+                }, {
+                u'publicURL':
+                'https://dfw.loadbalancers.api.rackspacecloud.com/v1.0/000000',
+                'region': 'DFW',
+                'tenantId': '000000'
+                }, {
+                u'publicURL':
+                'https://syd.loadbalancers.api.rackspacecloud.com/v1.0/000000',
+                'region': 'SYD',
+                'tenantId': '000000'}],
+            'name': 'cloudLoadBalancers',
+            'type': 'rax:load-balancer'
+            }, {
+            u'endpoints': [{
+                u'internalURL':
+                'https://snet-aa.fake1.clouddrive.com/v1/MossoCloudFS_abc',
+                'publicURL':
+                'https://aa.fake1.clouddrive.com/v1/MossoCloudFS_abc',
+                'region': 'FAKE',
+                'tenantId': 'MossoCloudFS_abc'
+                }, {
+                u'internalURL':
+                'https://snet-aa.dfw1.clouddrive.com/v1/MossoCloudFS_abc',
+                'publicURL':
+                'https://aa.dfw1.clouddrive.com/v1/MossoCloudFS_abc',
+                'region': 'DFW',
+                'tenantId': 'MossoCloudFS_abc'
+                }, {
+                u'internalURL':
+                'https://snet-aa.ord1.clouddrive.com/v1/MossoCloudFS_abc',
+                'publicURL':
+                'https://aa.ord1.clouddrive.com/v1/MossoCloudFS_abc',
+                'region': 'ORD',
+                'tenantId': 'MossoCloudFS_abc'
+                }, {
+                u'internalURL':
+                'https://snet-aa.syd1.clouddrive.com/v1/MossoCloudFS_abc',
+                'publicURL':
+                'https://aa.ord1.clouddrive.com/v1/MossoCloudFS_abc',
+                'region': 'SYD',
+                'tenantId': 'MossoCloudFS_abc'}],
+            'name': 'cloudFiles',
+            'type': 'object-store'
+            }, {
+            u'endpoints': [{
+                u'publicURL':
+                'https://dfw.servers.api.rackspacecloud.com/v2/000000',
+                'region': 'DFW',
+                'tenantId': '000000',
+                'versionId': '2',
+                'versionInfo': 'https://dfw.servers.api.rackspacecloud.com/v2',
+                'versionList': 'https://dfw.servers.api.rackspacecloud.com/'
+                }, {
+                u'publicURL':
+                'https://ord.servers.api.rackspacecloud.com/v2/000000',
+                'region': 'ORD',
+                'tenantId': '000000',
+                'versionId': '2',
+                'versionInfo': 'https://ord.servers.api.rackspacecloud.com/v2',
+                'versionList': 'https://ord.servers.api.rackspacecloud.com/'
+                }, {
+                u'publicURL':
+                'https://syd.servers.api.rackspacecloud.com/v2/000000',
+                'region': 'SYD',
+                'tenantId': '000000',
+                'versionId': '2',
+                'versionInfo': 'https://syd.servers.api.rackspacecloud.com/v2',
+                'versionList': 'https://syd.servers.api.rackspacecloud.com/'}],
+            'name': 'cloudServersOpenStack',
+            'type': 'compute'
+            }, {
+            u'endpoints': [{
+                    u'publicURL':
+                    'https://dns.api.rackspacecloud.com/v1.0/000000',
+                    'tenantId': '000000'}],
+                'name': 'cloudDNS',
+                'type': 'rax:dns'
+            }, {
+            u'endpoints': [{
+                u'publicURL':
+                'https://dfw.databases.api.rackspacecloud.com/v1.0/000000',
+                'region': 'DFW',
+                'tenantId': '000000'
+                }, {
+                u'publicURL':
+                'https://syd.databases.api.rackspacecloud.com/v1.0/000000',
+                'region': 'SYD',
+                'tenantId': '000000'
+                }, {
+                u'publicURL':
+                'https://ord.databases.api.rackspacecloud.com/v1.0/000000',
+                'region': 'ORD',
+                'tenantId': '000000'}],
+            'name': 'cloudDatabases',
+            'type': 'rax:database'
+            }, {
+            u'endpoints': [{
+                u'publicURL':
+                'https://servers.api.rackspacecloud.com/v1.0/000000',
+                'tenantId': '000000',
+                'versionId': '1.0',
+                'versionInfo': 'https://servers.api.rackspacecloud.com/v1.0',
+                'versionList': 'https://servers.api.rackspacecloud.com/'}],
+            'name': 'cloudServers',
+            'type': 'compute'
+            }, {
+            u'endpoints': [{
+                u'publicURL':
+                'https://cdn1.clouddrive.com/v1/MossoCloudFS_abc',
+                'region': 'DFW',
+                'tenantId': 'MossoCloudFS_abc'
+                }, {
+                u'publicURL':
+                'https://cdn1.clouddrive.com/v1/MossoCloudFS_abc',
+                'region': 'FAKE',
+                'tenantId': 'MossoCloudFS_abc'
+                }, {
+                u'publicURL':
+                'https://cdn1.clouddrive.com/v1/MossoCloudFS_abc',
+                'region': 'SYD',
+                'tenantId': 'MossoCloudFS_abc'
+                }, {
+                u'publicURL':
+                'https://cdn2.clouddrive.com/v1/MossoCloudFS_abc',
+                'region': 'ORD',
+                'tenantId': 'MossoCloudFS_abc'}],
+            'name': 'cloudFilesCDN',
+            'type': 'rax:object-cdn'
+            }, {
+            u'endpoints': [{
+                u'publicURL':
+                'https://monitoring.api.rackspacecloud.com/v1.0/000000',
+                'tenantId': '000000'}],
+            'name': 'cloudMonitoring',
+            'type': 'rax:monitor'}],
+        u'token': {
+            u'expires': '2222-02-22T22:22:22.000-02:00',
+            'id': 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+            'tenant': {u'id': '000000', 'name': '000000'}},
+        u'user': {
+            u'id': '123456',
+            'name': 'fakeuser',
+            'RAX-AUTH:defaultRegion': 'DFW',
+            'roles': [{u'description': 'User Admin Role.',
+                       'id': '3',
+                       'name': 'identity:user-admin'}],
+        }}}
 
 
 class FakeIdentityResponse(FakeResponse):
     status_code = 200
     response_type = "auth"
-    responses = {"auth": fake_identity_response,
+    responses = {
+            "auth": fake_identity_response,
             "users": fake_identity_user_response,
             "tenant": fake_identity_tenant_response,
             "tenants": fake_identity_tenants_response,
