@@ -7,13 +7,11 @@ import hashlib
 import os
 import random
 import sys
-import time
 import unittest
 
 import six
 from six import StringIO
 
-from mock import patch
 from mock import MagicMock as Mock
 
 from pyrax import base_identity
@@ -70,7 +68,7 @@ class UtilsTest(unittest.TestCase):
     def test_get_checksum_from_string(self):
         test = utils.random_ascii().encode("ascii")
         md = hashlib.md5()
-        md.update(test)
+        md.update(test.encode('utf-8'))
         expected = md.hexdigest()
         received = utils.get_checksum(test)
         self.assertEqual(expected, received)
@@ -78,8 +76,7 @@ class UtilsTest(unittest.TestCase):
     def test_get_checksum_from_unicode(self):
         test = utils.random_unicode()
         md = hashlib.md5()
-        enc = "utf8"
-        md.update(test.encode(enc))
+        md.update(test.encode("utf-8"))
         expected = md.hexdigest()
         received = utils.get_checksum(test)
         self.assertEqual(expected, received)
@@ -94,9 +91,8 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(expected, received)
 
     def test_get_checksum_from_binary(self):
-        test = os.urandom(1024)
+        test = bytes((random.randint(0, 255)) for _ in range(1024))
         md = hashlib.md5()
-        enc = "utf8"
         md.update(test)
         expected = md.hexdigest()
         received = utils.get_checksum(test)
@@ -105,7 +101,7 @@ class UtilsTest(unittest.TestCase):
     def test_get_checksum_from_file(self):
         test = b"some random text"
         md = hashlib.md5()
-        md.update(test)
+        md.update(test.encode('utf-8'))
         expected = md.hexdigest()
         with utils.SelfDeletingTempfile() as tmp:
             with open(tmp, "wb") as testfile:
@@ -121,7 +117,7 @@ class UtilsTest(unittest.TestCase):
 
     def test_folder_size_bad_folder(self):
         self.assertRaises(exc.FolderNotFound, utils.folder_size,
-                "/doesnt_exist")
+                          "/doesnt_exist")
 
     def test_coerce_to_list(self):
         val = utils.random_ascii()
@@ -216,7 +212,7 @@ class UtilsTest(unittest.TestCase):
 
     def test_safe_issubclass_good(self):
         ret = utils.safe_issubclass(fakes.FakeIdentity,
-                base_identity.BaseIdentity)
+                                    base_identity.BaseIdentity)
         self.assertTrue(ret)
 
     def test_safe_issubclass_bad(self):
@@ -233,7 +229,7 @@ class UtilsTest(unittest.TestCase):
     def test_wait_until(self):
         status_obj = fakes.FakeStatusChanger()
         self.assertRaises(exc.NoReloadError, utils.wait_until, status_obj,
-                "status", "available")
+                          "status", "available")
         status_obj.manager = fakes.FakeManager()
         status_obj.manager.get = Mock(return_value=status_obj)
         status_obj.get = status_obj.manager.get
@@ -241,7 +237,7 @@ class UtilsTest(unittest.TestCase):
         out = StringIO()
         sys.stdout = out
         ret = utils.wait_until(status_obj, "status", "ready", interval=0.00001,
-                verbose=True, verbose_atts="progress")
+                               verbose=True, verbose_atts="progress")
         self.assertTrue(isinstance(ret, fakes.FakeStatusChanger))
         self.assertEqual(ret.status, "ready")
         self.assertTrue(len(out.getvalue()) > 0)
@@ -250,12 +246,12 @@ class UtilsTest(unittest.TestCase):
     def test_wait_until_fail(self):
         status_obj = fakes.FakeStatusChanger()
         self.assertRaises(exc.NoReloadError, utils.wait_until, status_obj,
-                "status", "available")
+                          "status", "available")
         status_obj.manager = fakes.FakeManager()
         status_obj.manager.get = Mock(return_value=status_obj)
         status_obj.get = status_obj.manager.get
         ret = utils.wait_until(status_obj, "status", "fake", interval=0.00001,
-                attempts=2)
+                               attempts=2)
         self.assertFalse(ret.status == "fake")
 
     def test_wait_until_callback(self):
@@ -264,8 +260,9 @@ class UtilsTest(unittest.TestCase):
         status_obj.manager = fakes.FakeManager()
         status_obj.manager.get = Mock(return_value=status_obj)
         status_obj.get = status_obj.manager.get
-        thread = utils.wait_until(obj=status_obj, att="status", desired="ready",
-                interval=0.00001, callback=cback)
+        thread = utils.wait_until(
+            obj=status_obj, att="status", desired="ready", interval=0.00001,
+            callback=cback)
         thread.join()
         cback.assert_called_once_with(status_obj)
 
@@ -281,10 +278,10 @@ class UtilsTest(unittest.TestCase):
         verbose = utils.random_unicode()
         verbose_atts = utils.random_unicode()
         utils.wait_for_build(obj, att, desired, callback, interval, attempts,
-                verbose, verbose_atts)
-        utils.wait_until.assert_called_once_with(obj, att, desired,
-                callback=callback, interval=interval, attempts=attempts,
-                verbose=verbose, verbose_atts=verbose_atts)
+                             verbose, verbose_atts)
+        utils.wait_until.assert_called_once_with(
+            obj, att, desired, callback=callback, interval=interval,
+            attempts=attempts, verbose=verbose, verbose_atts=verbose_atts)
         utils.wait_until = sav
 
     def test_time_string_empty(self):
@@ -294,7 +291,7 @@ class UtilsTest(unittest.TestCase):
     def test_time_string_invalid(self):
         testval = "abcde"
         self.assertRaises(exc.InvalidDateTimeString, utils.iso_time_string,
-                testval)
+                          testval)
 
     def test_time_string_date(self):
         dt = "1999-12-31"
@@ -312,7 +309,7 @@ class UtilsTest(unittest.TestCase):
     def test_time_string_datetime_add_tz(self):
         dt = "1999-12-31 23:59:59"
         self.assertEqual(utils.iso_time_string(dt, show_tzinfo=True),
-                "1999-12-31T23:59:59+0000")
+                         "1999-12-31T23:59:59+0000")
 
     def test_time_string_datetime_show_tz(self):
 
@@ -322,7 +319,7 @@ class UtilsTest(unittest.TestCase):
 
         dt = datetime.datetime(1999, 12, 31, 23, 59, 59, tzinfo=TZ())
         self.assertEqual(utils.iso_time_string(dt, show_tzinfo=True),
-                "1999-12-31T23:59:59-0200")
+                         "1999-12-31T23:59:59-0200")
 
     def test_time_string_datetime_hide_tz(self):
 
@@ -332,7 +329,7 @@ class UtilsTest(unittest.TestCase):
 
         dt = datetime.datetime(1999, 12, 31, 23, 59, 59, tzinfo=TZ())
         self.assertEqual(utils.iso_time_string(dt, show_tzinfo=False),
-                "1999-12-31T23:59:59")
+                         "1999-12-31T23:59:59")
 
     def test_rfc2822_format(self):
         now = datetime.datetime.now()

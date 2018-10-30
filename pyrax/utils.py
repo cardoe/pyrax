@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import datetime
 import email.utils
@@ -49,6 +49,10 @@ def runproc(cmd):
     proc = Popen([cmd], shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE,
                  close_fds=True)
     stdoutdata, stderrdata = proc.communicate()
+    if isinstance(stdoutdata, bytes):
+        stdoutdata = stdoutdata.decode("utf-8")
+    if isinstance(stderrdata, bytes):
+        stderrdata = stderrdata.decode("utf-8")
     return (stdoutdata, stderrdata)
 
 
@@ -61,13 +65,13 @@ class SelfDeletingTempfile(object):
 
     Usage:
 
-    \code
-    with SelfDeletingTempfile() as tmp:
-        tmp.write( ... )
-        some_func(tmp)
-    # More code
-    # At this point, the tempfile has been erased.
-    \endcode
+    highlight:: python
+    code-block:: python
+        with SelfDeletingTempfile() as tmp:
+            tmp.write( ... )
+            some_func(tmp)
+        # More code
+        # At this point, the tempfile has been erased.
     """
     name = None
 
@@ -93,16 +97,16 @@ class SelfDeletingTempDirectory(object):
 
     Usage:
 
-    \code
-    with SelfDeletingTempDirectory() as tmpdir:
-        f1 = open(os.path.join(tmpdir, "my_file.txt", "w")
-        f1.write("blah...")
-        f1.close()
-        some_func(tmpdir)
-    # More code
-    # At this point, the directory 'tmpdir' has been deleted,
-    # as well as the file 'f1' within it.
-    \endcode
+    highlight:: python
+    code-block:: python
+        with SelfDeletingTempDirectory() as tmpdir:
+            f1 = open(os.path.join(tmpdir, "my_file.txt", "w")
+            f1.write("blah...")
+            f1.close()
+            some_func(tmpdir)
+        # More code
+        # At this point, the directory 'tmpdir' has been deleted,
+        # as well as the file 'f1' within it.
     """
     name = None
 
@@ -112,7 +116,6 @@ class SelfDeletingTempDirectory(object):
 
     def __exit__(self, type, value, traceback):
         shutil.rmtree(self.name)
-
 
 
 class DotDict(dict):
@@ -131,13 +134,13 @@ class DotDict(dict):
         att = self._att_mapper.get(att, att)
         ret = self.get(att, self._fail)
         if ret is self._fail:
-            raise AttributeError("'%s' object has no attribute '%s'" %
-                    (self.__class__.__name__, att))
+            raise AttributeError(
+                "'%s' object has no attribute '%s'"
+                % (self.__class__.__name__, att))
         return ret
 
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
-
 
 
 class ResultsIterator(object):
@@ -172,7 +175,6 @@ class ResultsIterator(object):
         self._init_methods()
         self.next_uri = ""
 
-
     def _init_methods(self):
         """
         Must be implemented in subclasses. For results that return a URI for
@@ -185,12 +187,13 @@ class ResultsIterator(object):
         """
         raise NotImplementedError()
 
-
     def __iter__(self):
         return self
 
-
     def next(self):
+        return self.__next__()
+
+    def __next__(self):
         """
         Return the next available item. If there are no more items in the
         local 'results' list, check if there is a 'next_uri' value. If so,
@@ -204,8 +207,9 @@ class ResultsIterator(object):
                 raise StopIteration()
             else:
                 if not self.next_uri:
-                    self.results = self.list_method(marker=self.marker,
-                            limit=self.limit, prefix=self.prefix)
+                    self.results = self.list_method(
+                        marker=self.marker, limit=self.limit,
+                        prefix=self.prefix)
                 else:
                     args = self.extra_args
                     self.results = self._list_method(self.next_uri, *args)
@@ -251,6 +255,11 @@ def get_checksum(content, encoding="utf8", block_size=8192):
             while txt:
                 safe_update(txt)
                 txt = ff.read(block_size)
+                while txt:
+                    safe_update(txt)
+                    txt = ff.read(block_size)
+        else:
+            safe_update(content)
     elif hasattr(content, "read"):
         pos = content.tell()
         content.seek(0)
@@ -259,8 +268,7 @@ def get_checksum(content, encoding="utf8", block_size=8192):
             safe_update(txt)
             txt = content.read(block_size)
         content.seek(pos)
-    else:
-        safe_update(content)
+
     return md.hexdigest()
 
 
@@ -354,7 +362,7 @@ class _WaitThread(threading.Thread):
     verbose will always be False for a background thread.
     """
     def __init__(self, obj, att, desired, callback, interval, attempts,
-            verbose, verbose_atts):
+                 verbose, verbose_atts):
         self.obj = obj
         self.att = att
         self.desired = desired
@@ -366,15 +374,15 @@ class _WaitThread(threading.Thread):
 
     def run(self):
         """Starts the thread."""
-        resp = _wait_until(obj=self.obj, att=self.att,
-                desired=self.desired, callback=None,
-                interval=self.interval, attempts=self.attempts,
-                verbose=False, verbose_atts=None)
+        resp = _wait_until(
+            obj=self.obj, att=self.att, desired=self.desired, callback=None,
+            interval=self.interval, attempts=self.attempts, verbose=False,
+            verbose_atts=None)
         self.callback(resp)
 
 
 def wait_until(obj, att, desired, callback=None, interval=5, attempts=0,
-        verbose=False, verbose_atts=None):
+               verbose=False, verbose_atts=None):
     """
     When changing the state of an object, it will commonly be in a transitional
     state until the change is complete. This will reload the object every
@@ -415,19 +423,21 @@ def wait_until(obj, att, desired, callback=None, interval=5, attempts=0,
     process in a separate thread.
     """
     if callback:
-        waiter = _WaitThread(obj=obj, att=att, desired=desired, callback=callback,
-                interval=interval, attempts=attempts, verbose=verbose,
-                verbose_atts=verbose_atts)
+        waiter = _WaitThread(
+            obj=obj, att=att, desired=desired, callback=callback,
+            interval=interval, attempts=attempts, verbose=verbose,
+            verbose_atts=verbose_atts)
         waiter.start()
         return waiter
     else:
-        return _wait_until(obj=obj, att=att, desired=desired, callback=None,
-                interval=interval, attempts=attempts, verbose=verbose,
-                verbose_atts=verbose_atts)
+        return _wait_until(
+            obj=obj, att=att, desired=desired, callback=None,
+            interval=interval, attempts=attempts, verbose=verbose,
+            verbose_atts=verbose_atts)
 
 
 def _wait_until(obj, att, desired, callback, interval, attempts, verbose,
-        verbose_atts):
+                verbose_atts):
     """
     Loops until either the desired value of the attribute is reached, or the
     number of attempts is exceeded.
@@ -451,8 +461,9 @@ def _wait_until(obj, att, desired, callback, interval, attempts, verbose,
                 obj = obj.manager.get(obj.id)
             except AttributeError:
                 # punt
-                raise exc.NoReloadError("The 'wait_until' method is not "
-                        "supported for '%s' objects." % obj.__class__)
+                raise exc.NoReloadError(
+                    "The 'wait_until' method is not supported for '%s' "
+                    "objects." % obj.__class__)
         attval = getattr(obj, att)
         if verbose:
             elapsed = time.time() - start
@@ -469,9 +480,8 @@ def _wait_until(obj, att, desired, callback, interval, attempts, verbose,
     return obj
 
 
-
 def wait_for_build(obj, att=None, desired=None, callback=None, interval=None,
-        attempts=None, verbose=None, verbose_atts=None):
+                   attempts=None, verbose=None, verbose_atts=None):
     """
     Designed to handle the most common use case for wait_until: an object whose
     'status' attribute will end up in either 'ACTIVE' or 'ERROR' state. Since
@@ -483,8 +493,9 @@ def wait_for_build(obj, att=None, desired=None, callback=None, interval=None,
     interval = interval or 20
     attempts = attempts or 0
     verbose_atts = verbose_atts or "progress"
-    return wait_until(obj, att, desired, callback=callback, interval=interval,
-            attempts=attempts, verbose=verbose, verbose_atts=verbose_atts)
+    return wait_until(
+        obj, att, desired, callback=callback, interval=interval,
+        attempts=attempts, verbose=verbose, verbose_atts=verbose_atts)
 
 
 def _parse_datetime_string(val):
@@ -493,14 +504,13 @@ def _parse_datetime_string(val):
     returns a datetime if successful. If not, a InvalidDateTimeString exception
     will be raised.
     """
-    dt = None
     lenval = len(val)
     fmt = {19: "%Y-%m-%d %H:%M:%S", 10: "%Y-%m-%d"}.get(lenval)
     if fmt is None:
         # Invalid date
-        raise exc.InvalidDateTimeString("The supplied value '%s' does not "
-              "match either of the formats 'YYYY-MM-DD HH:MM:SS' or "
-              "'YYYY-MM-DD'." % val)
+        raise exc.InvalidDateTimeString(
+            "The supplied value '%s' does not match either of the formats "
+            "'YYYY-MM-DD HH:MM:SS' or 'YYYY-MM-DD'." % val)
     return datetime.datetime.strptime(val, fmt)
 
 
@@ -657,7 +667,8 @@ def case_insensitive_update(dct1, dct2):
     Given two dicts, updates the first one with the second, but considers keys
     that are identical except for case to be the same.
 
-    No return value; this function modified dct1 similar to the update() method.
+    No return value; this function modified dct1 similar to the update()
+    method.
     """
     lowkeys = dict([(key.lower(), key) for key in dct1])
     for key, val in dct2.items():
@@ -781,6 +792,7 @@ def to_slug(value, incoming=None, errors="strict"):
         "ascii", "ignore").decode("ascii")
     value = SLUGIFY_STRIP_RE.sub("", value).strip().lower()
     return SLUGIFY_HYPHENATE_RE.sub("-", value)
+
 
 # For backwards compatibility, alias slugify to point to_slug
 slugify = to_slug
