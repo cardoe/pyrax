@@ -24,7 +24,6 @@ import re
 
 from six.moves import urllib
 
-import pyrax
 from pyrax.client import BaseClient
 import pyrax.exceptions as exc
 from pyrax.manager import BaseManager
@@ -65,20 +64,19 @@ def assure_queue(fnc):
     return _wrapped
 
 
-
 class BaseQueueManager(BaseManager):
     """
     This class attempts to add in all the common deviations from the API
     standards that the regular base classes are based on.
     """
     def _list(self, uri, obj_class=None, body=None, return_raw=False,
-            other_keys=None):
+              other_keys=None):
         try:
-            return super(BaseQueueManager, self)._list(uri, obj_class=None,
-                    body=None, return_raw=return_raw, other_keys=other_keys)
+            return super(BaseQueueManager, self)._list(
+                uri, obj_class=None, body=None, return_raw=return_raw,
+                other_keys=other_keys)
         except (exc.NotFound, AttributeError):
             return []
-
 
 
 class Queue(BaseResource):
@@ -90,16 +88,15 @@ class Queue(BaseResource):
         info = info or {"queue": {}}
         super(Queue, self).__init__(manager, info, key=key, loaded=loaded)
         self._repr_properties = ["id"]
-        self._message_manager = QueueMessageManager(self.manager.api,
-                resource_class=QueueMessage, response_key="",
-                plural_response_key="messages",
-                uri_base="queues/%s/messages" % self.id)
-        self._claim_manager = QueueClaimManager(self.manager.api,
-                resource_class=QueueClaim, response_key="",
-                plural_response_key="claims",
-                uri_base="queues/%s/claims" % self.id)
+        self._message_manager = QueueMessageManager(
+            self.manager.api, resource_class=QueueMessage, response_key="",
+            plural_response_key="messages",
+            uri_base="queues/%s/messages" % self.id)
+        self._claim_manager = QueueClaimManager(
+            self.manager.api, resource_class=QueueClaim, response_key="",
+            plural_response_key="claims",
+            uri_base="queues/%s/claims" % self.id)
         self._claim_manager._message_manager = self._message_manager
-
 
     def get_message(self, msg_id):
         """
@@ -108,7 +105,6 @@ class Queue(BaseResource):
         """
         return self._message_manager.get(msg_id)
 
-
     def delete_message(self, msg_id, claim_id=None):
         """
         Deletes the message whose ID matches the supplied msg_id from the
@@ -116,7 +112,6 @@ class Queue(BaseResource):
         must be passed as the 'claim_id' parameter.
         """
         return self._message_manager.delete(msg_id, claim_id=claim_id)
-
 
     def list(self, include_claimed=False, echo=False, marker=None, limit=None):
         """
@@ -131,9 +126,9 @@ class Queue(BaseResource):
         results. 'Marker' is the ID of the last message returned, while 'limit'
         controls the number of messages returned per reuqest (default=20).
         """
-        return self._message_manager.list(include_claimed=include_claimed,
-                echo=echo, marker=marker, limit=limit)
-
+        return self._message_manager.list(
+            include_claimed=include_claimed, echo=echo, marker=marker,
+            limit=limit)
 
     def list_by_ids(self, ids):
         """
@@ -144,13 +139,11 @@ class Queue(BaseResource):
         """
         return self._message_manager.list_by_ids(ids)
 
-
     def delete_by_ids(self, ids):
         """
         Deletes the messages whose IDs are passed in from this queue.
         """
         return self._message_manager.delete_by_ids(ids)
-
 
     def list_by_claim(self, claim):
         """
@@ -162,7 +155,6 @@ class Queue(BaseResource):
             claim = self._claim_manager.get(claim)
         return claim.messages
 
-
     def post_message(self, body, ttl):
         """
         Create a message in this queue. The value of ttl must be between 60 and
@@ -170,14 +162,14 @@ class Queue(BaseResource):
         """
         return self._message_manager.create(body, ttl)
 
-
     def claim_messages(self, ttl, grace, count=None):
         """
         Claims up to `count` unclaimed messages from this queue. If count is
         not specified, the default is to claim 10 messages.
 
         The `ttl` parameter specifies how long the server should wait before
-        releasing the claim. The ttl value MUST be between 60 and 43200 seconds.
+        releasing the claim. The ttl value MUST be between 60 and 43200
+        seconds.
 
         The `grace` parameter is the message grace period in seconds. The value
         of grace MUST be between 60 and 43200 seconds. The server extends the
@@ -192,14 +184,12 @@ class Queue(BaseResource):
         """
         return self._claim_manager.claim(ttl, grace, count=count)
 
-
     def get_claim(self, claim):
         """
         Returns a QueueClaim object with information about the specified claim.
         If no such claim exists, a NotFound exception is raised.
         """
         return self._claim_manager.get(claim)
-
 
     def update_claim(self, claim, ttl=None, grace=None):
         """
@@ -208,14 +198,12 @@ class Queue(BaseResource):
         """
         return self._claim_manager.update(claim, ttl=ttl, grace=grace)
 
-
     def release_claim(self, claim):
         """
         Releases the specified claim and makes any messages previously claimed
         by this claim as available for processing by other workers.
         """
         return self._claim_manager.delete(claim)
-
 
     @property
     def id(self):
@@ -224,7 +212,6 @@ class Queue(BaseResource):
     @id.setter
     def id(self, val):
         self.name = val
-
 
 
 class QueueMessage(BaseResource):
@@ -240,7 +227,6 @@ class QueueMessage(BaseResource):
         self.claim_id = None
         super(QueueMessage, self).__init__(*args, **kwargs)
 
-
     def _add_details(self, info):
         """
         The 'id' and 'claim_id' attributes are not supplied directly, but
@@ -255,14 +241,12 @@ class QueueMessage(BaseResource):
         if query:
             self.claim_id = query.split("claim_id=")[-1]
 
-
     def delete(self, claim_id=None):
         """
         Deletes this message from its queue. If the message has been claimed,
         the ID of that claim must be passed as the 'claim_id' parameter.
         """
         return self.manager.delete(self, claim_id=claim_id)
-
 
 
 class QueueClaim(BaseResource):
@@ -284,8 +268,7 @@ class QueueClaim(BaseResource):
         parsed = urllib.parse.urlparse(self.href)
         self.id = parsed.path.rsplit("/", 1)[-1]
         self.messages = [QueueMessage(self.manager._message_manager, item)
-                for item in msg_dicts]
-
+                         for item in msg_dicts]
 
 
 class QueueMessageManager(BaseQueueManager):
@@ -302,14 +285,12 @@ class QueueMessageManager(BaseQueueManager):
                 }]
         return body
 
-
     def list(self, include_claimed=False, echo=False, marker=None, limit=None):
         """
         Need to form the URI differently, so we can't use the default list().
         """
         return self._iterate_list(include_claimed=include_claimed, echo=echo,
-                marker=marker, limit=limit)
-
+                                  marker=marker, limit=limit)
 
     def _iterate_list(self, include_claimed, echo, marker, limit):
         """
@@ -321,8 +302,9 @@ class QueueMessageManager(BaseQueueManager):
         else:
             this_limit = min(MSG_LIMIT, limit)
             limit = limit - this_limit
-        uri = "/%s?include_claimed=%s&echo=%s" % (self.uri_base,
-                json.dumps(include_claimed), json.dumps(echo))
+        uri = ("/%s?include_claimed=%s&echo=%s"
+               % (self.uri_base, json.dumps(include_claimed),
+                  json.dumps(echo)))
         qs_parts = []
         if marker is not None:
             qs_parts.append("marker=%s" % marker)
@@ -340,9 +322,9 @@ class QueueMessageManager(BaseQueueManager):
         loop = 0
         if ((limit is None) or limit > 0) and marker:
             loop += 1
-            ret.extend(self._iterate_list(include_claimed, echo, marker, limit))
+            ret.extend(self._iterate_list(
+                include_claimed, echo, marker, limit))
         return ret
-
 
     def delete(self, msg, claim_id=None):
         """
@@ -356,7 +338,6 @@ class QueueMessageManager(BaseQueueManager):
         else:
             uri = "/%s/%s" % (self.uri_base, msg_id)
         return self._delete(uri)
-
 
     def list_by_ids(self, ids):
         """
@@ -376,7 +357,6 @@ class QueueMessageManager(BaseQueueManager):
         self.plural_response_key = curr_prkey
         return ret
 
-
     def delete_by_ids(self, ids):
         """
         Deletes the messages whose IDs are passed in from this queue.
@@ -384,7 +364,6 @@ class QueueMessageManager(BaseQueueManager):
         ids = utils.coerce_to_list(ids)
         uri = "/%s?ids=%s" % (self.uri_base, ",".join(ids))
         return self.api.method_delete(uri)
-
 
 
 class QueueClaimManager(BaseQueueManager):
@@ -397,7 +376,8 @@ class QueueClaimManager(BaseQueueManager):
         not specified, the default is to claim 10 messages.
 
         The `ttl` parameter specifies how long the server should wait before
-        releasing the claim. The ttl value MUST be between 60 and 43200 seconds.
+        releasing the claim. The ttl value MUST be between 60 and 43200
+        seconds.
 
         The `grace` parameter is the message grace period in seconds. The value
         of grace MUST be between 60 and 43200 seconds. The server extends the
@@ -427,7 +407,6 @@ class QueueClaimManager(BaseQueueManager):
         claim_id = href.split("claim_id=")[-1]
         return self.get(claim_id)
 
-
     def update(self, claim, ttl=None, grace=None):
         """
         Updates the specified claim with either a new TTL or grace period, or
@@ -439,11 +418,11 @@ class QueueClaimManager(BaseQueueManager):
         if grace is not None:
             body["grace"] = grace
         if not body:
-            raise exc.MissingClaimParameters("You must supply a value for "
-                    "'ttl' or 'grace' when calling 'update()'")
+            raise exc.MissingClaimParameters(
+                "You must supply a value for 'ttl' or 'grace' when calling "
+                "'update()'")
         uri = "/%s/%s" % (self.uri_base, utils.get_id(claim))
         resp, resp_body = self.api.method_patch(uri, body=body)
-
 
 
 class QueueManager(BaseQueueManager):
@@ -460,16 +439,15 @@ class QueueManager(BaseQueueManager):
             body = {"metadata": metadata}
         return body
 
-
     def get(self, id_):
         """
         Need to customize, since Queues are not returned with normal response
         bodies.
         """
         if self.api.queue_exists(id_):
-            return Queue(self, {"queue": {"name": id_, "id_": id_}}, key="queue")
+            return Queue(
+                self, {"queue": {"name": id_, "id_": id_}}, key="queue")
         raise exc.NotFound("The queue '%s' does not exist." % id_)
-
 
     def create(self, name):
         uri = "/%s/%s" % (self.uri_base, name)
@@ -478,10 +456,10 @@ class QueueManager(BaseQueueManager):
             return Queue(self, {"name": name})
         elif resp.status_code == 400:
             # Most likely an invalid name
-            raise exc.InvalidQueueName("Queue names must not exceed 64 bytes "
-                    "in length, and are limited to US-ASCII letters, digits, "
-                    "underscores, and hyphens. Submitted: '%s'." % name)
-
+            raise exc.InvalidQueueName(
+                "Queue names must not exceed 64 bytes in length, and are "
+                "limited to US-ASCII letters, digits, underscores, and "
+                "hyphens. Submitted: '%s'." % name)
 
     def get_stats(self, queue):
         """
@@ -491,7 +469,6 @@ class QueueManager(BaseQueueManager):
         resp, resp_body = self.api.method_get(uri)
         return resp_body.get("messages")
 
-
     def get_metadata(self, queue):
         """
         Returns the metadata for the specified queue.
@@ -499,7 +476,6 @@ class QueueManager(BaseQueueManager):
         uri = "/%s/%s/metadata" % (self.uri_base, utils.get_id(queue))
         resp, resp_body = self.api.method_get(uri)
         return resp_body
-
 
     def set_metadata(self, queue, metadata, clear=False):
         """
@@ -516,7 +492,6 @@ class QueueManager(BaseQueueManager):
         resp, resp_body = self.api.method_put(uri, body=curr)
 
 
-
 class QueueClient(BaseClient):
     """
     This is the primary class for interacting with Cloud Queues.
@@ -524,15 +499,13 @@ class QueueClient(BaseClient):
     name = "Cloud Queues"
     client_id = None
 
-
     def _configure_manager(self):
         """
         Create the manager to handle queues.
         """
-        self._manager = QueueManager(self,
-                resource_class=Queue, response_key="queue",
-                uri_base="queues")
-
+        self._manager = QueueManager(
+            self, resource_class=Queue, response_key="queue",
+            uri_base="queues")
 
     def _add_custom_headers(self, dct):
         """
@@ -543,7 +516,6 @@ class QueueClient(BaseClient):
         if self.client_id:
             dct["Client-ID"] = self.client_id
 
-
     def _api_request(self, uri, method, **kwargs):
         """
         Any request that involves messages must define the client ID. This
@@ -553,13 +525,12 @@ class QueueClient(BaseClient):
         try:
             return super(QueueClient, self)._api_request(uri, method, **kwargs)
         except exc.BadRequest as e:
-            if ((e.code == "400") and
-                    (e.message == 'The "Client-ID" header is required.')):
-                raise exc.QueueClientIDNotDefined("You must supply a client ID "
-                        "to work with Queue messages.")
+            if (e.code == "400" and (str(e) == 'The "Client-ID" header is '
+                                     'required. (HTTP 400)')):
+                raise exc.QueueClientIDNotDefined(
+                    "You must supply a client ID to work with Queue messages.")
             else:
                 raise
-
 
     def get_home_document(self):
         """
@@ -587,17 +558,15 @@ class QueueClient(BaseClient):
         uri = self.management_url.rsplit("/", 1)[0]
         return self.method_get(uri)
 
-
     def queue_exists(self, name):
         """
         Returns True or False, depending on the existence of the named queue.
         """
         try:
-            queue = self._manager.head(name)
+            self._manager.head(name)
             return True
         except exc.NotFound:
             return False
-
 
     def create(self, name):
         """
@@ -610,20 +579,17 @@ class QueueClient(BaseClient):
             raise exc.DuplicateQueue("The queue '%s' already exists." % name)
         return self._manager.create(name)
 
-
     def get_stats(self, queue):
         """
         Returns the message stats for the specified queue.
         """
         return self._manager.get_stats(queue)
 
-
     def get_metadata(self, queue):
         """
         Returns the metadata for the specified queue.
         """
         return self._manager.get_metadata(queue)
-
 
     def set_metadata(self, queue, metadata, clear=False):
         """
@@ -633,7 +599,6 @@ class QueueClient(BaseClient):
         """
         return self._manager.set_metadata(queue, metadata, clear=clear)
 
-
     @assure_queue
     def get_message(self, queue, msg_id):
         """
@@ -641,7 +606,6 @@ class QueueClient(BaseClient):
         specified queue.
         """
         return queue.get_message(msg_id)
-
 
     @assure_queue
     def delete_message(self, queue, msg_id, claim_id=None):
@@ -652,10 +616,9 @@ class QueueClient(BaseClient):
         """
         return queue.delete_message(msg_id, claim_id=claim_id)
 
-
     @assure_queue
     def list_messages(self, queue, include_claimed=False, echo=False,
-            marker=None, limit=None):
+                      marker=None, limit=None):
         """
         Returns a list of messages for the specified queue.
 
@@ -669,8 +632,7 @@ class QueueClient(BaseClient):
         controls the number of messages returned per reuqest (default=20).
         """
         return queue.list(include_claimed=include_claimed, echo=echo,
-                marker=marker, limit=limit)
-
+                          marker=marker, limit=limit)
 
     @assure_queue
     def list_messages_by_ids(self, queue, ids):
@@ -682,14 +644,12 @@ class QueueClient(BaseClient):
         """
         return queue.list_by_ids(ids)
 
-
     @assure_queue
     def delete_messages_by_ids(self, queue, ids):
         """
         Deletes the messages whose IDs are passed in from the specified queue.
         """
         return queue.delete_by_ids(ids)
-
 
     @assure_queue
     def list_messages_by_claim(self, queue, claim):
@@ -700,7 +660,6 @@ class QueueClient(BaseClient):
         """
         return queue.list_by_claim(claim)
 
-
     @assure_queue
     def post_message(self, queue, body, ttl):
         """
@@ -709,7 +668,6 @@ class QueueClient(BaseClient):
         """
         return queue.post_message(body, ttl)
 
-
     @assure_queue
     def claim_messages(self, queue, ttl, grace, count=None):
         """
@@ -717,7 +675,8 @@ class QueueClient(BaseClient):
         count is not specified, the default is to claim 10 messages.
 
         The `ttl` parameter specifies how long the server should wait before
-        releasing the claim. The ttl value MUST be between 60 and 43200 seconds.
+        releasing the claim. The ttl value MUST be between 60 and 43200
+        seconds.
 
         The `grace` parameter is the message grace period in seconds. The value
         of grace MUST be between 60 and 43200 seconds. The server extends the
@@ -732,7 +691,6 @@ class QueueClient(BaseClient):
         """
         return queue.claim_messages(ttl, grace, count=count)
 
-
     @assure_queue
     def get_claim(self, queue, claim):
         """
@@ -741,7 +699,6 @@ class QueueClient(BaseClient):
         """
         return queue.get_claim(claim)
 
-
     @assure_queue
     def update_claim(self, queue, claim, ttl=None, grace=None):
         """
@@ -749,7 +706,6 @@ class QueueClient(BaseClient):
         both.
         """
         return queue.update_claim(claim, ttl=ttl, grace=grace)
-
 
     @assure_queue
     def release_claim(self, queue, claim):

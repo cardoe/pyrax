@@ -6,19 +6,13 @@ import os
 import random
 import unittest
 
-from mock import patch
 from mock import MagicMock as Mock
 
 import pyrax
 import pyrax.queueing
-from pyrax.queueing import BaseQueueManager
 from pyrax.queueing import Queue
 from pyrax.queueing import QueueClaim
-from pyrax.queueing import QueueClaimManager
-from pyrax.queueing import QueueClient
-from pyrax.queueing import QueueManager
 from pyrax.queueing import QueueMessage
-from pyrax.queueing import QueueMessageManager
 from pyrax.queueing import assure_queue
 from pyrax.queueing import _parse_marker
 
@@ -66,8 +60,6 @@ class QueuesTest(unittest.TestCase):
         self.assertEqual(ret, fake_marker)
 
     def test_parse_marker_no_next(self):
-        fake_marker = "%s" % random.randint(10000, 100000)
-        href = "http://example.com/foo?marker=%s" % fake_marker
         body = {"links": [
                 {"rel": "bogus", "href": "fake"},
                 ]}
@@ -116,7 +108,7 @@ class QueuesTest(unittest.TestCase):
         claim_id = utils.random_unicode()
         q.delete_message(msg_id, claim_id=claim_id)
         q._message_manager.delete.assert_called_once_with(msg_id,
-                claim_id=claim_id)
+                                                          claim_id=claim_id)
 
     def test_queue_list(self):
         q = self.queue
@@ -126,7 +118,7 @@ class QueuesTest(unittest.TestCase):
         marker = utils.random_unicode()
         limit = utils.random_unicode()
         q.list(include_claimed=include_claimed, echo=echo, marker=marker,
-                limit=limit)
+               limit=limit)
         q._message_manager.list.assert_called_once_with(
                 include_claimed=include_claimed, echo=echo, marker=marker,
                 limit=limit)
@@ -185,7 +177,7 @@ class QueuesTest(unittest.TestCase):
         grace = utils.random_unicode()
         q.update_claim(claim, ttl=ttl, grace=grace)
         q._claim_manager.update.assert_called_once_with(claim, ttl=ttl,
-                grace=grace)
+                                                        grace=grace)
 
     def test_queue_release_claim(self):
         q = self.queue
@@ -205,7 +197,6 @@ class QueuesTest(unittest.TestCase):
 
     def test_msg_add_details(self):
         id_ = _safe_id()
-        claim_id = utils.random_unicode()
         age = utils.random_unicode()
         body = utils.random_unicode()
         ttl = utils.random_unicode()
@@ -240,8 +231,6 @@ class QueuesTest(unittest.TestCase):
         self.assertEqual(msg.claim_id, claim_id)
 
     def test_msg_add_details_no_href(self):
-        id_ = utils.random_unicode()
-        claim_id = utils.random_unicode()
         age = utils.random_unicode()
         body = utils.random_unicode()
         ttl = utils.random_unicode()
@@ -269,7 +258,6 @@ class QueuesTest(unittest.TestCase):
         num = random.randint(1, 9)
         for ii in range(num):
             msg_id = utils.random_unicode()
-            claim_id = utils.random_unicode()
             age = utils.random_unicode()
             body = utils.random_unicode()
             ttl = utils.random_unicode()
@@ -314,8 +302,8 @@ class QueuesTest(unittest.TestCase):
         rbody = {"links": [], "messages": [{"href": "fake"}]}
         pyrax.queueing._parse_marker = Mock(return_value="fake")
         mgr._list = Mock(return_value=(None, rbody))
-        msgs = mgr.list(include_claimed=include_claimed, echo=echo,
-                marker=marker, limit=limit)
+        mgr.list(include_claimed=include_claimed, echo=echo, marker=marker,
+                 limit=limit)
 
     def test_queue_msg_mgr_no_limit_or_body(self):
         q = self.queue
@@ -325,8 +313,7 @@ class QueuesTest(unittest.TestCase):
         marker = utils.random_unicode()
         pyrax.queueing._parse_marker = Mock(return_value="fake")
         mgr._list = Mock(return_value=(None, None))
-        msgs = mgr.list(include_claimed=include_claimed, echo=echo,
-                marker=marker)
+        mgr.list(include_claimed=include_claimed, echo=echo, marker=marker)
 
     def test_queue_msg_mgr_delete_claim(self):
         q = self.queue
@@ -468,7 +455,6 @@ class QueuesTest(unittest.TestCase):
         clt = self.client
         mgr = clt._manager
         name = utils.random_unicode()
-        exp_uri = "/%s/%s" % (mgr.uri_base, name)
         resp = fakes.FakeResponse()
         resp.status_code = 201
         mgr.api.method_put = Mock(return_value=(resp, None))
@@ -480,7 +466,6 @@ class QueuesTest(unittest.TestCase):
         clt = self.client
         mgr = clt._manager
         name = utils.random_unicode()
-        exp_uri = "/%s/%s" % (mgr.uri_base, name)
         resp = fakes.FakeResponse()
         resp.status_code = 400
         mgr.api.method_put = Mock(return_value=(resp, None))
@@ -517,7 +502,7 @@ class QueuesTest(unittest.TestCase):
         val = utils.random_unicode()
         metadata = {"new": val}
         mgr.api.method_put = Mock(return_value=(None, None))
-        ret = mgr.set_metadata(q, metadata, clear=True)
+        mgr.set_metadata(q, metadata, clear=True)
         mgr.api.method_put.assert_called_once_with(exp_uri, body=metadata)
 
     def test_queue_mgr_set_metadata_no_clear(self):
@@ -527,13 +512,12 @@ class QueuesTest(unittest.TestCase):
         exp_uri = "/%s/%s/metadata" % (mgr.uri_base, q)
         val = utils.random_unicode()
         metadata = {"new": val}
-        old_val = utils.random_unicode()
         old_metadata = {"old": val}
         exp_body = old_metadata
         exp_body.update(metadata)
         mgr.api.method_put = Mock(return_value=(None, None))
         mgr.get_metadata = Mock(return_value=old_metadata)
-        ret = mgr.set_metadata(q, metadata, clear=False)
+        mgr.set_metadata(q, metadata, clear=False)
         mgr.api.method_put.assert_called_once_with(exp_uri, body=exp_body)
 
     def test_clt_add_custom_headers(self):
@@ -583,7 +567,7 @@ class QueuesTest(unittest.TestCase):
         sav = id_svc.authenticate
         id_svc.authenticate = Mock()
         self.assertRaises(exc.QueueClientIDNotDefined, clt._api_request, uri,
-                method, **kwargs)
+                          method, **kwargs)
         id_svc.authenticate = sav
 
     def test_api_request_other_error(self):
@@ -598,7 +582,7 @@ class QueuesTest(unittest.TestCase):
         sav = id_svc.authenticate
         id_svc.authenticate = Mock()
         self.assertRaises(exc.BadRequest, clt._api_request, uri,
-                method, **kwargs)
+                          method, **kwargs)
         id_svc.authenticate = sav
 
     def test_clt_get_home_document(self):
@@ -662,7 +646,7 @@ class QueuesTest(unittest.TestCase):
         clear = random.choice((True, False))
         clt.set_metadata(q, metadata, clear=clear)
         clt._manager.set_metadata.assert_called_once_with(q, metadata,
-                clear=clear)
+                                                          clear=clear)
 
     def test_clt_get_message(self):
         clt = self.client
@@ -690,9 +674,9 @@ class QueuesTest(unittest.TestCase):
         limit = utils.random_unicode()
         q.list = Mock()
         clt.list_messages(q, include_claimed=include_claimed, echo=echo,
-                marker=marker, limit=limit)
+                          marker=marker, limit=limit)
         q.list.assert_called_once_with(include_claimed=include_claimed,
-                echo=echo, marker=marker, limit=limit)
+                                       echo=echo, marker=marker, limit=limit)
 
     def test_clt_list_messages_by_ids(self):
         clt = self.client
