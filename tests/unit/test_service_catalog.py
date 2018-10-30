@@ -4,11 +4,8 @@ from __future__ import absolute_import, unicode_literals
 
 import unittest
 
-from mock import MagicMock as Mock
-
 import six
 
-import pyrax.utils as utils
 import pyrax.exceptions as exc
 from pyrax import service_catalog
 
@@ -42,17 +39,17 @@ class ServiceCatalogTest(unittest.TestCase):
     def test_url_for_no_match(self):
         sc = self.service_catalog
         self.assertRaises(exc.EndpointNotFound, sc.url_for,
-                service_type="test")
+                          service_type="test")
 
     def test_url_for_ambiguous(self):
         sc = self.service_catalog
         self.assertRaises(exc.AmbiguousEndpoints, sc.url_for,
-                service_type="object-store")
+                          service_type="object-store")
 
     def test_url_for_object_store(self):
         sc = self.service_catalog
         ret = sc.url_for(service_type="object-store", attr="region",
-                filter_value="DFW")
+                         filter_value="DFW")
         self.assertTrue(isinstance(ret, six.string_types))
         self.assertTrue("http" in ret)
 
