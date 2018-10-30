@@ -43,7 +43,6 @@ class BaseResource(object):
     # Properties to add to the __repr__() display
     _repr_properties = []
 
-
     def __init__(self, manager, info, key=None, loaded=False):
         self._loaded = loaded
         self.manager = manager
@@ -52,16 +51,15 @@ class BaseResource(object):
         self._info = info
         self._add_details(info)
 
-
     @property
     def human_id(self):
-        """Subclasses may override this to provide a pretty ID which can be used
-        for bash completion.
+        """
+        Subclasses may override this to provide a pretty ID which can be
+        used for bash completion.
         """
         if self.NAME_ATTR in self.__dict__ and self.HUMAN_ID:
             return utils.to_slug(getattr(self, self.NAME_ATTR))
         return None
-
 
     def _add_details(self, info):
         """
@@ -74,7 +72,6 @@ class BaseResource(object):
             elif isinstance(key, bytes):
                 key = key.decode("utf-8")
             setattr(self, key, val)
-
 
     def __getattr__(self, key):
         """
@@ -89,20 +86,18 @@ class BaseResource(object):
         try:
             return self.__dict__[key]
         except KeyError:
-            raise AttributeError("'%s' object has no attribute "
-                    "'%s'." % (self.__class__, key))
-
+            raise AttributeError(
+                "'%s' object has no attribute '%s'." % (self.__class__, key))
 
     def __repr__(self):
         reprkeys = sorted(key for key in self.__dict__.keys()
-                if (key[0] != "_") and
-                   (key not in ("manager", "created", "updated")) and
-                   (key not in self._non_display))
+                          if (key[0] != "_") and
+                             (key not in ("manager", "created", "updated")) and
+                             (key not in self._non_display))
         reprkeys += self._repr_properties
         info = ", ".join("%s=%s" % (key, getattr(self, key))
-                for key in reprkeys)
+                         for key in reprkeys)
         return "<%s %s>" % (self.__class__.__name__, info)
-
 
     def get(self):
         """Gets the details for the object."""
@@ -118,7 +113,6 @@ class BaseResource(object):
     # This alias is used to make its purpose clearer.
     reload = get
 
-
     def delete(self):
         """Deletes the object."""
         # set 'loaded' first ... so if we have to bail, we know we tried.
@@ -126,7 +120,6 @@ class BaseResource(object):
         if not hasattr(self.manager, "delete"):
             return
         self.manager.delete(self)
-
 
     def __eq__(self, other):
         """
@@ -139,7 +132,6 @@ class BaseResource(object):
         if hasattr(self, "id") and hasattr(other, "id"):
             return self.id == other.id
         return self._info == other._info
-
 
     def _get_loaded(self):
         return self._loaded
