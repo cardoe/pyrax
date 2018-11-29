@@ -3261,7 +3261,7 @@ class ObjectStorageTest(unittest.TestCase):
         args_list = mock_log.call_args_list
         exist_call = any(["already exists" in call[0][0]
                          for call in args_list])
-        self.assertTrue(exist_call)
+        self.assertTrue(exist_call, args_list)
 
     @patch("logging.Logger.info")
     def test_clt_under_sync_folder_to_container_nested(self, mock_log):

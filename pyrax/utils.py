@@ -115,7 +115,7 @@ class SelfDeletingTempDirectory(object):
         return self.name
 
     def __exit__(self, type, value, traceback):
-        shutil.rmtree(self.name)
+        shutil.rmtree(self.name, ignore_errors=True)
 
 
 class DotDict(dict):
@@ -260,6 +260,8 @@ def get_checksum(content, encoding="utf8", block_size=8192):
                     txt = ff.read(block_size)
         else:
             safe_update(content)
+    elif isinstance(content, bytes):
+        safe_update(content)
     elif hasattr(content, "read"):
         pos = content.tell()
         content.seek(0)

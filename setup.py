@@ -58,6 +58,7 @@ class sdist(_sdist):
         # Run parent constructor
         _sdist.run(self)
 
+
 # Get the long description from the relevant file
 try:
     f = codecs.open('README.rst', encoding='utf-8')

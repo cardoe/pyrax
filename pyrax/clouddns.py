@@ -24,6 +24,7 @@ import time
 
 import six
 
+from novaclient.v2.servers import Server as CloudServer
 import pyrax
 from pyrax.client import BaseClient
 from pyrax.cloudloadbalancers import CloudLoadBalancer
@@ -888,12 +889,12 @@ class CloudDNSManager(BaseManager):
         """
         try:
             from tests.unit import fakes
-            server_types = (pyrax.CloudServer, fakes.FakeServer)
+            server_types = (CloudServer, fakes.FakeServer)
             lb_types = (CloudLoadBalancer, fakes.FakeLoadBalancer,
                         fakes.FakeDNSDevice)
         except ImportError:
             # Not running with tests
-            server_types = (pyrax.CloudServer, )
+            server_types = (CloudServer, )
             lb_types = (CloudLoadBalancer, )
         if isinstance(device, server_types):
             device_type = "server"

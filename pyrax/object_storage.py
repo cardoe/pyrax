@@ -1086,7 +1086,6 @@ class ContainerManager(BaseManager):
         """Returns a list of info on Containers.
 
         For each container, a dict containing the following keys is returned:
-        \code
             name - the name of the container
             count - the number of objects in the container
             bytes - the total bytes in the container
@@ -2356,7 +2355,6 @@ class StorageClient(BaseClient):
         """Returns a list of info on Containers.
 
         For each container, a dict containing the following keys is returned:
-        \code
             name - the name of the container
             count - the number of objects in the container
             bytes - the total bytes in the container
@@ -2970,7 +2968,7 @@ class StorageClient(BaseClient):
                         if verbose:
                             log.info(
                                 "%s NOT UPLOADED because remote object is "
-                                "newer", fullname_with_prefix)
+                                "newer" % fullname_with_prefix)
                             log.info("  Local: %s   Remote: %s" % (
                                     local_mod_str, obj_time_str))
                         continue
@@ -2979,7 +2977,7 @@ class StorageClient(BaseClient):
                                           etag=local_etag, return_none=True)
                     self._sync_summary["uploaded"] += 1
                     if verbose:
-                        log.info("%s UPLOADED", fullname_with_prefix)
+                        log.info("%s UPLOADED" % fullname_with_prefix)
                 except Exception as e:
                     # Record the failure, and move on
                     self._sync_summary["failed"] += 1
